@@ -1,0 +1,11 @@
+step,n_before,n_dropped_this_step,n_after
+consent_not_given,74,1,73
+under_18,73,0,73
+not_omnichannel_screener,73,1,72
+failed_attention_check_ATT1,72,27,45
+failed_attention_check_ATT2,45,0,45
+failed_comprehension_check_CC1,45,0,45
+failed_comprehension_check_CC2,45,0,45
+speeding_below_threshold,45,0,45
+excess_missing_items,45,0,45
+TOTAL,74,29,45

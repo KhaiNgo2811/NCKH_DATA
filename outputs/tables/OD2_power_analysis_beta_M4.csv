@@ -1,0 +1,3 @@
+scenario,f2,k,alpha,target_power,required_n,achieved_power_at_n
+a priori target (TF v2.2 SS C.2),0.02,8,0.05,0.8,402,0.8006
+conservative risk band (Aguinis et al. 2005 median),0.009,8,0.05,0.8,882,0.8004

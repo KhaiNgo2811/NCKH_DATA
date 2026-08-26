@@ -1,0 +1,121 @@
+ResponseId,CELL,AIP_COND,DISC_COND,CONSENT,SCR_AGE,SCR1,CC1,CC2,AIP1,AIP2,AIP3,AIP4,AIP5,AIP6,REL1,REL2,REL3,REL4,INT1,INT2,INT3,INT4,INT5,TRU1,TRU2,TRU3,TRU4,TRU5,ENG1,ENG2,ENG3,ENG4,ENG5,ENG6,PI1,PI2,PI3,PDPL1,PDPL2,PDPL3,PDPL4,ATT1,ATT2,MC_AIP,MC_DISC,VIG_TIME_First Click,VIG_TIME_Last Click,VIG_TIME_Page Submit,VIG_TIME_Click Count,Duration (in seconds),AGE_BAND,GEN,EDU,INC,FREQ,PLAT,PRIOR,CHAN,CHAN_APP,CHAN_WEB,CHAN_LIVE,CHAN_STORE,CHAN_SOC
+R_1_0000,2,0,1,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,1,5,3.0,6,4,3,4,5,4,3.0,4,5,6,6,4,4,1,1,3,3,1,5.0,6,4,4,5,6,2,3,3,4,5,7,6,4,2,5,6,1.4,10.6,12.6,7,153,18 - 24,Nu,Dai hoc,Tren 20 - 40 trieu,Nhieu lan moi tuan,Shopee,Tu 6 den 12 thang,"CHAN_APP,CHAN_LIVE",True,False,True,False,False
+R_1_0001,4,1,1,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",2,3,7,6.0,6,6,6,5,5,4,4.0,4,4,4,5,5,4,3,2,4,2,3,1.0,3,1,2,2,3,4,5,7,2,4,5,5,5,2,4,6,2.5,3.5,4.1,5,497,35 - 44,Nam,Sau dai hoc,Tren 40 trieu,Vai lan moi nam,Lazada,Tren 3 nam,"CHAN_APP,CHAN_LIVE",True,False,True,False,False
+R_1_0002,1,0,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,2,3,4.0,4,4,4,5,4,5,5.0,4,4,3,5,5,4,4,6,7,6,7,6.0,3,5,5,4,5,3,3,5,4,2,2,3,5,2,6,4,2.2,3.4000000000000004,4.300000000000001,4,740,45 - 54,Nam,Dai hoc,5 - 10 trieu,Nhieu lan moi tuan,Shopee,Duoi 6 thang,"CHAN_APP,CHAN_LIVE",True,False,True,False,False
+R_1_0003,4,1,1,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",2,1,3,4.0,4,4,5,3,4,3,3.0,3,4,5,3,4,5,3,3,2,3,2,3.0,2,2,2,3,3,3,3,3,3,5,5,4,5,2,5,3,2.5,5.3,5.8,4,578,18 - 24,Nam,Dai hoc,Duoi 5 trieu,Khoang moi thang,Shopee,Tren 3 nam,"CHAN_APP,CHAN_WEB",True,True,False,False,False
+R_1_0004,1,0,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,2,4,3.0,6,3,2,6,2,3,3.0,4,4,2,4,4,4,3,4,5,4,4,5.0,3,5,3,4,4,5,4,6,4,3,3,3,5,2,4,4,4.3,6.1,6.8,1,546,35 - 44,Nu,Dai hoc,Tren 20 - 40 trieu,Khoang moi tuan,TikTok Shop,Tren 3 nam,"CHAN_WEB,CHAN_STORE",False,True,False,True,False
+R_1_0005,2,0,1,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,1,7,5.0,6,5,7,4,5,5,4.0,5,5,3,3,3,3,4,5,5,5,5,5.0,5,5,4,5,4,5,5,4,5,3,3,5,5,2,3,6,0.5,1.0,1.7,7,528,18 - 24,Nam,Trung cap - Cao dang,Duoi 5 trieu,Nhieu lan moi tuan,Lazada,Tu 6 den 12 thang,"CHAN_APP,CHAN_LIVE",True,False,True,False,False
+R_1_0006,3,1,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",3,2,2,4.0,2,2,2,2,3,4,1.0,2,3,3,4,1,4,3,4,3,3,3,5.0,4,2,2,3,3,2,3,3,5,4,4,4,5,2,2,5,0.0,5.6,5.8999999999999995,3,607,25 - 34,Nam,Dai hoc,5 - 10 trieu,Khoang moi thang,Lazada,Duoi 6 thang,"CHAN_WEB,CHAN_STORE",False,True,False,True,False
+R_1_0007,2,0,1,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,1,3,3.0,3,3,3,5,6,6,5.0,6,4,4,4,2,3,6,4,4,5,3,4.0,4,3,4,4,2,3,5,4,3,4,5,4,5,2,5,5,1.7,4.4,4.4,2,367,25 - 34,Nam,Dai hoc,Tren 10 - 20 trieu,Vai lan moi nam,TikTok Shop,Tu 6 den 12 thang,"CHAN_APP,CHAN_LIVE",True,False,True,False,False
+R_1_0008,2,0,1,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,1,5,,4,4,5,4,5,3,4.0,4,6,5,4,4,5,3,2,2,2,4,2.0,3,2,3,2,3,5,3,4,4,4,3,5,5,2,5,6,0.3,1.2,3.9000000000000004,5,379,25 - 34,Nam,Dai hoc,Tren 20 - 40 trieu,Khoang moi tuan,Lazada,Tu 6 den 12 thang,CHAN_APP,True,False,False,False,False
+R_1_0009,1,0,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",3,2,2,1.0,1,2,2,1,2,4,3.0,4,3,4,3,3,2,6,4,6,5,5,4.0,4,4,4,4,3,4,4,5,6,6,7,5,5,2,3,5,0.1,3.5,3.6,4,529,55 tro len,Nu,Dai hoc,5 - 10 trieu,Nhieu lan moi tuan,Shopee,Tu 1 den 3 nam,"CHAN_APP,CHAN_LIVE",True,False,True,False,False
+R_1_0010,3,1,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",2,2,5,5.0,5,5,5,6,5,6,6.0,5,5,5,6,6,5,4,4,5,4,5,2.0,5,4,2,3,4,5,5,4,4,3,2,4,5,2,4,4,0.7,1.1,1.7000000000000002,2,398,25 - 34,Nam,Dai hoc,Tren 20 - 40 trieu,Nhieu lan moi tuan,Lazada,Tren 3 nam,"CHAN_APP,CHAN_WEB,CHAN_LIVE,CHAN_SOC",True,True,True,False,True
+R_1_0011,2,0,1,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,1,3,4.0,3,3,3,4,3,5,2.0,5,4,5,4,5,6,2,3,4,3,3,3.0,2,2,4,2,3,2,3,3,6,3,3,4,5,2,3,7,0.3,15.100000000000001,16.1,6,511,18 - 24,Nam,Dai hoc,Tren 10 - 20 trieu,Khoang moi thang,Lazada,Tu 1 den 3 nam,"CHAN_APP,CHAN_WEB",True,True,False,False,False
+R_1_0012,1,0,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,2,5,5.0,6,5,5,4,6,4,,5,5,5,4,4,3,6,5,5,5,5,,5,7,5,6,6,4,3,4,3,4,5,4,5,2,6,2,3.3,4.8,5.0,3,250,45 - 54,Nu,Sau dai hoc,Tren 20 - 40 trieu,Khoang moi tuan,Shopee,Tu 6 den 12 thang,"CHAN_APP,CHAN_WEB",True,True,False,False,False
+R_1_0013,3,1,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",2,2,4,4.0,6,4,5,4,2,3,3.0,5,6,4,5,6,5,3,1,3,3,3,3.0,3,2,1,2,3,4,5,5,3,3,2,2,5,2,4,3,3.1,10.0,10.9,2,571,18 - 24,Nu,Dai hoc,Tren 40 trieu,Khoang moi tuan,Shopee,Tu 1 den 3 nam,"CHAN_APP,CHAN_WEB",True,True,False,False,False
+R_1_0014,1,0,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,2,5,5.0,2,5,4,5,3,5,5.0,4,5,6,4,5,4,3,3,4,4,5,4.0,3,2,3,3,4,4,4,3,1,2,2,2,5,2,5,3,1.9,3.3,3.6999999999999997,7,582,25 - 34,Nam,Trung cap - Cao dang,Tren 10 - 20 trieu,Vai lan moi nam,Lazada,Duoi 6 thang,"CHAN_APP,CHAN_WEB,CHAN_LIVE,CHAN_SOC",True,True,True,False,True
+R_1_0015,2,0,1,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,3,5,6.0,5,5,6,4,4,3,3.0,4,4,5,4,3,4,4,3,3,3,5,4.0,5,5,5,5,3,6,4,4,6,5,6,7,5,2,5,3,0.0,2.0,3.2,6,485,25 - 34,Nu,Dai hoc,Tren 40 trieu,Nhieu lan moi tuan,Shopee,Tu 6 den 12 thang,"CHAN_APP,CHAN_LIVE",True,False,True,False,False
+R_1_0016,1,0,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,2,4,5.0,3,4,4,5,5,3,5.0,4,4,4,5,5,5,3,3,3,3,2,3.0,5,4,4,4,2,6,4,5,1,2,2,1,5,2,6,3,6.0,6.6,6.8999999999999995,7,500,35 - 44,Nu,Trung cap - Cao dang,Tren 10 - 20 trieu,Vai lan moi nam,TikTok Shop,Tu 6 den 12 thang,"CHAN_APP,CHAN_WEB,CHAN_LIVE,CHAN_SOC",True,True,True,False,True
+R_1_0017,2,0,1,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,1,3,5.0,4,2,2,3,2,3,3.0,3,3,3,4,2,3,2,2,2,2,1,3.0,4,1,3,3,4,6,5,5,6,5,4,5,5,2,2,7,4.0,10.2,10.2,4,674,18 - 24,Nu,Sau dai hoc,Duoi 5 trieu,Khoang moi tuan,Shopee,Tren 3 nam,CHAN_APP,True,False,False,False,False
+R_1_0018,1,0,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,2,2,3.0,3,3,3,2,3,4,4.0,3,1,4,3,1,4,4,2,2,4,2,5.0,5,4,5,5,3,4,3,4,3,5,3,4,5,2,2,5,3.6,12.299999999999999,12.6,4,350,25 - 34,Nu,Dai hoc,Tren 40 trieu,Khoang moi tuan,TikTok Shop,Duoi 6 thang,"CHAN_APP,CHAN_WEB,CHAN_LIVE,CHAN_SOC",True,True,True,False,True
+R_1_0019,1,0,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,2,6,5.0,6,5,6,4,3,3,4.0,3,5,4,5,4,5,2,1,4,2,4,5.0,3,2,4,5,3,3,4,3,3,2,1,4,5,2,5,4,3.3,4.2,5.1000000000000005,1,370,25 - 34,Nam,Trung cap - Cao dang,5 - 10 trieu,Khoang moi tuan,Tiki,Duoi 6 thang,CHAN_APP,True,False,False,False,False
+R_1_0020,3,1,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",2,2,4,5.0,4,4,4,4,6,6,4.0,4,4,2,4,4,4,6,7,4,4,5,5.0,7,6,5,4,5,3,3,4,1,2,1,2,5,2,5,6,1.0,1.8,2.8,6,349,25 - 34,Khac,THPT tro xuong,Tren 20 - 40 trieu,Khoang moi thang,Lazada,Tu 1 den 3 nam,"CHAN_APP,CHAN_WEB,CHAN_LIVE,CHAN_SOC",True,True,True,False,True
+R_1_0021,1,0,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,2,2,3.0,5,4,3,3,4,4,2.0,3,3,3,3,2,5,3,3,4,5,4,7.0,4,4,2,3,3,5,3,3,3,3,4,5,5,2,5,4,2.7,3.4000000000000004,4.7,7,429,45 - 54,Nam,Dai hoc,5 - 10 trieu,Khoang moi tuan,Shopee,Tu 1 den 3 nam,"CHAN_APP,CHAN_LIVE",True,False,True,False,False
+R_1_0022,2,0,1,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,1,5,4.0,6,4,5,5,2,5,4.0,3,4,2,3,2,3,4,5,3,5,4,3.0,2,2,2,2,3,2,2,2,5,6,4,4,5,2,5,5,1.1,1.5,3.8,4,359,18 - 24,Nam,THPT tro xuong,Duoi 5 trieu,Nhieu lan moi tuan,TikTok Shop,Duoi 6 thang,"CHAN_WEB,CHAN_STORE",False,True,False,True,False
+R_1_0023,4,1,1,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",2,1,5,5.0,4,4,3,5,4,3,2.0,4,2,3,4,3,3,2,4,3,2,1,3.0,3,5,4,4,3,4,5,5,2,3,3,1,5,2,5,6,1.4,3.6999999999999997,4.3,3,484,18 - 24,Nam,THPT tro xuong,Duoi 5 trieu,Nhieu lan moi tuan,Shopee,Duoi 6 thang,"CHAN_APP,CHAN_WEB",True,True,False,False,False
+R_1_0024,4,1,1,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",2,1,6,6.0,6,4,5,6,4,5,4.0,5,2,3,3,1,2,5,5,4,3,3,6.0,5,4,5,6,4,1,2,2,5,6,6,5,5,2,4,5,2.1,2.2,3.5,3,37,35 - 44,Nu,Dai hoc,Tren 20 - 40 trieu,Vai lan moi nam,TikTok Shop,Tu 6 den 12 thang,"CHAN_APP,CHAN_WEB,CHAN_LIVE,CHAN_SOC",True,True,True,False,True
+R_1_0025,3,1,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",3,3,5,3.0,4,5,5,5,5,3,3.0,5,3,4,4,3,4,4,3,4,4,4,5.0,6,4,5,5,3,5,6,5,6,5,4,3,5,2,6,5,2.6,7.800000000000001,8.3,4,306,18 - 24,Nu,Dai hoc,Tren 10 - 20 trieu,Nhieu lan moi tuan,Shopee,Tu 6 den 12 thang,"CHAN_APP,CHAN_WEB,CHAN_LIVE,CHAN_SOC",True,True,True,False,True
+R_1_0026,2,0,1,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,1,4,5.0,4,4,3,4,3,3,4.0,3,5,3,4,4,4,4,3,3,2,3,2.0,2,3,2,3,1,4,3,4,7,6,6,4,5,2,5,4,2.6,3.0,3.5,1,294,25 - 34,Nu,Dai hoc,Tren 10 - 20 trieu,Khoang moi tuan,Shopee,Duoi 6 thang,"CHAN_APP,CHAN_WEB",True,True,False,False,False
+R_1_0027,1,0,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,2,3,3.0,2,2,3,3,3,3,4.0,2,3,4,4,3,4,2,2,3,2,3,3.0,3,3,3,3,3,4,6,6,2,3,5,4,5,2,3,5,0.6,4.1,4.3,6,625,18 - 24,Nam,Trung cap - Cao dang,Duoi 5 trieu,Khoang moi thang,Tiki,Tu 6 den 12 thang,CHAN_APP,True,False,False,False,False
+R_1_0028,1,0,0,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",1,2,5,3.0,6,5,4,5,3,5,3.0,4,5,6,6,6,7,3,4,4,2,3,4.0,1,4,4,2,3,2,2,2,4,6,6,6,5,2,5,4,0.7,7.4,9.7,5,472,25 - 34,Khac,Sau dai hoc,5 - 10 trieu,Nhieu lan moi tuan,Shopee,Tu 6 den 12 thang,"CHAN_APP,CHAN_WEB,CHAN_LIVE,CHAN_SOC",True,True,True,False,True
+R_1_0029,4,1,1,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",2,1,4,4.0,3,3,5,5,3,3,4.0,4,4,4,4,4,5,5,5,4,4,5,4.0,4,4,3,3,4,6,4,3,4,5,7,6,5,2,3,6,3.1,4.2,5.7,7,453,25 - 34,Nam,Dai hoc,Duoi 5 trieu,Khoang moi thang,Shopee,Tren 3 nam,"CHAN_APP,CHAN_WEB",True,True,False,False,False

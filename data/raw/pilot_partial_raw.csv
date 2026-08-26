@@ -1,0 +1,205 @@
+StartDate,EndDate,Status,IPAddress,Progress,Duration (in seconds),Finished,RecordedDate,ResponseId,RecipientLastName,RecipientFirstName,RecipientEmail,ExternalReference,LocationLatitude,LocationLongitude,DistributionChannel,UserLanguage,Q_DuplicateRespondent,Last Seen Flow Element ID,Last Seen Question IDs,CONSENT,SCR_AGE,SCR1,VIG_TIME_First Click,VIG_TIME_Last Click,VIG_TIME_Page Submit,VIG_TIME_Click Count,VIG_TIME_First Click,VIG_TIME_Last Click,VIG_TIME_Page Submit,VIG_TIME_Click Count,VIG_TIME_First Click,VIG_TIME_Last Click,VIG_TIME_Page Submit,VIG_TIME_Click Count,VIG_TIME_First Click,VIG_TIME_Last Click,VIG_TIME_Page Submit,VIG_TIME_Click Count,CC1,CC2,AIP1,AIP2,AIP3,AIP4,AIP5,AIP6,REL1,REL2,REL3,REL4,INT1,INT2,INT3,INT4,INT5,ATT1,TRU1,TRU2,TRU3,TRU4,TRU5,ENG1,ENG2,ENG3,ENG4,ENG5,ENG6,ATT2,PI1,PI2,PI3,PDPL1,PDPL2,PDPL3,PDPL4,MC_AIP,MC_DISC,AGE_BAND,GEN,EDU,INC,FREQ,PLAT,PLAT_5_TEXT,PRIOR,CHAN,CELL,AIP_COND,DISC_COND
+Start Date,End Date,Response Type,IP Address,Progress,Duration (in seconds),Finished,Recorded Date,Response ID,Recipient Last Name,Recipient First Name,Recipient Email,External Data Reference,Location Latitude,Location Longitude,Distribution Channel,User Language,Q_DuplicateRespondent,Last Seen Flow Element ID,Last Seen Question IDs,"Anh/Chị có đồng ý tham gia khảo sát này không?
+
+Do you agree to participate in this survey?","Anh/Chị có đủ 18 tuổi trở lên không?
+
+Yes, I am 18 or older","Trong 3 tháng gần đây, bạn có mua sắm trên các nền tảng như Shopee, Lazada, TikTok Shop, Thế giới di động, Hasaki… qua ít nhất 2 kênh khác nhau không (ví dụ: vừa đặt qua ứng dụng vừa đặt qua website, hoặc vừa mua online vừa mua trực tiếp tại cửa hàng)?
+
+In the past 3 months, have you shopped on platforms such as Shopee, Lazada, TikTok Shop, The Gioi Di Dong, Hasaki, etc. through at least 2 different channels (for example, ordering both via app and via website, or shopping both online and in-store)?",Timing - First Click,Timing - Last Click,Timing - Page Submit,Timing - Click Count,Timing - First Click,Timing - Last Click,Timing - Page Submit,Timing - Click Count,Timing - First Click,Timing - Last Click,Timing - Page Submit,Timing - Click Count,Timing - First Click,Timing - Last Click,Timing - Page Submit,Timing - Click Count,"Trong tình huống bạn vừa đọc, danh sách sản phẩm được hiển thị theo cách nào?
+
+In the scenario you just read, how was the product list displayed?","Trong tình huống bạn vừa đọc, trước khi xem các sản phẩm, ShopWave có hiển thị thông báo về quyền riêng tư không?
+
+In the scenario you just read, before viewing the products, did ShopWave display a privacy notice?","ShopWave sử dụng dữ liệu cá nhân của tôi (ví dụ: lịch sử mua hàng, hành vi duyệt xem) để cá nhân hoá các gợi ý sản phẩm dành cho tôi.
+
+ShopWave uses my personal data (e.g., purchase history, browsing behavior) to personalize the product recommendations shown to me.","ShopWave ghi nhớ các tương tác trước đây của tôi và điều chỉnh nội dung hiển thị cho phù hợp.
+
+ShopWave remembers my previous interactions and adjusts the displayed content accordingly.","ShopWave lựa chọn ưu đãi và khuyến mãi hiển thị cho tôi dựa trên đặc điểm và hành vi mua sắm của tôi.
+
+ShopWave selects the offers and promotions shown to me based on my characteristics and shopping behavior.","Các gợi ý và thông điệp của ShopWave hướng đến riêng cá nhân tôi, thay vì xem tôi như một người mua hàng bất kỳ.
+
+
+
+ShopWave's recommendations and messages are directed specifically at me personally, rather than treating me as a generic shopper.","Bất kể tôi dùng kênh nào (ứng dụng hay website), ShopWave đều đưa ra gợi ý thể hiện cùng một sự hiểu biết về tôi.
+
+Regardless of which channel I use (app or website), ShopWave provides recommendations that reflect the same understanding of me.","Các khuyến mãi và gợi ý sản phẩm của ShopWave nhất quán với hồ sơ cá nhân của tôi, bất kể tôi đang dùng kênh nào.
+
+ShopWave's promotions and product recommendations are consistent with my personal profile, regardless of which channel I am using.","Danh sách sản phẩm tôi vừa xem phù hợp với nhu cầu mua sắm hiện tại của tôi.
+
+The product list I just viewed matches my current shopping needs.","Danh sách sản phẩm tôi vừa xem phù hợp với sở thích cá nhân của tôi.
+
+The product list I just viewed matches my personal preferences.","Nhìn chung, tôi thấy danh sách sản phẩm tôi vừa xem có liên quan và phù hợp với tôi.
+
+Overall, I find the product list I just viewed relevant and suitable for me.","Những gợi ý của ShopWave giúp tôi dễ dàng tìm được sản phẩm phù hợp/hữu ích đối với quyết định mua sắm.
+
+ShopWave's recommendations make it easy for me to find products that are suitable/useful for my purchase decision.","Tôi cảm thấy danh sách sản phẩm này gây cản trở trải nghiệm mua sắm thông thường của tôi.
+
+I feel that this product list interferes with my normal shopping experience.","Tôi cảm thấy khó chịu vì danh sách sản phẩm này làm gián đoạn việc tôi đang mua sắm.
+
+I feel annoyed because this product list disrupts what I am doing while shopping.","Tôi cảm thấy danh sách sản phẩm này quấy rầy và khó có thể lờ đi.
+
+I feel that this product list is intrusive and hard to ignore.","Tôi cảm thấy trải nghiệm này xâm phạm quyền riêng tư của tôi.
+
+I feel that this experience violates my privacy.","Tôi cảm thấy cách sản phẩm được hiển thị cho tôi mang tính áp đặt, nằm ngoài tầm kiểm soát của tôi.
+
+I feel that the way products are displayed to me is imposing and beyond my control.","Để xác nhận Anh/Chị đang đọc kỹ câu hỏi, vui lòng chọn số 5 cho câu này.
+
+To confirm that you are reading the questions carefully, please select number 5 for this item.","Tôi tin ShopWave có đủ năng lực để hiểu đúng nhu cầu mua sắm của tôi.
+
+I believe ShopWave is competent enough to correctly understand my shopping needs.","Tôi tin rằng ShopWave luôn hành động một cách trung thực và đáng tin cậy/luôn giữ đúng những gì họ cam kết với khách hàng.
+
+I believe ShopWave always acts honestly and reliably / always keeps its commitments to customers.","Tôi tin rằng ShopWave hành động vì lợi ích của tôi, chứ không chỉ vì lợi ích riêng của họ.
+
+I believe ShopWave acts in my interest, not just in its own interest.","Tôi cảm thấy an toàn khi tương tác với ShopWave.
+
+I feel safe interacting with ShopWave.","Nhìn chung, tôi tin tưởng vào ShopWave.
+
+Overall, I trust ShopWave.","Khi mua sắm trực tuyến, tôi sẽ thường nghĩ đến ShopWave.
+
+When shopping online, I would often think of ShopWave.","Tôi sẽ rất chú ý đến những nội dung liên quan đến các gợi ý của ShopWave.
+
+I would pay close attention to content related to ShopWave's recommendations.","Tôi cảm thấy những cảm xúc tích cực khi tương tác với ShopWave.
+
+I would feel positive emotions when interacting with ShopWave.","Tôi sẽ chủ động sử dụng và khám phá các tính năng mà ShopWave cung cấp.
+
+I would actively use and explore the features that ShopWave offers.","So với các nền tảng mua sắm khác, tôi sẽ dành nhiều thời gian sử dụng ShopWave hơn.
+
+Compared to other shopping platforms, I would spend more time using ShopWave.","Tôi cảm thấy hào hứng khi sử dụng ShopWave.
+
+I would feel excited when using ShopWave.","Để xác nhận Anh/Chị đang đọc kỹ câu hỏi, vui lòng chọn số 2 cho câu này.
+
+To confirm that you are reading the questions carefully, please select number 2 for this item.","Nếu có cơ hội, tôi có ý định mua các sản phẩm được nền tảng ShopWave hiển thị cho tôi.
+
+If given the opportunity, I intend to purchase the products displayed to me by ShopWave.","Tôi nghĩ rằng trong tương lai tôi sẽ mua hàng trên nền tảng ShopWave dựa trên những gì tôi đã thấy hôm nay.
+
+I think that in the future I would make purchases on the ShopWave platform based on what I saw today.","Dựa trên tình huống vừa đọc, nhiều khả năng tôi sẽ tiếp tục mua sắm trên ShopWave.
+
+Based on the scenario I just read, I am likely to continue shopping on ShopWave.","Tôi biết Việt Nam hiện có luật quy định về bảo vệ dữ liệu cá nhân.
+
+I know that Vietnam currently has a law governing personal data protection.","Tôi biết mình có quyền yêu cầu doanh nghiệp xóa hoặc ngừng sử dụng dữ liệu cá nhân của mình.
+
+I know that I have the right to request businesses to delete or stop using my personal data.","Tôi hiểu rằng doanh nghiệp phải xin sự đồng ý của tôi trước khi thu thập dữ liệu để cá nhân hóa.
+
+I understand that businesses must obtain my consent before collecting data for personalization purposes.","Tôi biết mình có quyền được thông báo về việc dữ liệu cá nhân của mình đang được xử lý như thế nào.
+
+I know that I have the right to be informed about how my personal data is being processed.","Tôi cảm thấy danh sách sản phẩm mà mình nhìn thấy đã được cá nhân hóa theo sở thích của riêng tôi.
+
+I feel that the product list I saw was personalized according to my own preferences.","Tôi nhận thấy nền tảng này đã cung cấp thông báo về quyền riêng tư trước khi tôi tiếp tục duyệt xem.
+
+I noticed that the platform provided a privacy notice before I continued browsing.","Anh/Chị vui lòng cho biết nhóm tuổi của mình:
+
+Please indicate your age group:","Anh/Chị vui lòng cho biết giới tính của mình:
+
+Please indicate your gender:","Trình độ học vấn cao nhất Anh/Chị đã hoàn thành là gì?
+
+What is the highest level of education you have completed?","Thu nhập cá nhân hằng tháng của Anh/Chị hiện nay khoảng bao nhiêu?
+
+What is your approximate current monthly personal income?","Anh/Chị mua sắm trực tuyến với tần suất như thế nào?
+
+How often do you shop online?","Trong 3 tháng gần đây, Anh/Chị mua sắm nhiều nhất trên nền tảng nào dưới đây?
+
+In the past 3 months, which of the following platforms have you shopped on the most? - Selected Choice","Trong 3 tháng gần đây, Anh/Chị mua sắm nhiều nhất trên nền tảng nào dưới đây?
+
+In the past 3 months, which of the following platforms have you shopped on the most? - Khác
+
+Other - Text","Anh/Chị đã sử dụng nền tảng [QID73-ChoiceGroup-SelectedChoices] được bao lâu?
+
+How long have you been using [QID73-ChoiceGroup-SelectedChoices] platform?","Trong 3 tháng gần đây, Anh/Chị đã mua hàng của nền tảng [QID73-ChoiceGroup-SelectedChoices] qua những kênh nào dưới đây? (Có thể chọn nhiều đáp án)
+
+In the past 3 months, through which of the following channels have you made purchases on [QID73-ChoiceGroup-SelectedChoices] platform? (Multiple answers allowed)",CELL,AIP_COND,DISC_COND
+"{""ImportId"":""startDate"",""timeZone"":""America/Denver""}","{""ImportId"":""endDate"",""timeZone"":""America/Denver""}","{""ImportId"":""status""}","{""ImportId"":""ipAddress""}","{""ImportId"":""progress""}","{""ImportId"":""duration""}","{""ImportId"":""finished""}","{""ImportId"":""recordedDate"",""timeZone"":""America/Denver""}","{""ImportId"":""_recordId""}","{""ImportId"":""recipientLastName""}","{""ImportId"":""recipientFirstName""}","{""ImportId"":""recipientEmail""}","{""ImportId"":""externalDataReference""}","{""ImportId"":""locationLatitude""}","{""ImportId"":""locationLongitude""}","{""ImportId"":""distributionChannel""}","{""ImportId"":""userLanguage""}","{""ImportId"":""Q_DuplicateRespondent""}","{""ImportId"":""LastSeenFlowID""}","{""ImportId"":""LastSeenQuestions""}","{""ImportId"":""QID1""}","{""ImportId"":""QID2""}","{""ImportId"":""QID4""}","{""ImportId"":""QID8_FIRST_CLICK""}","{""ImportId"":""QID8_LAST_CLICK""}","{""ImportId"":""QID8_PAGE_SUBMIT""}","{""ImportId"":""QID8_CLICK_COUNT""}","{""ImportId"":""QID10_FIRST_CLICK""}","{""ImportId"":""QID10_LAST_CLICK""}","{""ImportId"":""QID10_PAGE_SUBMIT""}","{""ImportId"":""QID10_CLICK_COUNT""}","{""ImportId"":""QID12_FIRST_CLICK""}","{""ImportId"":""QID12_LAST_CLICK""}","{""ImportId"":""QID12_PAGE_SUBMIT""}","{""ImportId"":""QID12_CLICK_COUNT""}","{""ImportId"":""QID14_FIRST_CLICK""}","{""ImportId"":""QID14_LAST_CLICK""}","{""ImportId"":""QID14_PAGE_SUBMIT""}","{""ImportId"":""QID14_CLICK_COUNT""}","{""ImportId"":""QID15""}","{""ImportId"":""QID79""}","{""ImportId"":""QID16""}","{""ImportId"":""QID80""}","{""ImportId"":""QID81""}","{""ImportId"":""QID82""}","{""ImportId"":""QID83""}","{""ImportId"":""QID84""}","{""ImportId"":""QID85""}","{""ImportId"":""QID97""}","{""ImportId"":""QID86""}","{""ImportId"":""QID87""}","{""ImportId"":""QID92""}","{""ImportId"":""QID93""}","{""ImportId"":""QID94""}","{""ImportId"":""QID95""}","{""ImportId"":""QID96""}","{""ImportId"":""QID60""}","{""ImportId"":""QID99""}","{""ImportId"":""QID100""}","{""ImportId"":""QID101""}","{""ImportId"":""QID102""}","{""ImportId"":""QID103""}","{""ImportId"":""QID40""}","{""ImportId"":""QID109""}","{""ImportId"":""QID110""}","{""ImportId"":""QID111""}","{""ImportId"":""QID112""}","{""ImportId"":""QID113""}","{""ImportId"":""QID114""}","{""ImportId"":""QID116""}","{""ImportId"":""QID117""}","{""ImportId"":""QID118""}","{""ImportId"":""QID119""}","{""ImportId"":""QID120""}","{""ImportId"":""QID121""}","{""ImportId"":""QID122""}","{""ImportId"":""QID123""}","{""ImportId"":""QID124""}","{""ImportId"":""QID69""}","{""ImportId"":""QID70""}","{""ImportId"":""QID71""}","{""ImportId"":""QID72""}","{""ImportId"":""QID74""}","{""ImportId"":""QID73""}","{""ImportId"":""QID73_5_TEXT""}","{""ImportId"":""QID75""}","{""ImportId"":""QID76""}","{""ImportId"":""CELL""}","{""ImportId"":""AIP_COND""}","{""ImportId"":""DISC_COND""}"
+2026-08-18 21:39:57,2026-08-18 21:50:10,IP Address,116.105.253.163,100,613,True,2026-08-18 21:50:11,R_4EDOgG89zgBM7yV,,,,,12.6675,108.0378,anonymous,VI,,FL_EOS_ID,,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",,,,,23.936,100.432,100.453,12,,,,,,,,,"Danh sách các sản phẩm bán chạy nhất trên toàn nền tảng
+A list of the platform's best-selling products overall","Có
+Yes","7 - Hoàn toàn đồng ý
+(Strongly agree)","6 - Đồng ý
+(Agree)","7 - Hoàn toàn đồng ý
+(Strongly agree)","5 - Đồng ý một phần
+(Partly agree)","5 - Đồng ý một phần
+(Partly agree)","6 - Đồng ý
+(Agree)","5 - Đồng ý một phần
+(Partly agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","3 - Không đồng ý một phần
+(Partly disagree)","4 - Trung lập
+(Neutral)","3 - Không đồng ý một phần
+(Partly disagree)","4 - Trung lập
+(Neutral)","5 - Đồng ý một phần
+(Partly agree)","5 - Đồng ý một phần
+(Partly agree)","5 - Đồng ý một phần
+(Partly agree)","6 - Đồng ý
+(Agree)","5 - Đồng ý một phần
+(Partly agree)","4 - Trung lập
+(Neutral)","5 - Đồng ý một phần
+(Partly agree)","6 - Đồng ý
+(Agree)","5 - Đồng ý một phần
+(Partly agree)","4 - Trung lập
+(Neutral)","5 - Đồng ý một phần
+(Partly agree)","5 - Đồng ý một phần
+(Partly agree)","6 - Đồng ý
+(Agree)","2 - Không đồng ý
+(Disagree)","5 - Đồng ý một phần
+(Partly agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","7 - Hoàn toàn đồng ý
+(Strongly agree)","7 - Hoàn toàn đồng ý
+(Strongly agree)","7 - Hoàn toàn đồng ý
+(Strongly agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)",18 - 24,"Nữ
+Female","Đại học
+University (Bachelor's degree)","Dưới 5 triệu
+Under 5 million VND","Khoảng mỗi tuần
+About weekly",Shopee,,"Trên 3 năm
+Over 3 years","CHAN_APP,CHAN_LIVE",2,0,1
+2026-08-18 21:42:49,2026-08-18 21:59:58,IP Address,171.243.50.127,100,1028,True,2026-08-18 21:59:58,R_9QmjLvkA27oKTiX,,,,,10.822,106.6257,anonymous,VI,,FL_EOS_ID,,"Tôi đồng ý tham gia
+I agree to participate","Có, tôi đã từ 18 tuổi trở lên
+Yes, I am 18 or older","Có
+Yes",,,,,,,,,2.863,84.864,84.866,14,,,,,"Danh sách được chọn riêng, chỉ dành cho tôi
+A list curated specifically and only for me","Không
+No","7 - Hoàn toàn đồng ý
+(Strongly agree)","7 - Hoàn toàn đồng ý
+(Strongly agree)","7 - Hoàn toàn đồng ý
+(Strongly agree)","6 - Đồng ý
+(Agree)","7 - Hoàn toàn đồng ý
+(Strongly agree)","7 - Hoàn toàn đồng ý
+(Strongly agree)","6 - Đồng ý
+(Agree)","7 - Hoàn toàn đồng ý
+(Strongly agree)","6 - Đồng ý
+(Agree)","7 - Hoàn toàn đồng ý
+(Strongly agree)","2 - Không đồng ý
+(Disagree)","3 - Không đồng ý một phần
+(Partly disagree)","3 - Không đồng ý một phần
+(Partly disagree)","2 - Không đồng ý
+(Disagree)","2 - Không đồng ý
+(Disagree)","5 - Đồng ý một phần
+(Partly agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","7 - Hoàn toàn đồng ý
+(Strongly agree)","7 - Hoàn toàn đồng ý
+(Strongly agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","2 - Không đồng ý
+(Disagree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","6 - Đồng ý
+(Agree)","7 - Hoàn toàn đồng ý
+(Strongly agree)","6 - Đồng ý
+(Agree)",18 - 24,"Nam
+Male","Đại học
+University (Bachelor's degree)","Dưới 5 triệu
+Under 5 million VND","Khoảng mỗi tháng
+About monthly",Shopee,,"Từ 1 đến 3 năm
+From 1 to 3 years","CHAN_APP,CHAN_LIVE,CHAN_SOC",3,1,0

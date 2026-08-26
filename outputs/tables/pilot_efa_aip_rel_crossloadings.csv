@@ -1,0 +1,11 @@
+,Factor1,Factor2,cross_loading_risk
+AIP1,0.836,0.101,False
+AIP2,0.72,0.276,False
+AIP3,0.759,0.228,False
+AIP4,0.921,-0.065,False
+AIP5,0.959,-0.124,False
+AIP6,0.92,-0.028,False
+REL1,-0.123,1.038,False
+REL2,0.233,0.782,False
+REL3,0.148,0.837,False
+REL4,0.443,0.48,True

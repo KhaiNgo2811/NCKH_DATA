@@ -1,0 +1,10 @@
+pandas
+numpy
+pingouin
+factor_analyzer
+statsmodels
+scipy
+matplotlib
+seaborn
+openpyxl
+rpy2

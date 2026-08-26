@@ -1,0 +1,9 @@
+step,n_before,n_dropped_this_step,n_after
+consent_not_given,420,0,420
+under_18,420,0,420
+not_omnichannel_screener,420,0,420
+failed_attention_check_ATT1,420,21,399
+failed_attention_check_ATT2,399,0,399
+speeding_below_threshold,399,21,378
+excess_missing_items,378,0,378
+TOTAL,420,42,378

@@ -1,0 +1,2 @@
+mc_column,group_col,n_low_or_no,n_high_or_with,mean_low_or_no,mean_high_or_with,t,p,cohens_d,gate_pass_d>=0.50
+MC_DISC,DISC_COND,19,26,3.32,5.73,4.096,0.0003,1.333,True
