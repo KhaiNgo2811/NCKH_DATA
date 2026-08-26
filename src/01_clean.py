@@ -6,7 +6,7 @@ import pandas as pd
 sys.path.insert(0, "src")
 from _qualtrics_io import load_and_normalize, anchor_match  # noqa: E402
 from _config import (  # noqa: E402
-    ALL_ITEMS, CONSENT_COL, CONSENT_OK_ANCHOR, AGE_COL, AGE_OK_ANCHOR,
+    ALL_ITEMS, FIELDED_ITEMS, CONSENT_COL, CONSENT_OK_ANCHOR, AGE_COL, AGE_OK_ANCHOR,
     OMNI_COL, OMNI_OK_ANCHOR, ATT1_COL, ATT1_CORRECT, ATT2_COL, ATT2_CORRECT,
     CC1_COL, CC2_COL,
     DURATION_COL, DISC_COL, AIP_COND_COL, CELL_COL,
@@ -70,7 +70,9 @@ def apply_exclusions(df):
         dur = pd.to_numeric(df[DURATION_COL], errors="coerce")
         drop_step(dur >= SPEEDING_MIN_SECONDS, "speeding_below_threshold")
 
-    present_items = [c for c in ALL_ITEMS if c in df.columns]
+    # TF v2.4 SS C.4.1: missing-data screen uses the FIELDED battery (33, incl. REL4),
+    # not the analysed battery (32) -- this tests engagement with what was asked.
+    present_items = [c for c in FIELDED_ITEMS if c in df.columns]
     if present_items:
         miss_pct = df[present_items].isna().mean(axis=1)
         drop_step(miss_pct <= MAX_MISSING_ITEM_PCT, "excess_missing_items")
@@ -86,7 +88,9 @@ def apply_exclusions(df):
 def add_soft_flags(df):
     """Đánh dấu các mẫu nghi ngờ (Straightlining). CC1/CC2 đã được xử lý
     như hard-drop trong apply_exclusions nên không cần gắn cờ lại ở đây."""
-    present_items = [c for c in ALL_ITEMS if c in df.columns]
+    # TF v2.4 SS C.4.1: straightlining is a response-style diagnostic across the
+    # FIELDED battery (33, incl. REL4), same rationale as the missing-data screen.
+    present_items = [c for c in FIELDED_ITEMS if c in df.columns]
     if present_items:
         df["flag_straightliner"] = df[present_items].std(axis=1, skipna=True) < STRAIGHTLINE_SD_THRESHOLD
     return df

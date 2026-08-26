@@ -1,6 +1,6 @@
 construct,n_items,n_obs,alpha,flag_below_0.70,note
 AIP,6,45,0.951,False,
-REL,4,45,0.932,False,
+REL,3,45,0.947,False,
 INT,5,45,0.904,False,
 TRU,5,45,0.867,False,
 ENG,6,45,0.852,False,

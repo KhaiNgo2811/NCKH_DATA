@@ -15,13 +15,19 @@ whose `effect_size` parameter does NOT follow this convention for this use case 
 returned power stuck at ~alpha regardless of n. Validated by hand against the known
 TF v2.2 target (f2=0.02, k=8 -> n~402) before use; see CLAUDE.md SS5 for the check.
 
+k reduced from 8 to 6 by Amendment A-8: the full model is now INT, PDPL, DISC,
+INTxPDPL, INTxDISC, +1 -- PDPLxDISC and INTxPDPLxDISC are retired, no longer part of
+the model. Because beta_M1 and beta_M2 share the same k and the same formula, this
+script's output applies identically to both terms -- it is not a calculation for just
+one of them.
+
 This is the Python cross-check ONLY. Must be reconciled against the R-side pwr/WebPower
 check (PLS-specific power can differ from this OLS-regression analogue) before the
 Qualtrics quota is frozen - see CLAUDE.md SS5.
 
 Usage:
     python src/06_power_analysis.py
-    python src/06_power_analysis.py --f2 0.02 0.009 --k 8 --alpha 0.05 --power 0.80
+    python src/06_power_analysis.py --f2 0.02 0.009 --k 6 --alpha 0.05 --power 0.80
 """
 import argparse
 
@@ -54,7 +60,7 @@ def main():
     ap.add_argument("--k", type=int, default=6,
                      help="total predictor terms in the full model (INT, PDPL, DISC, "
                           "INTxPDPL, INTxDISC, +1). PDPLxDISC and INTxPDPLxDISC are "
-                          "retired - no longer part of the model (Amendment A-8).")
+                          "retired (Amendment A-8) -- no longer part of the model.")
     ap.add_argument("--alpha", type=float, default=0.05)
     ap.add_argument("--power", type=float, default=0.80)
     args = ap.parse_args()
@@ -72,11 +78,10 @@ def main():
 
     out = pd.DataFrame(rows)
     out.to_csv("outputs/tables/OD2_power_analysis_beta_M1_M2.csv", index=False)
-    print("--- OD-2: Power analysis for beta_M1 (INT x PDPL -> TRU) / "
-          "beta_M2 (INT x DISC -> TRU) ---")
-    print("NOTE: beta_M1 and beta_M2 are independent two-way terms estimated in the "
-          "same model with the same k, so the required_n below applies identically to "
-          "both terms - this is not a calculation for just one of them.")
+    print("--- OD-2 (CLOSED, Amendment A-8): Power analysis for beta_M1 (INT x PDPL -> TRU, "
+          "H7a) and beta_M2 (INT x DISC -> TRU, H7b) ---")
+    print("NOTE: beta_M1 and beta_M2 share the same k and formula -- this table applies "
+          "identically to both terms, it is not a calculation for just one of them.")
     print(out.to_string(index=False))
     print("\nNOTE: cross-validate against the R-side pwr::pwr.f2.test() / WebPower check "
           "before freezing the Qualtrics quota (CLAUDE.md SS5). This is an OLS-regression "

@@ -46,12 +46,24 @@ def main():
 
     results = []
     aip_col = AIP_COND_COL if AIP_COND_COL in df.columns else "AIP_COND"
-    r1 = mc_test(df, MC_AIP_COL, aip_col, ("Low", "High"))
+    # BUGFIX 2026-08-26: AIP_COND is numeric 0/1 in the real export (CLAUDE.md SS4:
+    # "AIP_COND, DISC_COND arrive as NUMERIC 0/1, not Low/High strings"), not text
+    # labels. The previous ("Low", "High") group_labels matched zero rows, so
+    # mc_test() silently returned None and MC_AIP was dropped from the results
+    # table entirely -- the printed "PASS...for all checks" message was reporting
+    # on 1 of 2 checks without saying so. Fixed to match the real coding.
+    r1 = mc_test(df, MC_AIP_COL, aip_col, (0, 1))
     if r1:
         results.append(r1)
+    else:
+        print(f"!! WARNING: MC_AIP check could not be computed (insufficient n per "
+              f"group in column '{aip_col}') -- NOT included in the gate verdict below.")
     r2 = mc_test(df, MC_DISC_COL, DISC_COL, (0, 1))
     if r2:
         results.append(r2)
+    else:
+        print(f"!! WARNING: MC_DISC check could not be computed (insufficient n per "
+              f"group in column '{DISC_COL}') -- NOT included in the gate verdict below.")
 
     out = pd.DataFrame(results)
     out.to_csv("outputs/tables/pilot_manipulation_check.csv", index=False)

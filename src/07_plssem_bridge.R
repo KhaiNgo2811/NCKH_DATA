@@ -1,6 +1,5 @@
 # 07_plssem_bridge.R
-# PLS-SEM model specification via seminr, matching TF v2.3 Table 1 / SS C.1 / SS C.3
-# (post Amendment A-8).
+# PLS-SEM model specification via seminr, matching TF v2.2 Table 1 / SS C.1 / SS C.3.
 # Called from Python via rpy2 (see run_plssem.py). Not run standalone for reporting -
 # always cross-validate against SmartPLS 4 output before a number goes in the manuscript
 # (CLAUDE.md SS5, 07_plssem_bridge.R docstring rule).
@@ -27,9 +26,8 @@ run_plssem <- function(data) {
   # ---- Structural model ----
   # H1 AIP->REL, H2 AIP->INT, H4 REL->TRU, H5 REL->ENG,
   # H6a INT->TRU, H6b INT->ENG, H6c INT->PI, E1 TRU->ENG, E2 ENG->PI
-  # DISC_COND (observed 0/1) enters as a specification term (DISC->INT) plus the H7a
-  # (PDPL×INT) and H7b (DISC×INT) two-way interaction terms — NOT a three-way product
-  # term. seminr interaction terms are added via the `interactions` block.
+  # DISC_COND (observed 0/1) enters as a specification term (DISC->INT) plus the H7
+  # interaction terms. seminr interaction terms are added via the `interactions` block.
   structure <- relationships(
     paths(from = "AIP",  to = c("REL", "INT")),
     paths(from = "REL",  to = c("TRU", "ENG")),
@@ -55,13 +53,9 @@ run_plssem <- function(data) {
 }
 
 # NOTE: This is a STRUCTURE, not a finished script. Before running on real n>=400 data:
-#  1. Add ONLY beta_M1 (INT×PDPL→TRU) and beta_M2 (INT×DISC→TRU) as two separate
-#     two-way interaction terms via seminr::interactions() / the two-stage approach
-#     (Becker et al., 2018) per TF v2.3 SS C.2 (Amendment A-8). Do NOT add a three-way
-#     INT×PDPL×DISC product term — it is retired.
+#  1. Add the beta_M1-beta_M4 interaction terms via seminr::interactions() / the two-stage
+#     approach (Becker et al., 2018) per TF v2.2 SS C.2 "Confirmatory - full product term".
 #  2. Add MICOM (measurement invariance) via cSEM before any PLS-MGA interpretation
-#     (TF v2.2 SS C.2 "Primary - permutation-based multi-group analysis"). Per
-#     Amendment A-8, PLS-MGA/MICOM across DISC groups is no longer required
-#     specifically for H7 testing.
+#     (TF v2.2 SS C.2 "Primary - permutation-based multi-group analysis").
 #  3. Replace the `ave` placeholder with a real reliability()/AVE extraction call.
 #  4. Cross-validate every reported number against SmartPLS 4 before manuscript use.
