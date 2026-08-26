@@ -1,7 +1,14 @@
 # Python
 .venv/
+venv/
 __pycache__/
 *.py[cod]
+*.egg-info/
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
 
 # IDE
 .vscode/
@@ -22,3 +29,29 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.log
+
+# ---------------------------------------------------------------------------
+# Data governance (see CLAUDE.md SS0 and README "Data handling")
+# ---------------------------------------------------------------------------
+# NEVER commit an ORIGINAL raw Qualtrics export -- it contains IPAddress and
+# precise LocationLatitude/LocationLongitude for every respondent, which are
+# personal data under Law 91/2025/QH15 Art. 2. Only de-identified copies
+# (produced by src/strip_pii.py) belong in data/raw/.
+data/raw/_local/
+data/raw/*_original.csv
+data/raw/*_raw_untouched.csv
+
+# Processed/derived data is script-generated and reproducible from a committed
+# de-identified raw export -- do not commit it, regenerate it instead.
+data/processed/*.csv
+
+# Every script writes here -- regenerate, don't commit.
+outputs/tables/*.csv
+outputs/figures/*.png
+outputs/figures/*.pdf
+
+# Keep the folder structure in git even though contents are ignored
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!outputs/tables/.gitkeep
+!outputs/figures/.gitkeep
