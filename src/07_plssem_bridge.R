@@ -27,13 +27,22 @@
 # never a Likert/reflective construct. DISC has one indicator (DISC_COND itself),
 # no loadings table is meaningful for it, and none should be reported for it.
 #
-# VERIFY BEFORE RUNNING ON REAL DATA: interaction_term(), single_item(), and the
-# exact column names inside summary(model)$reliability can differ slightly across
-# seminr versions. Run `?interaction_term`, `?single_item`, and inspect
-# `colnames(summary(model)$reliability)` in your local R session before trusting the
-# output structure this script assumes -- this was written without a local R/seminr
-# install available to execute against, so treat the seminr call signatures below as
-# a best-effort draft, not a verified-by-execution one.
+# SMOKE-TESTED 2026-08-26 against data/processed/main_clean.csv (synthetic, n=336
+# after complete-case filtering) with seminr 2.5.0 / R 4.6.1. estimate_pls(),
+# bootstrap_model(), interaction_term(..., method=two_stage), and single_item() all
+# ran and returned the expected shapes. One real bug was caught and fixed: seminr
+# does not export a standalone HTMT() function (only plot_htmt/dot_graph_htmt) -- the
+# HTMT matrix is under summary(model)$validity$htmt, which is what this script now
+# uses. summary(model)$reliability column names (alpha/rhoA/rhoC/AVE) matched the
+# assumption already in this file -- no change needed there.
+#
+# STILL TO DO before real main-collection data: the rpy2 Python<->R round-trip in
+# run_plssem.py has NOT been executed on this machine -- rpy2 3.6.7 fails at import
+# because `R CMD config --ldflags` returns empty without Rtools/make on PATH (a
+# Windows-without-Rtools limitation, not an rpy2 or script bug). Installing Rtools
+# would resolve it; until then, treat run_plssem.py itself as still unverified even
+# though the R-side logic it calls (this file) is now confirmed working directly via
+# Rscript.
 
 library(seminr)
 
@@ -100,7 +109,8 @@ run_plssem <- function(data) {
     reliability = reliability_tab,        # alpha, rhoC, AVE, rhoA per construct
     path_coefficients = model$path_coef,
     f_squared = summary(model)$fSquare,   # individual f2 per path, incl. beta_M1/beta_M2
-    htmt = HTMT(model),
+    htmt = summary(model)$validity$htmt,  # HTMT() is not exported by seminr; the
+                                           # matrix lives under summary(model)$validity
     boot_paths = summary(boot)$bootstrapped_paths
   )
 }
