@@ -1,6 +1,6 @@
 step,n_before,n_dropped_this_step,n_after
-excess_missing_items,62,30,32
-duplicate_response_pattern,32,0,32
-straightlining_near_zero_sd,32,0,32
-TOTAL,62,30,32
-"manipulation_check_group_evidence (report only, n_excluded=0, d=0.468, p=0.1257)",32,0,32
+excess_missing_items,76,38,38
+duplicate_response_pattern,38,0,38
+straightlining_near_zero_sd,38,0,38
+TOTAL,76,38,38
+"manipulation_check_group_evidence (report only, n_excluded=0, d=0.406, p=0.1502)",38,0,38
