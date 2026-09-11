@@ -1,8 +1,7 @@
 construct,n_items,CR,AVE,flag_cr_below_0.70,flag_ave_below_0.50
-AIP,6,0.961,0.805,False,False
-ENG,6,0.892,0.594,False,False
-INT,5,0.931,0.731,False,False
-PDPL,4,0.879,0.644,False,False
-PI,3,0.907,0.765,False,False
-REL,3,0.966,0.905,False,False
-TRU,5,0.905,0.657,False,False
+AIP,5,0.942,0.764,False,False
+INT,5,0.931,0.729,False,False
+PDPL,4,0.883,0.659,False,False
+PI,4,0.922,0.747,False,False
+REL,4,0.922,0.747,False,False
+TRU,6,0.92,0.657,False,False

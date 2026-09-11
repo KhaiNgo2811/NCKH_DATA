@@ -11,10 +11,19 @@ Purpose:
 Important governance rules:
     - DISC is a 0/1 dummy (DISC_COND), NOT a reflective construct.
       Never include DISC in Cronbach's alpha, loadings, CR/AVE, HTMT, or EFA.
-    - TRU/ENG item counts follow the actual fielded instrument:
-        TRU = 5 items
-        ENG = 6 items
+    - Item counts follow the actual fielded instrument (Master Codebook v2.5 /
+      TF v2.9, 8 Sep 2026, cross-checked against pilot_real.csv):
+        AIP = 5, REL = 4 (all analysed), INT = 5, TRU = 6 (see _config.py note),
+        ENG = 6, PI = 4, PDPL = 4.
       Do not silently add/drop items here.
+    - ENG standing prohibition (Amendment A-12): no pooled Cronbach's alpha,
+      item-rest correlation, or outer-loading diagnostic across all six ENG
+      items. ENG is EXCLUDED from the pooled reliability/loadings/CR-AVE tables
+      below and instead gets its own within-dimension reliability table
+      (Cognitive Processing: ENG1,ENG2; Affection: ENG3,ENG6; Activation:
+      ENG4,ENG5). ENG_mean (pooled) remains the sole structural-model input --
+      unaffected, computed elsewhere (this script does not compute construct
+      scores).
     - This script is for PILOT data only.
 
 Usage:
@@ -25,6 +34,7 @@ Outputs:
     outputs/tables/pilot_outer_loadings.csv
     outputs/tables/pilot_cr_ave.csv
     outputs/tables/pilot_htmt.csv
+    outputs/tables/pilot_eng_dimension_reliability.csv
     outputs/tables/pilot_efa_aip_rel_crossloadings.csv
 """
 
@@ -43,7 +53,12 @@ from factor_analyzer.factor_analyzer import (
 )
 
 sys.path.insert(0, "src")
-from _config import CONSTRUCT_ITEMS  # noqa: E402
+from _config import CONSTRUCT_ITEMS, ENG_DIMENSIONS  # noqa: E402
+
+# Constructs entering the pooled per-construct reliability/loadings/CR-AVE tables.
+# ENG is excluded (Amendment A-12 -- see module docstring); it gets its own
+# within-dimension table instead.
+POOLED_CONSTRUCTS = {k: v for k, v in CONSTRUCT_ITEMS.items() if k != "ENG"}
 
 
 # ---------------------------------------------------------------------
@@ -77,7 +92,7 @@ def reliability_table(df):
     """
     rows = []
 
-    for construct, items in CONSTRUCT_ITEMS.items():
+    for construct, items in POOLED_CONSTRUCTS.items():
         present = [item for item in items if item in df.columns]
 
         if len(present) < 2:
@@ -121,6 +136,27 @@ def reliability_table(df):
             }
         )
 
+    return pd.DataFrame(rows)
+
+
+def eng_dimension_reliability_table(df):
+    """Within-dimension Cronbach's alpha for ENG (Amendment A-12). Pooling
+    across all six ENG items is prohibited -- see module docstring."""
+    rows = []
+    for dim, items in ENG_DIMENSIONS.items():
+        present = [item for item in items if item in df.columns]
+        if len(present) < 2:
+            rows.append({"dimension": dim, "n_items": len(present), "n_obs": 0,
+                         "r_or_alpha": None, "note": "insufficient items present"})
+            continue
+        sub = df[present].dropna()
+        if len(sub) == 0:
+            rows.append({"dimension": dim, "n_items": len(present), "n_obs": 0,
+                         "r_or_alpha": None, "note": "no complete observations"})
+            continue
+        alpha, _ = pg.cronbach_alpha(data=sub)
+        rows.append({"dimension": dim, "n_items": len(present), "n_obs": len(sub),
+                     "r_or_alpha": round(alpha, 3), "note": ""})
     return pd.DataFrame(rows)
 
 
@@ -170,10 +206,11 @@ def construct_outer_loadings(df, construct, items):
 
 
 def all_outer_loadings(df):
-    """Run construct_outer_loadings for every construct in CONSTRUCT_ITEMS."""
+    """Run construct_outer_loadings for every construct in POOLED_CONSTRUCTS
+    (ENG excluded -- see module docstring)."""
     frames = []
 
-    for construct, items in CONSTRUCT_ITEMS.items():
+    for construct, items in POOLED_CONSTRUCTS.items():
         result = construct_outer_loadings(df, construct, items)
         if result is not None:
             frames.append(result)
@@ -467,6 +504,19 @@ def main():
         print("!! WARNING: at least one construct has alpha < 0.70 at pilot.")
 
     # -------------------------------------------------------------
+    # 1b. ENG within-dimension reliability (Amendment A-12 -- ENG is excluded
+    #     from the pooled table above; pooling across all six items is
+    #     prohibited)
+    # -------------------------------------------------------------
+
+    eng_dim_tab = eng_dimension_reliability_table(df)
+    eng_dim_path = OUTPUT_DIR / "pilot_eng_dimension_reliability.csv"
+    eng_dim_tab.to_csv(eng_dim_path, index=False)
+
+    print("\n--- ENG within-dimension reliability (Amendment A-12, not pooled) ---")
+    print(eng_dim_tab.to_string(index=False))
+
+    # -------------------------------------------------------------
     # 2. NEW: Outer loadings per construct
     # -------------------------------------------------------------
 
@@ -575,6 +625,7 @@ def main():
 
     print("\n[03_reliability_efa] wrote:")
     print(f"  - {reliability_path}")
+    print(f"  - {eng_dim_path}")
     print(f"  - {loadings_path}")
     print(f"  - {cr_ave_path}")
     print(f"  - {htmt_path}")

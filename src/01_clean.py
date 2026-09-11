@@ -2,29 +2,107 @@ import argparse
 import sys
 import numpy as np
 import pandas as pd
+import pingouin as pg
 
 sys.path.insert(0, "src")
-from _qualtrics_io import load_and_normalize, anchor_match  # noqa: E402
+from _qualtrics_io import load_and_normalize  # noqa: E402
 from _config import (  # noqa: E402
-    ALL_ITEMS, FIELDED_ITEMS, CONSENT_COL, CONSENT_OK_ANCHOR, AGE_COL, AGE_OK_ANCHOR,
-    OMNI_COL, OMNI_OK_ANCHOR, ATT1_COL, ATT1_CORRECT, ATT2_COL, ATT2_CORRECT,
-    CC1_COL, CC2_COL,
-    DURATION_COL, DISC_COL, AIP_COND_COL, CELL_COL,
-    SPEEDING_MIN_SECONDS, STRAIGHTLINE_SD_THRESHOLD, MAX_MISSING_ITEM_PCT,
+    FIELDED_ITEMS, DISC_COL, AIP_COND_COL, CELL_COL,
+    MC_AIP_COL, MC_DISC_COL, MC_MIDPOINT,
+    STRAIGHTLINE_HARD_SD_THRESHOLD, DUPLICATE_MAX_DIFFERING_ITEMS,
+    MAX_MISSING_ITEM_PCT,
+    DEMOGRAPHIC_PNTS_CODE, DEMOGRAPHIC_PNTS_COLS,
 )
 
-# CC1: người dùng phải nhận diện đúng điều kiện AIP mình được xem
-#   AIP_COND = 0 (Low)  -> đáp án đúng CC1 = 1
-#   AIP_COND = 1 (High) -> đáp án đúng CC1 = 2
-# CC2: người dùng phải nhận diện đúng điều kiện DISC mình được xem
-#   DISC_COND = 1 -> đáp án đúng CC2 = 1
-#   DISC_COND != 1 -> đáp án đúng CC2 = 2
-# Vì khảo sát Qualtrics đã tự động terminate khi CC sai, các dòng lọt vào
-# đây mà vẫn sai CC coi như dữ liệu không hợp lệ -> loại cứng (hard drop).
+# ---------------------------------------------------------------------------
+# POLICY CHANGE (2026-09-11, requested by Khai): the sample-filtering criteria
+# were narrowed to exactly four checks (superseding the earlier 9-step
+# consent/age/screener/ATT/CC/speeding set from before that):
+#   1. Missing data
+#   2. Duplicate response pattern
+#   3. Straightlining
+#   (a 4th, manipulation-check-based individual exclusion, was added then
+#    immediately identified as a problem -- see the next policy change below)
+#
+# AMENDMENT (2026-09-11, same day, requested by Khai): the individual-level
+# manipulation-check filter on MC_AIP is REMOVED. Dropping respondents based
+# on MC_AIP -- a variable measured AFTER the AIP_COND treatment was
+# administered -- is post-treatment conditioning: it can introduce selection
+# bias into the causal estimate of AIP_COND's effect, because "how someone
+# answered MC_AIP" is itself partly a consequence of the treatment (Montgomery,
+# Nyhan & Torres, 2018, AJPS). The project now follows an
+# Intention-to-Treat (ITT) design for this check:
+#   - MC_AIP is NEVER used to drop individual rows.
+#   - report_manipulation_check() reports group-level manipulation strength
+#     (Welch's t-test + Cohen's d comparing MC_AIP across AIP_COND) AFTER
+#     filtering, for diagnostic/manuscript purposes only -- it excludes no one.
+#   - flag_extreme_reversers() marks (does not drop) respondents who show a
+#     flatly reversed reading of their assigned condition, for a separate
+#     robustness check (e.g. re-running H2/H3/H7 with/without this group) in
+#     03_reliability_efa.py or a later analysis script -- never in this script.
+#   - A respondent who quit before reaching the MC block (MC_AIP is NaN) is
+#     still excluded, but via the ordinary missing-data screen on the
+#     substantive item battery (since the MC block sits after all 34 items in
+#     the instrument, a genuine mid-survey dropout already fails that screen
+#     on its own merits) -- not via a "manipulation check fail" label, since
+#     that mislabels dropout as miscomprehension.
+# ---------------------------------------------------------------------------
+
+
+def breakdown_mc_groups(df, mc_col=MC_AIP_COL, cond_col=AIP_COND_COL, midpoint=MC_MIDPOINT):
+    """Split respondents into the two groups that were previously conflated
+    under one 'manipulation_check_fail' label:
+      (a) answered MC_AIP, but on the wrong side of the midpoint for their
+          assigned AIP_COND (genuine miscomprehension / reversed reading)
+      (b) MC_AIP is missing -- did not reach that point in the survey
+          (dropout, not miscomprehension)
+    Returns (table, mask_a, mask_b) -- table is a small summary DataFrame,
+    the masks are boolean Series aligned to df.index for further inspection.
+    """
+    mc = pd.to_numeric(df[mc_col], errors="coerce")
+    cond = pd.to_numeric(df[cond_col], errors="coerce")
+
+    missing_mc = mc.isna()
+    wrong_direction = pd.Series(False, index=df.index)
+    wrong_direction |= (cond == 1) & (mc <= midpoint)
+    wrong_direction |= (cond == 0) & (mc >= midpoint)
+
+    mask_b = missing_mc
+    mask_a = wrong_direction & ~missing_mc
+    mask_correct = (~missing_mc) & (~wrong_direction)
+
+    table = pd.DataFrame([
+        {"group": "(a) answered, wrong direction (miscomprehension)", "n": int(mask_a.sum())},
+        {"group": "(b) missing MC_AIP (dropout, never reached it)", "n": int(mask_b.sum())},
+        {"group": "correct direction", "n": int(mask_correct.sum())},
+        {"group": "TOTAL", "n": len(df)},
+    ])
+    return table, mask_a, mask_b
+
+
+def flag_duplicate_response_pattern(df, items):
+    """Flag every respondent who has another respondent with an identical or
+    near-identical (<= DUPLICATE_MAX_DIFFERING_ITEMS items differing, over the
+    items both answered) response pattern across the full item battery."""
+    mat = df[items].to_numpy(dtype=float)
+    n = len(df)
+    is_dup = np.zeros(n, dtype=bool)
+    for i in range(n):
+        for j in range(i + 1, n):
+            row_i, row_j = mat[i], mat[j]
+            valid = ~(np.isnan(row_i) | np.isnan(row_j))
+            if valid.sum() == 0:
+                continue
+            n_diff = np.sum(row_i[valid] != row_j[valid])
+            if n_diff <= DUPLICATE_MAX_DIFFERING_ITEMS:
+                is_dup[i] = True
+                is_dup[j] = True
+    return pd.Series(is_dup, index=df.index)
 
 
 def apply_exclusions(df):
-    """Lọc bỏ các mẫu không hợp lệ (Hard drops)."""
+    """Lọc bỏ các mẫu không hợp lệ (Hard drops) -- 3 tiêu chí. MC_AIP không
+    còn được dùng để loại cá nhân nào (xem policy note ở đầu file)."""
     log_rows = []
     n0 = len(df)
     keep = pd.Series(True, index=df.index)
@@ -39,43 +117,23 @@ def apply_exclusions(df):
                           "n_dropped_this_step": int(newly_dropped.sum()),
                           "n_after": int(keep.sum())})
 
-    if CONSENT_COL in df.columns:
-        drop_step(anchor_match(df[CONSENT_COL], CONSENT_OK_ANCHOR), "consent_not_given")
-    if AGE_COL in df.columns:
-        drop_step(anchor_match(df[AGE_COL], AGE_OK_ANCHOR), "under_18")
-    if OMNI_COL in df.columns:
-        drop_step(anchor_match(df[OMNI_COL], OMNI_OK_ANCHOR), "not_omnichannel_screener")
-    if ATT1_COL in df.columns:
-        drop_step(pd.to_numeric(df[ATT1_COL], errors="coerce") == ATT1_CORRECT,
-                   "failed_attention_check_ATT1")
-    if ATT2_COL in df.columns:
-        drop_step(pd.to_numeric(df[ATT2_COL], errors="coerce") == ATT2_CORRECT,
-                   "failed_attention_check_ATT2")
-
-    # Comprehension checks: sai CC1/CC2 nghĩa là khảo sát lẽ ra đã terminate.
-    # Loại cứng các dòng còn sót lại mà đáp án sai (hoặc thiếu).
-    if CC1_COL in df.columns and AIP_COND_COL in df.columns:
-        cc1_val = pd.to_numeric(df[CC1_COL], errors="coerce")
-        aip = pd.to_numeric(df[AIP_COND_COL], errors="coerce")
-        expect_cc1 = np.where(aip == 1, 2, 1)
-        drop_step(cc1_val == expect_cc1, "failed_comprehension_check_CC1")
-
-    if CC2_COL in df.columns and DISC_COL in df.columns:
-        cc2_val = pd.to_numeric(df[CC2_COL], errors="coerce")
-        disc = pd.to_numeric(df[DISC_COL], errors="coerce")
-        expect_cc2 = np.where(disc == 1, 1, 2)
-        drop_step(cc2_val == expect_cc2, "failed_comprehension_check_CC2")
-
-    if DURATION_COL in df.columns:
-        dur = pd.to_numeric(df[DURATION_COL], errors="coerce")
-        drop_step(dur >= SPEEDING_MIN_SECONDS, "speeding_below_threshold")
-
-    # TF v2.4 SS C.4.1: missing-data screen uses the FIELDED battery (33, incl. REL4),
-    # not the analysed battery (32) -- this tests engagement with what was asked.
     present_items = [c for c in FIELDED_ITEMS if c in df.columns]
+
+    # 1. Missing data (also catches MC-block dropouts -- MC sits after all 34
+    #    items in the instrument, see policy note)
     if present_items:
         miss_pct = df[present_items].isna().mean(axis=1)
         drop_step(miss_pct <= MAX_MISSING_ITEM_PCT, "excess_missing_items")
+
+    # 2. Duplicate / near-duplicate response pattern
+    if present_items:
+        dup_flag = flag_duplicate_response_pattern(df, present_items)
+        drop_step(~dup_flag, "duplicate_response_pattern")
+
+    # 3. Straightlining (hard drop -- SD ~ 0 across the full item battery)
+    if present_items:
+        sd = df[present_items].std(axis=1, skipna=True)
+        drop_step(sd >= STRAIGHTLINE_HARD_SD_THRESHOLD, "straightlining_near_zero_sd")
 
     clean = df.loc[keep].copy()
     log = pd.DataFrame(log_rows)
@@ -85,18 +143,57 @@ def apply_exclusions(df):
     return clean, log
 
 
-def add_soft_flags(df):
-    """Đánh dấu các mẫu nghi ngờ (Straightlining). CC1/CC2 đã được xử lý
-    như hard-drop trong apply_exclusions nên không cần gắn cờ lại ở đây."""
-    # TF v2.4 SS C.4.1: straightlining is a response-style diagnostic across the
-    # FIELDED battery (33, incl. REL4), same rationale as the missing-data screen.
-    present_items = [c for c in FIELDED_ITEMS if c in df.columns]
-    if present_items:
-        df["flag_straightliner"] = df[present_items].std(axis=1, skipna=True) < STRAIGHTLINE_SD_THRESHOLD
+def report_manipulation_check(df, mc_col=MC_AIP_COL, cond_col=AIP_COND_COL):
+    """Group-level ITT evidence for the manipulation check (Welch's t-test +
+    Cohen's d), run AFTER filtering. REPORTS ONLY -- excludes no observations.
+    Returns a dict with the test statistics (None if it couldn't be computed)."""
+    if mc_col not in df.columns or cond_col not in df.columns:
+        return None
+    cond = pd.to_numeric(df[cond_col], errors="coerce")
+    mc = pd.to_numeric(df[mc_col], errors="coerce")
+    g0 = mc[cond == 0].dropna()
+    g1 = mc[cond == 1].dropna()
+    if len(g0) < 2 or len(g1) < 2:
+        return None
+    res = pg.ttest(g1, g0, correction=True)  # Welch's t (unequal variances)
+    d = pg.compute_effsize(g1, g0, eftype="cohen")
+    p_col = "p_val" if "p_val" in res.columns else "p-val"
+    result = {
+        "mc_column": mc_col, "cond_column": cond_col,
+        "n_group0": len(g0), "n_group1": len(g1),
+        "mean_group0": round(g0.mean(), 3), "mean_group1": round(g1.mean(), 3),
+        "t_welch": round(res["T"].iloc[0], 3), "p": round(res[p_col].iloc[0], 4),
+        "cohens_d": round(d, 3), "flag_d_below_0.50": bool(abs(d) < 0.50),
+    }
+    print(f"\n[report_manipulation_check] {mc_col} by {cond_col} (Welch's t-test, group-level ITT evidence, n_excluded=0)")
+    print(f"    n0={result['n_group0']} mean0={result['mean_group0']}  "
+          f"n1={result['n_group1']} mean1={result['mean_group1']}")
+    print(f"    Welch t={result['t_welch']}  p={result['p']}  Cohen's d={result['cohens_d']}")
+    if result["flag_d_below_0.50"]:
+        print(f"    !! WARNING: |d| < 0.50 -- manipulation may be weak for {mc_col}.")
+    return result
+
+
+def flag_extreme_reversers(df, mc_col=MC_AIP_COL, cond_col=AIP_COND_COL,
+                            high_reverse_thresh=3, low_reverse_thresh=5):
+    """Flag (does not drop) respondents who show a flatly reversed reading of
+    their assigned condition: AIP High but MC_AIP <= high_reverse_thresh, or
+    AIP Low but MC_AIP >= low_reverse_thresh. For a separate robustness check
+    only (e.g. re-run H2/H3/H7 with/without this group) -- never a filter."""
+    if mc_col not in df.columns or cond_col not in df.columns:
+        df["flag_extreme_reverser"] = False
+        return df
+    cond = pd.to_numeric(df[cond_col], errors="coerce")
+    mc = pd.to_numeric(df[mc_col], errors="coerce")
+    reversed_high = (cond == 1) & (mc <= high_reverse_thresh)
+    reversed_low = (cond == 0) & (mc >= low_reverse_thresh)
+    df["flag_extreme_reverser"] = (reversed_high | reversed_low).fillna(False)
     return df
 
 
 def check_cell_consistency(df):
+    """Diagnostic only -- does not drop anyone. Flags CELL vs AIP_COND x
+    DISC_COND disagreement (Survey-Flow integrity signal)."""
     if CELL_COL not in df.columns or AIP_COND_COL not in df.columns or DISC_COL not in df.columns:
         return df
     expected_cell = {(0, 0): 1, (0, 1): 2, (1, 0): 3, (1, 1): 4}
@@ -105,6 +202,16 @@ def check_cell_consistency(df):
     predicted = [expected_cell.get((a, d), np.nan) if pd.notna(a) and pd.notna(d) else np.nan
                  for a, d in zip(aip, disc)]
     df["flag_cell_mismatch"] = pd.to_numeric(df[CELL_COL], errors="coerce") != pd.Series(predicted, index=df.index)
+    return df
+
+
+def recode_pnts(df):
+    """Recode the -98 'prefer not to say' sentinel to missing (Master Codebook
+    v2.6 SS4.8 / standing prohibition: no -98 in a computed statistic)."""
+    for col in DEMOGRAPHIC_PNTS_COLS:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce").replace(
+                DEMOGRAPHIC_PNTS_CODE, np.nan)
     return df
 
 
@@ -124,16 +231,39 @@ def main():
 
     df = load_and_normalize(args.input)
     df = check_cell_consistency(df)
+
+    # Step 1: breakdown BEFORE filtering -- (a) miscomprehension vs (b) dropout,
+    # previously conflated under one "manipulation_check_fail" label.
+    mc_table, _, _ = breakdown_mc_groups(df)
+    print("[01_clean] MC_AIP breakdown BEFORE filtering (diagnostic only, not a filter step):")
+    print(mc_table.to_string(index=False))
+
     clean, log = apply_exclusions(df)
-    clean = add_soft_flags(clean)
     clean = recode_cond(clean)
+    clean = recode_pnts(clean)
+
+    # Group-level ITT evidence (report only, n_excluded=0) -- run AFTER filtering.
+    mc_result = report_manipulation_check(clean, MC_AIP_COL, AIP_COND_COL)
+    disc_result = report_manipulation_check(clean, MC_DISC_COL, DISC_COL)
+
+    if mc_result is not None:
+        log.loc[len(log)] = {
+            "step": f"manipulation_check_group_evidence (report only, n_excluded=0, "
+                    f"d={mc_result['cohens_d']}, p={mc_result['p']})",
+            "n_before": len(clean), "n_dropped_this_step": 0, "n_after": len(clean),
+        }
+
+    # Extreme-reverser flag (for a separate robustness check -- not a filter).
+    clean = flag_extreme_reversers(clean)
+    n_reversers = int(clean["flag_extreme_reverser"].sum())
+    print(f"\n[flag_extreme_reversers] flagged (not dropped): {n_reversers} / {len(clean)}")
 
     out_csv = f"data/processed/{args.phase}_clean.csv"
     out_log = f"outputs/tables/{args.phase}_exclusion_log.csv"
     clean.to_csv(out_csv, index=False)
     log.to_csv(out_log, index=False)
 
-    print(f"[01_clean] input={args.input} phase={args.phase}")
+    print(f"\n[01_clean] input={args.input} phase={args.phase}")
     print(log.to_string(index=False))
     print(f"[01_clean] wrote {out_csv} (n={len(clean)}) and {out_log}")
 
