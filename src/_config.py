@@ -102,28 +102,50 @@ DEMOGRAPHIC_PNTS_COLS = ["AGE_BAND", "GEN", "EDU", "INC"]
 
 RESPONSE_ID_COL = "ResponseId"
 
+# PII columns (Law 91/2025/QH15 Art. 2). Single source of truth shared by
+# strip_pii.py (raw export, before commit) AND 01_clean.py (processed output,
+# before to_csv) -- both must strip the same list. RecipientEmail/FirstName/
+# LastName/ExternalReference are typically empty for anonymous-link
+# distributions but are stripped regardless -- never assume they're empty.
+PII_COLUMNS = [
+    "IPAddress",
+    "LocationLatitude",
+    "LocationLongitude",
+    "RecipientEmail",
+    "RecipientFirstName",
+    "RecipientLastName",
+    "ExternalReference",
+]
+
 # ---- Ngưỡng loại bỏ mẫu ----
-# POLICY CHANGE (2026-09-11, requested by Khai): 01_clean.py's hard-drop pipeline
-# now uses ONLY 4 criteria -- manipulation check fail, missing data, duplicate
-# response pattern, straightlining. The old consent/age/omni/ATT1/ATT2/CC1/CC2/
-# speeding hard drops are no longer applied (constants below kept, unused, in
-# case they're needed again).
+# POLICY CHANGE (2026-09-11, requested by Khai, amended same day): 01_clean.py's
+# hard-drop pipeline uses ONLY 3 criteria -- missing data, duplicate response
+# pattern, straightlining. Manipulation check (MC_AIP/MC_DISC) is NOT a filter
+# -- it was briefly a 4th individual-level drop criterion, then removed the same
+# day after being identified as post-treatment conditioning (see CLAUDE.md
+# SS6.1); it is now report-only (Welch's t + Cohen's d, group-level ITT
+# evidence) via 01_clean.py::report_manipulation_check(). The original
+# consent/age/omni/ATT1/ATT2/CC1/CC2/speeding hard drops (pre-2026-09-11) are
+# also no longer applied (constants below kept, unused, in case reinstated).
 SPEEDING_MIN_SECONDS = 120
 STRAIGHTLINE_SD_THRESHOLD = 0.5   # old soft-flag threshold, no longer used by 01_clean.py
 MAX_MISSING_ITEM_PCT = 0.10
 
-# Manipulation check (per-respondent hard drop, criterion 1). MC_AIP/MC_DISC are
-# 1-7 Likert; a respondent must land on the expected side of the midpoint for
-# their assigned condition (e.g. AIP_COND=1 -> MC_AIP > 4) to pass.
+# Manipulation-check midpoint -- NOT used as a filter (see policy note above).
+# Used only by 01_clean.py::breakdown_mc_groups()/report_manipulation_check()/
+# flag_extreme_reversers() to classify direction, on a 1-7 Likert scale.
 MC_MIDPOINT = 4
 
-# Straightlining (per-respondent hard drop, criterion 4). This is a much
-# stricter threshold than the old STRAIGHTLINE_SD_THRESHOLD soft flag -- it is
-# meant to catch responses that are (near-)identical across the whole battery
-# (SD ~= 0), not merely low-variance responding.
+# Straightlining (per-respondent hard drop). Much stricter than the old
+# STRAIGHTLINE_SD_THRESHOLD soft flag -- meant to catch responses that are
+# (near-)identical across the whole battery (SD ~= 0), not merely low-variance
+# responding.
 STRAIGHTLINE_HARD_SD_THRESHOLD = 0.10
 
-# Duplicate / near-duplicate response pattern (per-respondent hard drop,
-# criterion 3). Two respondents are treated as duplicates if their answers
-# differ on at most this many of the fielded items (0 = exact match only).
+# Duplicate / near-duplicate response pattern (per-respondent hard drop). Two
+# respondents are treated as duplicates if their answers differ on at most
+# this many of the fielded items (0 = exact match only). O(n^2) pairwise
+# comparison in 01_clean.py::flag_duplicate_response_pattern -- fine at pilot
+# n, but will need a vectorized/hashing approach before main collection
+# (n>=400, ~80k pairs) if it becomes a runtime bottleneck.
 DUPLICATE_MAX_DIFFERING_ITEMS = 2

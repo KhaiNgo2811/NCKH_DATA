@@ -61,7 +61,7 @@ def generate(n, seed, unbalanced_cells=False, inject_quality_issues=True):
     #     01_clean.py is genuinely smoke-tested here too, not bypassed) ---
     df["CONSENT"] = "Tôi đồng ý tham gia\nI agree to participate"
     df["SCR_AGE"] = "Có, tôi đã từ 18 tuổi trở lên\nYes, I am 18 or older"
-    df["SCR1"] = "Có\nYes"
+    df["SCR_OMNI"] = "Có\nYes"  # real column name confirmed 2026-09-10; was SCR1 in an older draft
 
     # --- Comprehension check, numeric-coded directly (1/2/3) ---
     cc1_correct = np.where(aip_high == 1, 2, 1)

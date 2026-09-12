@@ -1,7 +1,7 @@
 construct,n_items,n_obs,alpha,flag_below_0.70,note
-AIP,5,38,0.913,False,
-REL,4,38,0.829,False,
-INT,5,38,0.888,False,
-TRU,6,38,0.87,False,
-PI,4,38,0.859,False,
-PDPL,4,38,0.804,False,
+AIP,5,55,0.904,False,
+REL,4,55,0.825,False,
+INT,5,55,0.891,False,
+TRU,6,55,0.881,False,
+PI,4,55,0.863,False,
+PDPL,4,55,0.817,False,

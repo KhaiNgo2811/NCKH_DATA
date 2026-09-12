@@ -36,7 +36,7 @@ def main():
     aip_col = AIP_COND_COL if AIP_COND_COL in df.columns else "AIP_COND"
 
     aov = pg.anova(data=df, dv="INT_mean", between=[aip_col, "DISC_label"],
-                    detailed=True)
+                    detailed=True, effsize="np2")
     aov.to_csv("outputs/tables/H3_anova_disclosure_main_effect.csv", index=False)
     print("--- Two-way ANOVA: INT ~ AIP_COND * DISC_COND ---")
     print(aov.to_string(index=False))

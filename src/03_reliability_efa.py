@@ -314,6 +314,17 @@ def htmt_table(df):
     CONSTRUCT_ITEMS (DISC is excluded automatically since it is not
     a key in CONSTRUCT_ITEMS).
 
+    NOTE: this deliberately uses CONSTRUCT_ITEMS, not POOLED_CONSTRUCTS -- ENG
+    IS included here as a pooled 6-item construct, unlike reliability_table()/
+    all_outer_loadings() above. The Amendment A-12 "no pooled reliability
+    across all six ENG items" prohibition targets ITEM-RETENTION diagnostics
+    (alpha, item-rest correlation, outer loadings) used to decide whether to
+    drop an ENG item -- it does not forbid using ENG's full item set for
+    discriminant validity against OTHER constructs, which is a different
+    question (does ENG as a whole overlap with AIP/REL/etc, not "which ENG
+    item is weak"). Dropping ENG from this table would silently lose HTMT(ENG,
+    other) coverage with no governance basis for doing so.
+
     Returns
     -------
     pandas.DataFrame

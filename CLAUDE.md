@@ -583,3 +583,83 @@ amendment. Headline results at the n=28/29 checkpoint, run through
 - [ ] `07_plssem_bridge.R` / `run_plssem.py` smoke-tested locally with R installed.
 - [ ] PDPL1 reviewed for removal or rewording (content-validity issue, not a
       data artifact — see above).
+
+---
+
+## 8. Code review fixes — 2026-09-12
+
+An external review (`analysis_results.md`) was checked against the actual code and
+mostly held up. Fixed:
+
+- **PII in `data/processed/*.csv` (critical, worse than the review described):**
+  not only was `pilot_clean.csv` never stripped of `IPAddress`/`LocationLatitude`/
+  `LocationLongitude` before being written, those files (and most of
+  `outputs/tables/*.csv`) turned out to be **tracked in git** despite
+  `.gitignore` declaring `data/processed/*.csv` and `outputs/tables/*.csv` —
+  they were added before that rule existed, and `.gitignore` doesn't retroactively
+  untrack anything. Real respondent IP/location data has been sitting in git
+  history. Fixed going forward: `_config.py::PII_COLUMNS` is now the single
+  source of truth (shared by `strip_pii.py` and the new
+  `01_clean.py::strip_pii()`, called right before `to_csv()`). **Not yet done,
+  needs your decision:** `git rm --cached` the currently-tracked processed/output
+  CSVs, and — if this repo has ever been pushed anywhere — scrub the PII out of
+  git history (e.g. `git filter-repo`). Both are left undone deliberately; a
+  history rewrite is destructive and needs explicit sign-off, especially if
+  there's a remote or collaborators involved. See README's new "Known PII
+  exposure" section.
+- `_config.py`'s exclusion-policy comment still said "4 criteria -- manipulation
+  check fail, missing data, ..." after the ITT amendment (§6.1) dropped MC to a
+  report-only step — corrected to describe the actual 3 hard-drop criteria.
+- `03_reliability_efa.py::htmt_table()` intentionally keeps ENG pooled (unlike
+  the reliability/loadings/CR-AVE tables, which exclude it per Amendment A-12)
+  — added a comment explaining why this isn't an inconsistency: A-12's pooling
+  ban targets item-retention diagnostics, not ENG's cross-construct
+  discriminant-validity coverage.
+- `00_generate_synthetic.py` still generated a `SCR1` column; the real fielded
+  name is `SCR_OMNI` (§4's data dictionary) — fixed for consistency, though it
+  had no pipeline impact since `01_clean.py` no longer filters on this column.
+- `02_descriptives.py` checked `flag_straightliner`/`flag_cc1_wrong`/
+  `flag_cc2_wrong`, none of which `01_clean.py` has produced since the
+  2026-09-11 policy changes (§6.1) — updated to check `flag_cell_mismatch` and
+  `flag_extreme_reverser` instead, and added a construct-level mean/SD table
+  (`{phase}_construct_descriptives.csv`) that didn't exist anywhere before.
+- **Construct scores were never persisted anywhere** — `05_anova_h3.py`
+  computed `INT_mean` inline and discarded it; nothing else computed the rest.
+  Added `01_clean.py::compute_construct_scores()`, which writes an
+  `{construct}_mean` column for every construct in `CONSTRUCT_ITEMS` into
+  `{phase}_clean.csv`. `ENG_mean` here is still the pooled score (the sole
+  structural-model input, Amendment A-12) — per-dimension ENG diagnostics stay
+  in `03_reliability_efa.py`, not here.
+- `run_plssem.py` only extracted `path_coefficients` and `boot_paths` from
+  `07_plssem_bridge.R`'s result, silently dropping `reliability`, `f_squared`
+  (needed for β_M1/β_M2 effect sizes), `htmt`, `loadings`, and `weights` —
+  now extracts and saves all seven. Still unverified end-to-end (no R/rpy2 in
+  this environment — see §5's `07_plssem_bridge.R` entry).
+- `04_manipulation_check.py` hardcoded `pilot_manipulation_check.csv` as its
+  output path with no `--phase` flag, so running it on main-collection data
+  would silently overwrite the pilot results — added `--phase` (default
+  `pilot` for backward compatibility).
+- `05_anova_h3.py`'s ANOVA didn't report partial η² — added
+  `effsize="np2"` to the `pg.anova()` call.
+- README.md pinned `Theoretical_Foundations_v2_4.docx` / `Master_Codebook_v2_0.docx`
+  and a stale "REL4 excluded, α=0.82-0.95" status paragraph — updated to point at
+  "whatever's the highest vN in docs/" instead of a specific filename (same
+  staleness risk this file already warns about at the top), and to a status
+  paragraph that points at CLAUDE.md §7 instead of duplicating numbers that will
+  drift again.
+- Removed `src/import numpy as np.py` (scratch file, unrelated to the pipeline),
+  `outputs/tables/OD2_power_analysis_beta_M4.csv` (references the retired
+  three-way term, Amendment A-8), and
+  `outputs/tables/_smoketest_real_2resp_exclusion_log.csv` (stale smoke-test
+  artifact that shouldn't have been tracked either).
+
+**Reviewed and NOT changed (review flagged these, judged not worth acting on, or
+already fine):**
+- HTMT keeping ENG pooled — see above, this is correct, not a bug.
+- `pilot_eng_dimension_reliability.csv` — the review said this output was
+  missing; it exists (`outputs/tables/pilot_eng_dimension_reliability.csv`).
+  Likely just needed a re-run after a data update, not a code fix.
+- `flag_duplicate_response_pattern()`'s O(n²) pairwise comparison — noted in a
+  `_config.py` comment as a scalability concern for main collection (n≥400,
+  ~80k pairs) rather than fixed now; pilot n is small enough that it's not
+  worth the added complexity yet.

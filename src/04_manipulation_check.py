@@ -41,6 +41,11 @@ def mc_test(df, mc_col, group_col, group_labels):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--input", required=True)
+    ap.add_argument("--phase", choices=["pilot", "main"], default="pilot",
+                     help="Controls the output filename -- defaults to 'pilot' for "
+                          "backward compatibility, but pass --phase main when running "
+                          "against main-collection data or you will silently overwrite "
+                          "the pilot results file.")
     args = ap.parse_args()
     df = pd.read_csv(args.input)
 
@@ -66,7 +71,8 @@ def main():
               f"group in column '{DISC_COL}') -- NOT included in the gate verdict below.")
 
     out = pd.DataFrame(results)
-    out.to_csv("outputs/tables/pilot_manipulation_check.csv", index=False)
+    out_path = f"outputs/tables/{args.phase}_manipulation_check.csv"
+    out.to_csv(out_path, index=False)
     print("--- Manipulation check t-tests (gate: |d| >= 0.50) ---")
     print(out.to_string(index=False))
 
@@ -77,6 +83,7 @@ def main():
         if not gate_pass:
             print(">> Per TF v2.2 SS C.3 / Amendment A-7: vignettes must be revised "
                   "(task B2.10) and pilot re-run before main collection opens.")
+    print(f"\n[04_manipulation_check] wrote {out_path}")
 
 
 if __name__ == "__main__":

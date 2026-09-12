@@ -12,11 +12,15 @@ the operating manual for this pipeline: exact column names, exclusion rules, kno
 bugs already fixed, and the governance rules (hypothesis numbering, naming locks,
 what belongs to Study 1 vs Study 2) that the code must not silently drift from.
 
-The governing specification is [`docs/Theoretical_Foundations_v2_4.docx`](./docs/Theoretical_Foundations_v2_4.docx)
-(single source of truth for theory, hypotheses H1–H7b, and the measurement register)
-and [`docs/Master_Codebook_v2_0.docx`](./docs/Master_Codebook_v2_0.docx) (variable-level
-bridge between the Qualtrics instrument and this code). Where code and docs disagree,
-the docs win — fix the code, not the doc, unless a governance decision changes.
+The governing specification is `docs/Theoretical_Foundations_vN_updated.docx` (single
+source of truth for theory, hypotheses H1–H7b, and the measurement register) and
+`docs/Master_Codebook_vN_updated.docx` (variable-level bridge between the Qualtrics
+instrument and this code) — **both docs get re-issued under a new filename with a
+higher N periodically; always check `docs/` for the current highest N** rather than
+trusting a filename pinned here, which will go stale. As of 2026-09-11 the current
+pair is `Theoretical_Foundations_v2_11_updated.docx` (self-titled "Version 2.9") and
+`Master_Codebook_v2_6_updated.docx`. Where code and docs disagree, TF prevails on
+substance — fix the code, not the doc, unless a governance decision changes.
 
 ## ⚠️ Data handling — read before committing any CSV
 
@@ -39,9 +43,11 @@ column the pipeline actually uses untouched, and keeps the file readable by
 `data/raw/_local/` (gitignored) for your own local analysis runs if you want — just
 never `git add` it.
 
-`data/processed/` and `outputs/` are gitignored entirely — they're script-generated
-and reproducible from a committed de-identified raw export, so there's no reason to
-version them.
+`data/processed/` and `outputs/` are *intended* to be gitignored entirely — they're
+script-generated and reproducible from a committed de-identified raw export, so
+there's no reason to version them. **In practice, several files under both were
+committed before that `.gitignore` rule existed and are still tracked** — see
+"Known PII exposure" below before assuming those directories are safe.
 
 ## Setup
 
@@ -67,27 +73,34 @@ install.packages(c("seminr", "cSEM", "pwr"))
 NCKH_DATA/
 ├── CLAUDE.md                   # pipeline operating manual — read first
 ├── README.md                   # this file
-├── docs/                       # governing documents (TF v2.4, Master Codebook)
+├── docs/                       # governing documents (TF, Master Codebook — check for highest vN)
 ├── requirements.txt
 ├── data/
 │   ├── raw/                    # de-identified exports only — see Data handling
 │   │   └── _local/             # gitignored: your original exports for local use
-│   └── processed/              # gitignored: script output
+│   └── processed/              # should be gitignored script output (regenerate, don't
+│                                # commit) — but see "Known PII exposure" below: some
+│                                # files here are currently tracked in git anyway
 ├── src/
-│   ├── _config.py               # single source of truth: columns, item lists, thresholds
+│   ├── _config.py               # single source of truth: columns, item lists,
+│   │                             # thresholds, PII_COLUMNS
 │   ├── _qualtrics_io.py         # raw-export loader/normalizer
-│   ├── strip_pii.py             # de-identify a raw export before committing
+│   ├── strip_pii.py             # de-identify a RAW export before committing
 │   ├── 00_generate_synthetic.py
-│   ├── 01_clean.py              # exclusions + soft flags
-│   ├── 02_descriptives.py       # demographics, cell balance
-│   ├── 03_reliability_efa.py    # Cronbach's alpha, AIP/REL EFA (pilot only)
+│   ├── 01_clean.py              # exclusions (missing/duplicate/straightlining),
+│   │                             # ITT-based manipulation-check reporting, construct
+│   │                             # scores, PII stripping on the CLEANED output too
+│   ├── 02_descriptives.py       # demographics, cell balance, construct descriptives
+│   ├── 03_reliability_efa.py    # Cronbach's alpha, CR/AVE, HTMT, AIP/REL EFA,
+│   │                             # ENG within-dimension reliability (pilot only)
 │   ├── 04_manipulation_check.py # MC_AIP / MC_DISC t-tests, Cohen's d gate
 │   ├── 05_anova_h3.py           # two-way ANOVA — sole confirmatory test of H3
 │   ├── 06_power_analysis.py     # OD-2 (closed) — power for beta_M1 / beta_M2
 │   ├── 07_plssem_bridge.R       # seminr PLS-SEM model (main collection only)
 │   └── run_plssem.py            # rpy2 bridge orchestrator
 └── outputs/
-    ├── tables/                  # gitignored: every script writes results here
+    ├── tables/                  # should be gitignored (regenerate, don't commit) —
+    │                            # same caveat as data/processed/ above
     └── figures/                 # gitignored
 ```
 
@@ -107,8 +120,27 @@ data (see `CLAUDE.md` §7).
 
 ## Current status
 
-See `CLAUDE.md` §7 ("Before running on real data — checklist") for what's done and
-what's still open. As of the last pipeline run: reliability is strong across all
-constructs (α = 0.82–0.95), REL4's exclusion from the measurement model is corroborated
-on real pilot data (cross-loads 0.44/0.48 on both factors when included), and both
-manipulation checks clear the d ≥ 0.50 gate.
+See `CLAUDE.md` §7 for what's done and what's still open — it's the living record,
+this section is just a pointer so it doesn't rot the way the paragraph it replaced
+did (REL4 is no longer excluded from the measurement model; that reflected a since-
+reversed Amendment A-9 decision). As of 2026-09-11: pipeline runs end-to-end on real
+pilot data (`data/raw/pilot_real.csv`, a live/growing export); reliability is strong
+across constructs; AIP↔REL discriminant validity (HTMT) is an open concern under
+active investigation; the MC_AIP manipulation check is borderline/failing the
+|d|≥0.50 gate depending on checkpoint and uses an Intention-to-Treat (ITT) design
+(report-only, no individual-level exclusion) as of the same date — see `CLAUDE.md`
+§6.1 for why.
+
+## ⚠️ Known PII exposure in git history (as of 2026-09-11)
+
+`data/processed/*.csv` and most of `outputs/tables/*.csv` are declared in
+`.gitignore` but were tracked in git **before** that rule was added, so the ignore
+rule doesn't retroactively untrack them — several of those files (e.g.
+`pilot_clean.csv`) carry real respondent `IPAddress`/`LocationLatitude`/
+`LocationLongitude` values and are sitting in git history right now. `01_clean.py`
+was fixed (2026-09-11) to strip those columns before writing any future
+`{phase}_clean.csv`, which stops the leak going forward, but does **not** remove
+what's already committed. Untracking (`git rm --cached`) and, if this repo has ever
+been pushed anywhere, scrubbing history (e.g. `git filter-repo`) are still open —
+deliberately not done automatically, since a history rewrite is destructive and
+needs your explicit go-ahead (and coordination with any remote/collaborators).

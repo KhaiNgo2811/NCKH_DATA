@@ -7,11 +7,12 @@ import pingouin as pg
 sys.path.insert(0, "src")
 from _qualtrics_io import load_and_normalize  # noqa: E402
 from _config import (  # noqa: E402
-    FIELDED_ITEMS, DISC_COL, AIP_COND_COL, CELL_COL,
+    FIELDED_ITEMS, CONSTRUCT_ITEMS, DISC_COL, AIP_COND_COL, CELL_COL,
     MC_AIP_COL, MC_DISC_COL, MC_MIDPOINT,
     STRAIGHTLINE_HARD_SD_THRESHOLD, DUPLICATE_MAX_DIFFERING_ITEMS,
     MAX_MISSING_ITEM_PCT,
     DEMOGRAPHIC_PNTS_CODE, DEMOGRAPHIC_PNTS_COLS,
+    PII_COLUMNS,
 )
 
 # ---------------------------------------------------------------------------
@@ -174,6 +175,50 @@ def report_manipulation_check(df, mc_col=MC_AIP_COL, cond_col=AIP_COND_COL):
     return result
 
 
+def report_manipulation_check_composite(df, cond_col=AIP_COND_COL):
+    """SUPPLEMENTARY (2026-09-11, requested by Khai): additional group-level ITT
+    evidence using the AIP_mean composite (all fielded AIP items, currently
+    AIP1-AIP5) instead of the single MC_AIP item. Same Welch's t + Cohen's d
+    design as report_manipulation_check(), report-only, excludes no one.
+
+    Rationale / caveat: AIP_mean is less noisy than the single-item MC_AIP (5
+    items vs 1), so it's a reasonable SUPPLEMENTARY corroboration -- if AIP_mean
+    and MC_AIP tell different stories, that's itself informative (e.g. a weak
+    single-item MC_AIP reading next to a clean AIP_mean split would suggest the
+    MC item itself is the noisy part, not the manipulation). But AIP_mean is
+    also the measured construct that feeds H1/H2 as a predictor -- it is NOT a
+    substitute for the pre-registered MC_AIP manipulation check (TF/Codebook
+    §4.6), and should never be reported as "the" manipulation check in the
+    manuscript. Keep both numbers side by side, don't let this one replace the
+    other."""
+    aip_items = [c for c in CONSTRUCT_ITEMS["AIP"] if c in df.columns]
+    if not aip_items or cond_col not in df.columns:
+        return None
+    df["AIP_mean"] = df[aip_items].mean(axis=1)
+    cond = pd.to_numeric(df[cond_col], errors="coerce")
+    low = df.loc[cond == 0, "AIP_mean"].dropna()
+    high = df.loc[cond == 1, "AIP_mean"].dropna()
+    if len(low) < 2 or len(high) < 2:
+        return None
+    res = pg.ttest(high, low, correction=True)  # Welch's t (unequal variances)
+    d = pg.compute_effsize(high, low, eftype="cohen")
+    p_col = "p_val" if "p_val" in res.columns else "p-val"
+    result = {
+        "n_items": len(aip_items), "n_low": len(low), "n_high": len(high),
+        "mean_low": round(low.mean(), 3), "mean_high": round(high.mean(), 3),
+        "t_welch": round(res["T"].iloc[0], 3), "p": round(res[p_col].iloc[0], 4),
+        "cohens_d": round(d, 3), "flag_d_below_0.50": bool(abs(d) < 0.50),
+    }
+    print(f"\n[report_manipulation_check_composite] AIP_mean ({result['n_items']} items) "
+          f"by {cond_col} (Welch's t-test, SUPPLEMENTARY ITT evidence, n_excluded=0)")
+    print(f"    n_low={result['n_low']} mean_low={result['mean_low']}  "
+          f"n_high={result['n_high']} mean_high={result['mean_high']}")
+    print(f"    Welch t={result['t_welch']}  p={result['p']}  Cohen's d={result['cohens_d']}")
+    if result["flag_d_below_0.50"]:
+        print("    !! WARNING: |d| < 0.50 on the AIP_mean composite check too.")
+    return result
+
+
 def flag_extreme_reversers(df, mc_col=MC_AIP_COL, cond_col=AIP_COND_COL,
                             high_reverse_thresh=3, low_reverse_thresh=5):
     """Flag (does not drop) respondents who show a flatly reversed reading of
@@ -215,6 +260,31 @@ def recode_pnts(df):
     return df
 
 
+def strip_pii(df):
+    """Drop PII columns (Law 91/2025/QH15 Art. 2) before writing the processed
+    output. strip_pii.py only de-identifies the RAW export before commit; this
+    is the equivalent safeguard for the CLEANED output, since data/processed/
+    has been found tracked in git despite .gitignore's intent (see CLAUDE.md
+    SS0 / README "Data handling") -- belt and suspenders, not a substitute for
+    also fixing the git tracking state."""
+    return df.drop(columns=[c for c in PII_COLUMNS if c in df.columns], errors="ignore")
+
+
+def compute_construct_scores(df):
+    """Add one unweighted-mean column per construct (AIP_mean, REL_mean, ...)
+    to the cleaned output, so downstream scripts/analysts don't each
+    reimplement this (05_anova_h3.py currently computes INT_mean inline and
+    doesn't persist it; report_manipulation_check_composite() needs AIP_mean).
+    ENG_mean is still the sole structural-model input for ENG (pooled, per
+    Amendment A-12) -- this does not add per-dimension ENG scores; use
+    _config.py::ENG_DIMENSIONS directly if those are needed."""
+    for construct, items in CONSTRUCT_ITEMS.items():
+        present = [c for c in items if c in df.columns]
+        if present:
+            df[f"{construct}_mean"] = df[present].mean(axis=1)
+    return df
+
+
 def recode_cond(df):
     if AIP_COND_COL in df.columns:
         df[AIP_COND_COL] = pd.to_numeric(df[AIP_COND_COL], errors="coerce").round().astype("Int64")
@@ -241,10 +311,12 @@ def main():
     clean, log = apply_exclusions(df)
     clean = recode_cond(clean)
     clean = recode_pnts(clean)
+    clean = compute_construct_scores(clean)
 
     # Group-level ITT evidence (report only, n_excluded=0) -- run AFTER filtering.
     mc_result = report_manipulation_check(clean, MC_AIP_COL, AIP_COND_COL)
     disc_result = report_manipulation_check(clean, MC_DISC_COL, DISC_COL)
+    composite_result = report_manipulation_check_composite(clean, AIP_COND_COL)
 
     if mc_result is not None:
         log.loc[len(log)] = {
@@ -252,11 +324,19 @@ def main():
                     f"d={mc_result['cohens_d']}, p={mc_result['p']})",
             "n_before": len(clean), "n_dropped_this_step": 0, "n_after": len(clean),
         }
+    if composite_result is not None:
+        log.loc[len(log)] = {
+            "step": f"manipulation_check_composite_evidence (report only, n_excluded=0, "
+                    f"AIP_mean d={composite_result['cohens_d']}, p={composite_result['p']})",
+            "n_before": len(clean), "n_dropped_this_step": 0, "n_after": len(clean),
+        }
 
     # Extreme-reverser flag (for a separate robustness check -- not a filter).
     clean = flag_extreme_reversers(clean)
     n_reversers = int(clean["flag_extreme_reverser"].sum())
     print(f"\n[flag_extreme_reversers] flagged (not dropped): {n_reversers} / {len(clean)}")
+
+    clean = strip_pii(clean)
 
     out_csv = f"data/processed/{args.phase}_clean.csv"
     out_log = f"outputs/tables/{args.phase}_exclusion_log.csv"

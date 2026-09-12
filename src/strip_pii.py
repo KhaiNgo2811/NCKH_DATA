@@ -19,21 +19,12 @@ Usage:
     python src/strip_pii.py --input <original_export.csv> --output data/raw/<name>.csv
 """
 import argparse
+import sys
 
 import pandas as pd
 
-# Columns removed unconditionally. RecipientEmail/FirstName/LastName/ExternalReference
-# are typically empty for anonymous-link distributions but are stripped regardless --
-# never assume they're empty without checking first.
-PII_COLUMNS = [
-    "IPAddress",
-    "LocationLatitude",
-    "LocationLongitude",
-    "RecipientEmail",
-    "RecipientFirstName",
-    "RecipientLastName",
-    "ExternalReference",
-]
+sys.path.insert(0, "src")
+from _config import PII_COLUMNS  # noqa: E402 -- single source of truth, shared with 01_clean.py
 
 
 def main():

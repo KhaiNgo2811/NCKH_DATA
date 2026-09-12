@@ -52,20 +52,52 @@ def main():
     ro.globalenv["input_data"] = r_df
     result = ro.r("run_plssem(input_data)")
 
+    # 07_plssem_bridge.R's run_plssem() returns a named list with 7 elements
+    # (loadings, weights, reliability, path_coefficients, f_squared, htmt,
+    # boot_paths) -- pull and save all of them, not just 2. Previously this
+    # script silently dropped reliability/f_squared/htmt/loadings/weights,
+    # forcing a manual re-extraction from the R session for anything beyond
+    # path coefficients.
+    r_result_names = {
+        "loadings": "plssem_outer_loadings.csv",
+        "weights": "plssem_outer_weights.csv",
+        "reliability": "plssem_reliability.csv",
+        "path_coefficients": "plssem_path_coefficients.csv",
+        "f_squared": "plssem_f_squared.csv",
+        "htmt": "plssem_htmt.csv",
+        "boot_paths": "plssem_bootstrap_paths.csv",
+    }
+
+    dfs = {}
     with localconverter(ro.default_converter + pandas2ri.converter):
-        path_coef = ro.conversion.rpy2py(result.rx2("path_coefficients"))
-        boot_paths = ro.conversion.rpy2py(result.rx2("boot_paths"))
-
-    path_coef_df = pd.DataFrame(path_coef)
-    boot_paths_df = pd.DataFrame(boot_paths)
-
-    path_coef_df.to_csv("outputs/tables/plssem_path_coefficients.csv")
-    boot_paths_df.to_csv("outputs/tables/plssem_bootstrap_paths.csv")
+        for r_name, out_filename in r_result_names.items():
+            try:
+                r_obj = result.rx2(r_name)
+            except Exception as e:
+                print(f"!! WARNING: could not extract '{r_name}' from the R result: {e}")
+                continue
+            py_df = pd.DataFrame(ro.conversion.rpy2py(r_obj))
+            dfs[r_name] = py_df
+            py_df.to_csv(f"outputs/tables/{out_filename}")
 
     print("--- PLS-SEM path coefficients (structural model) ---")
-    print(path_coef_df)
+    if "path_coefficients" in dfs:
+        print(dfs["path_coefficients"])
     print("\n--- Bootstrap CIs (10,000 resamples) ---")
-    print(boot_paths_df)
+    if "boot_paths" in dfs:
+        print(dfs["boot_paths"])
+    print("\n--- Reliability (alpha, rhoC, AVE, rhoA per construct) ---")
+    if "reliability" in dfs:
+        print(dfs["reliability"])
+    print("\n--- f-squared (incl. beta_M1/beta_M2 individual effect sizes) ---")
+    if "f_squared" in dfs:
+        print(dfs["f_squared"])
+    print("\n--- HTMT (discriminant validity) ---")
+    if "htmt" in dfs:
+        print(dfs["htmt"])
+
+    written = [f"outputs/tables/{r_result_names[name]}" for name in dfs]
+    print(f"\n[run_plssem] wrote: {', '.join(written)}")
     print("\n!! Cross-validate all numbers against SmartPLS 4 before manuscript use "
           "(CLAUDE.md SS5, 07_plssem_bridge.R rule).")
 
