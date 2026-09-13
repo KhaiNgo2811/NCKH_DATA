@@ -120,16 +120,21 @@ data (see `CLAUDE.md` §7).
 
 ## Current status
 
-See `CLAUDE.md` §7 for what's done and what's still open — it's the living record,
-this section is just a pointer so it doesn't rot the way the paragraph it replaced
-did (REL4 is no longer excluded from the measurement model; that reflected a since-
-reversed Amendment A-9 decision). As of 2026-09-11: pipeline runs end-to-end on real
-pilot data (`data/raw/pilot_real.csv`, a live/growing export); reliability is strong
-across constructs; AIP↔REL discriminant validity (HTMT) is an open concern under
-active investigation; the MC_AIP manipulation check is borderline/failing the
-|d|≥0.50 gate depending on checkpoint and uses an Intention-to-Treat (ITT) design
-(report-only, no individual-level exclusion) as of the same date — see `CLAUDE.md`
-§6.1 for why.
+See `CLAUDE.md` §7–§9 for what's done and what's still open — it's the living
+record, this section is just a pointer so it doesn't rot the way the paragraph it
+replaced did (REL4 is no longer excluded from the measurement model; that
+reflected a since-reversed Amendment A-9 decision). As of 2026-09-13: pipeline
+runs end-to-end on real pilot data (`data/raw/pilot_real.csv`, a live/growing
+export, 130 raw responses as of this update, n=76 after exclusions); reliability
+is strong across constructs; AIP↔REL discriminant validity (HTMT) is an open
+concern under active investigation; the MC_AIP manipulation check is borderline
+(d≈0.45–0.49, just under the 0.50 gate) and uses an Intention-to-Treat (ITT)
+design (report-only, no individual-level exclusion) — see `CLAUDE.md` §6.1 for
+why. `01_clean.py` now also labels each response `sample_role = pilot/main`
+using an **administrative** cutoff (when the `LOC` field was added,
+2026-09-12 02:15:56) — explicitly not a measurement-readiness boundary; the
+manipulation-check gate has not cleared on either side of it — see `CLAUDE.md`
+§9.
 
 ## ⚠️ Known PII exposure in git history (as of 2026-09-11)
 

@@ -117,6 +117,20 @@ PII_COLUMNS = [
     "ExternalReference",
 ]
 
+# ---- Pilot -> main administrative boundary (2026-09-13, requested by Khai) ----
+# MAIN_DATA_START_TIMESTAMP marks the same moment the LOC demographic item was
+# added to the live Qualtrics instrument (2026-09-12 02:15:56) -- reused here
+# as the administrative cutoff between 'pilot' and 'main' sample_role labels.
+# This is an ADMINISTRATIVE boundary (when a field was added), NOT a
+# measurement-readiness boundary -- the manipulation-check gate
+# (04_manipulation_check.py, |d| >= 0.50) has not cleared on data on either
+# side of it as of 2026-09-13. See 01_clean.py's printed reminder and
+# TF v2.10 / OD-12 (referenced in the request that added this; not otherwise
+# present in this session's own records -- verify against the actual TF/OD
+# text if you rely on the citation).
+RECORDED_DATE_COL = "RecordedDate"
+MAIN_DATA_START_TIMESTAMP = "2026-09-12 02:15:56"  # = LOC_ADDED_TIMESTAMP
+
 # ---- Ngưỡng loại bỏ mẫu ----
 # POLICY CHANGE (2026-09-11, requested by Khai, amended same day): 01_clean.py's
 # hard-drop pipeline uses ONLY 3 criteria -- missing data, duplicate response

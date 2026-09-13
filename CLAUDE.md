@@ -663,3 +663,79 @@ already fine):**
   `_config.py` comment as a scalability concern for main collection (n≥400,
   ~80k pairs) rather than fixed now; pilot n is small enough that it's not
   worth the added complexity yet.
+
+---
+
+## 9. `sample_role` (pilot/main administrative label) — 2026-09-13
+
+**Context-honesty note:** this request cited "TF v2.10" and "OD-12" as the basis
+for using the LOC-field-addition timestamp as the pilot→main boundary. Neither
+appears anywhere in this session's actual records (not in CLAUDE.md, not in the
+extracted TF v2.11/Codebook v2.6 text). Implemented as literally specified below;
+verify the TF v2.10/OD-12 citation independently before repeating it elsewhere.
+
+**What this is:** `MAIN_DATA_START_TIMESTAMP` (`_config.py`, = 2026-09-12
+02:15:56, the same moment the `LOC` demographic item was added to the live
+instrument) is now also used as an **administrative** boundary: responses
+recorded before it are labeled `sample_role = "pilot"`, at/after it
+`sample_role = "main"`. `01_clean.py::compute_collection_phase()` sets this
+alongside the older technical `collection_phase` column (`pre_LOC`/`post_LOC`,
+same cutoff, kept in parallel for traceability — the two columns currently
+partition identically since they share one cutoff, but are named for different
+purposes in case that cutoff ever needs to diverge from a future LOC-specific
+one).
+
+**This is explicitly NOT a measurement-readiness boundary.** `01_clean.py`
+prints a reminder on every run:
+> sample_role boundary is administrative (LOC field added), not a
+> measurement-readiness boundary. Manipulation-check gate
+> (04_manipulation_check.py) has not cleared d>=0.50 as of the most recent
+> batch on this side of the boundary either.
+
+`04_manipulation_check.py` itself is **unchanged** — its gate logic and
+|d|≥0.50 threshold apply exactly as before, to whatever file is passed to it.
+Labeling a row `sample_role="main"` does **not** mean main collection has
+formally opened per §7's checklist (pilot MC gate still hasn't cleared) — it's
+a bookkeeping label for filtering, not a governance sign-off.
+
+`01_clean.py::collection_checkpoint_log(df)` writes
+`outputs/tables/collection_checkpoint_log.csv` (one shared file across
+`--phase` runs, not per-phase) — n and AIP_COND breakdown by `sample_role` ×
+`collection_phase`.
+
+**Result on `pilot_real.csv` (130 raw, 2026-09-13):** 130 → n=76 after
+exclusions (unchanged from §9's earlier LOC-tracking numbers — same filtering
+logic, just relabeled).
+
+| sample_role | collection_phase | n | AIP low(0) | AIP high(1) | % high |
+|---|---|---|---|---|---|
+| pilot | pre_LOC | 61 | 36 | 25 | 41.0% |
+| main | post_LOC | 15 | 7 | 8 | 53.3% |
+
+Ad hoc (not wired into `04_manipulation_check.py`, gate logic there is
+unchanged): MC_AIP d by `sample_role` — pilot (n=61): d=0.409, p=0.084; main
+(n=15): d=0.859, p=0.145. The "main" d looks stronger, but n=15 (7 vs 8) makes
+that number extremely unstable — not a basis for concluding the manipulation
+is fine "for main," consistent with the printed reminder that the gate hasn't
+cleared on either side yet.
+
+**Update (2026-09-13, same day):** `04_manipulation_check.py` and
+`03_reliability_efa.py` both gained an optional `--sample-role {pilot,main,all}`
+flag so the ad hoc numbers above can be reproduced without a one-off script.
+`all` (the default) preserves the exact prior behavior — no filtering, same
+output filenames — so existing invocations without the flag are unaffected.
+Passing `pilot` or `main` filters rows on the `sample_role` column before
+running the SAME unchanged calculation (t-test/Cohen's d formula, α/CR/AVE/
+HTMT formulas, gate threshold) and appends `_{role}` to every output filename
+(e.g. `pilot_manipulation_check_main.csv`) so a filtered run never silently
+overwrites the unfiltered one. This does **not** loosen or reinterpret the MC
+gate — per §9's rule, `sample_role="main"` is still just an administrative
+label, and a `main`-filtered gate PASS (e.g. the n=15 case above happens to
+show `PASS` when actually filtered through `04_manipulation_check.py`) must
+not be read as "the manipulation works for main collection," given how
+unstable that number is at n=15.
+
+```bash
+python src/04_manipulation_check.py --input data/processed/pilot_clean.csv --sample-role pilot
+python src/03_reliability_efa.py --input data/processed/pilot_clean.csv --sample-role main
+```

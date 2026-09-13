@@ -13,6 +13,7 @@ from _config import (  # noqa: E402
     MAX_MISSING_ITEM_PCT,
     DEMOGRAPHIC_PNTS_CODE, DEMOGRAPHIC_PNTS_COLS,
     PII_COLUMNS,
+    RECORDED_DATE_COL, MAIN_DATA_START_TIMESTAMP,
 )
 
 # ---------------------------------------------------------------------------
@@ -236,6 +237,59 @@ def flag_extreme_reversers(df, mc_col=MC_AIP_COL, cond_col=AIP_COND_COL,
     return df
 
 
+def compute_collection_phase(df):
+    """Adds two parallel columns, both derived from the same
+    MAIN_DATA_START_TIMESTAMP cutoff compared against RECORDED_DATE_COL
+    (never row order/index -- unstable across re-exports of a growing survey):
+
+      - 'collection_phase': 'pre_LOC' / 'post_LOC' -- the technical marker
+        (whether the LOC demographic item existed yet when this response was
+        recorded). Kept for technical traceability.
+      - 'sample_role': 'pilot' / 'main' -- the OFFICIAL administrative label
+        (2026-09-13, requested by Khai) built on the same cutoff. This is an
+        administrative boundary (when a field was added), NOT a
+        measurement-readiness boundary -- see the printed reminder in main()
+        and the note in _config.py. 04_manipulation_check.py's gate logic is
+        UNCHANGED by this label and must not be loosened just because a
+        'main' bucket now exists.
+
+    Both columns are 'unknown' if RecordedDate can't be parsed."""
+    if RECORDED_DATE_COL not in df.columns:
+        df["collection_phase"] = "unknown"
+        df["sample_role"] = "unknown"
+        return df
+    recorded = pd.to_datetime(df[RECORDED_DATE_COL], errors="coerce")
+    cutoff = pd.to_datetime(MAIN_DATA_START_TIMESTAMP)
+    df["collection_phase"] = np.where(recorded.isna(), "unknown",
+                                       np.where(recorded >= cutoff, "post_LOC", "pre_LOC"))
+    df["sample_role"] = np.where(recorded.isna(), "unknown",
+                                  np.where(recorded < cutoff, "pilot", "main"))
+    return df
+
+
+def collection_checkpoint_log(df):
+    """Checkpoint table keyed by sample_role (with collection_phase carried
+    along for cross-reference): n per role, n/pct by AIP_COND within each
+    role (differential-attrition tracking). Diagnostic only -- filters
+    nobody. Always written to outputs/tables/collection_checkpoint_log.csv
+    (one shared file, not per --phase) so pilot/main can be filtered out of
+    it directly regardless of which --phase this run used."""
+    rows = []
+    if "sample_role" in df.columns:
+        group_cols = ["sample_role"] + (["collection_phase"] if "collection_phase" in df.columns else [])
+        for keys, sub in df.groupby(group_cols):
+            keys = keys if isinstance(keys, tuple) else (keys,)
+            row = dict(zip(group_cols, keys))
+            row["n"] = len(sub)
+            if AIP_COND_COL in df.columns:
+                aip = pd.to_numeric(sub[AIP_COND_COL], errors="coerce")
+                row["n_AIP_low_0"] = int((aip == 0).sum())
+                row["n_AIP_high_1"] = int((aip == 1).sum())
+                row["pct_AIP_high"] = round((aip == 1).mean() * 100, 1) if len(aip.dropna()) else None
+            rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def check_cell_consistency(df):
     """Diagnostic only -- does not drop anyone. Flags CELL vs AIP_COND x
     DISC_COND disagreement (Survey-Flow integrity signal)."""
@@ -312,6 +366,19 @@ def main():
     clean = recode_cond(clean)
     clean = recode_pnts(clean)
     clean = compute_construct_scores(clean)
+    clean = compute_collection_phase(clean)
+
+    print("\nNOTE: sample_role boundary is administrative (LOC field added), "
+          "not a measurement-readiness boundary. Manipulation-check gate "
+          "(04_manipulation_check.py) has not cleared d>=0.50 as of the most "
+          "recent batch on this side of the boundary either. See TF v2.10, OD-12.")
+
+    checkpoint = collection_checkpoint_log(clean)
+    print("\n[collection_checkpoint_log] n by sample_role (pilot/main) and collection_phase, "
+          "with AIP_COND breakdown:")
+    print(checkpoint.to_string(index=False) if len(checkpoint) else "(no data)")
+    checkpoint_path = "outputs/tables/collection_checkpoint_log.csv"
+    checkpoint.to_csv(checkpoint_path, index=False)
 
     # Group-level ITT evidence (report only, n_excluded=0) -- run AFTER filtering.
     mc_result = report_manipulation_check(clean, MC_AIP_COL, AIP_COND_COL)
@@ -345,7 +412,7 @@ def main():
 
     print(f"\n[01_clean] input={args.input} phase={args.phase}")
     print(log.to_string(index=False))
-    print(f"[01_clean] wrote {out_csv} (n={len(clean)}) and {out_log}")
+    print(f"[01_clean] wrote {out_csv} (n={len(clean)}), {out_log}, and {checkpoint_path}")
 
 
 if __name__ == "__main__":

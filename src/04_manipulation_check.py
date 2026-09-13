@@ -46,8 +46,27 @@ def main():
                           "backward compatibility, but pass --phase main when running "
                           "against main-collection data or you will silently overwrite "
                           "the pilot results file.")
+    ap.add_argument("--sample-role", choices=["pilot", "main", "all"], default="all",
+                     help="Optional row filter on the 'sample_role' column "
+                          "(01_clean.py::compute_collection_phase(), an ADMINISTRATIVE "
+                          "pilot/main label, see CLAUDE.md SS9 -- not a measurement-"
+                          "readiness boundary). Default 'all' preserves the original "
+                          "behavior (no filtering) exactly. This does NOT change the "
+                          "gate threshold or t-test/Cohen's d formula -- it only "
+                          "changes which rows feed into the same unchanged calculation.")
     args = ap.parse_args()
     df = pd.read_csv(args.input)
+
+    if args.sample_role != "all":
+        if "sample_role" not in df.columns:
+            print(f"!! WARNING: --sample-role={args.sample_role} requested but the input "
+                  f"has no 'sample_role' column (only present after 01_clean.py's "
+                  f"2026-09-13 sample_role labeling) -- running on the full input instead.")
+        else:
+            n_before = len(df)
+            df = df[df["sample_role"] == args.sample_role].copy()
+            print(f"[04_manipulation_check] --sample-role={args.sample_role}: "
+                  f"{n_before} -> {len(df)} rows")
 
     results = []
     aip_col = AIP_COND_COL if AIP_COND_COL in df.columns else "AIP_COND"
@@ -71,7 +90,8 @@ def main():
               f"group in column '{DISC_COL}') -- NOT included in the gate verdict below.")
 
     out = pd.DataFrame(results)
-    out_path = f"outputs/tables/{args.phase}_manipulation_check.csv"
+    role_suffix = f"_{args.sample_role}" if args.sample_role != "all" else ""
+    out_path = f"outputs/tables/{args.phase}_manipulation_check{role_suffix}.csv"
     out.to_csv(out_path, index=False)
     print("--- Manipulation check t-tests (gate: |d| >= 0.50) ---")
     print(out.to_string(index=False))
