@@ -89,7 +89,34 @@ VIG_TIME_BASE_COLS = ["VIG_TIME_First Click", "VIG_TIME_Last Click",
 DURATION_COL = "Duration (in seconds)"
 
 # Demographics
-DEMOGRAPHIC_COLS = ["AGE_BAND", "GEN", "EDU", "INC", "FREQ", "PLAT", "PRIOR"]
+# LOC and REF (2026-09-14, requested by Khai) are two new demographic items
+# added to the live Qualtrics instrument alongside the earlier LOC addition
+# (see MAIN_DATA_START_TIMESTAMP note above):
+#   LOC ("Bạn hiện đang sinh sống ở đâu?" / area of residence) -- has an
+#     "other, please specify" companion column, LOC_TEXT_COL.
+#   REF ("Bạn nhận khảo sát này từ ai?" / "Who did you receive this survey
+#     from?" -- the referrer/recruitment-source item) -- values 1-5, no free-
+#     text companion column in the raw export (unlike LOC/PLAT's _5_TEXT).
+# Both are demographics/covariates only -- neither is part of the 34-item
+# reflective battery (ALL_ITEMS above), so neither affects
+# excess_missing_items, straightlining, or any exclusion rule.
+LOC_COL = "LOC"
+LOC_TEXT_COL = "LOC_5_TEXT"
+REF_COL = "REF"
+DEMOGRAPHIC_COLS = ["AGE_BAND", "GEN", "LOC", "EDU", "INC", "FREQ", "PLAT", "PRIOR", "REF"]
+
+# REF value labels (2026-09-15, requested by Khai) -- REF tracks which team
+# member's link/invite a respondent came through, not a respondent-level
+# identity, so this is operational/team bookkeeping, not respondent PII.
+# Used by 02_descriptives.py to show names instead of bare codes 1-5.
+REF_LABELS = {
+    1: "Hoàng Khải",
+    2: "Tuấn Anh",
+    3: "Đức Thiện",
+    4: "Trọng Phúc",
+    5: "Như Quỳnh",
+}
+
 CHAN_COL = "CHAN"
 CHAN_CODES = ["CHAN_APP", "CHAN_WEB", "CHAN_LIVE", "CHAN_STORE", "CHAN_SOC"]
 
@@ -116,6 +143,20 @@ PII_COLUMNS = [
     "RecipientLastName",
     "ExternalReference",
 ]
+
+# ---- Pilot -> main administrative boundary (2026-09-13, requested by Khai) ----
+# MAIN_DATA_START_TIMESTAMP marks the same moment the LOC demographic item was
+# added to the live Qualtrics instrument (2026-09-12 02:15:56) -- reused here
+# as the administrative cutoff between 'pilot' and 'main' sample_role labels.
+# This is an ADMINISTRATIVE boundary (when a field was added), NOT a
+# measurement-readiness boundary -- the manipulation-check gate
+# (04_manipulation_check.py, |d| >= 0.50) has not cleared on data on either
+# side of it as of 2026-09-13. See 01_clean.py's printed reminder and
+# TF v2.10 / OD-12 (referenced in the request that added this; not otherwise
+# present in this session's own records -- verify against the actual TF/OD
+# text if you rely on the citation).
+RECORDED_DATE_COL = "RecordedDate"
+MAIN_DATA_START_TIMESTAMP = "2026-09-12 02:15:56"  # = LOC_ADDED_TIMESTAMP
 
 # ---- Ngưỡng loại bỏ mẫu ----
 # POLICY CHANGE (2026-09-11, requested by Khai, amended same day): 01_clean.py's
@@ -144,8 +185,20 @@ STRAIGHTLINE_HARD_SD_THRESHOLD = 0.10
 
 # Duplicate / near-duplicate response pattern (per-respondent hard drop). Two
 # respondents are treated as duplicates if their answers differ on at most
-# this many of the fielded items (0 = exact match only). O(n^2) pairwise
-# comparison in 01_clean.py::flag_duplicate_response_pattern -- fine at pilot
-# n, but will need a vectorized/hashing approach before main collection
-# (n>=400, ~80k pairs) if it becomes a runtime bottleneck.
+# this many of the fielded items (0 = exact match only), AND they have at
+# least DUPLICATE_MIN_OVERLAP_ITEMS items both jointly answered. O(n^2)
+# pairwise comparison in 01_clean.py::flag_duplicate_response_pattern -- fine
+# at pilot n, but will need a vectorized/hashing approach before main
+# collection (n>=400, ~80k pairs) if it becomes a runtime bottleneck.
 DUPLICATE_MAX_DIFFERING_ITEMS = 2
+
+# BUGFIX 2026-09-15: without a minimum-overlap requirement, two respondents
+# who both have heavy missingness (e.g. 3 answered items each, most of the
+# battery blank) could match by chance on those few shared items and get
+# flagged as "duplicates" even though the match is noise, not real content
+# overlap -- ndiff<=2 is trivially satisfied when there are only 3-5 jointly-
+# answered items. Verified against pilot_real.csv (2026-09-14, n=289/323/409
+# checkpoints) that this had NOT yet produced a false positive -- both
+# genuinely-flagged pairs had full 34/34 item overlap -- but the gap was
+# real and this constant closes it before it can bite at larger n.
+DUPLICATE_MIN_OVERLAP_ITEMS = 15

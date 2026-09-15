@@ -483,6 +483,17 @@ def main():
         required=True,
         help="Path to the cleaned pilot CSV.",
     )
+    ap.add_argument(
+        "--sample-role",
+        choices=["pilot", "main", "all"],
+        default="all",
+        help="Optional row filter on the 'sample_role' column "
+             "(01_clean.py::compute_collection_phase(), an ADMINISTRATIVE "
+             "pilot/main label, see CLAUDE.md SS9 -- not a measurement-readiness "
+             "boundary). Default 'all' preserves the original behavior (no "
+             "filtering) exactly -- this does not change any threshold or formula "
+             "below, only which rows are analysed.",
+    )
 
     args = ap.parse_args()
 
@@ -495,6 +506,20 @@ def main():
 
     df = pd.read_csv(input_path)
 
+    role_suffix = ""
+    if args.sample_role != "all":
+        if "sample_role" not in df.columns:
+            print(f"!! WARNING: --sample-role={args.sample_role} requested but the "
+                  f"input has no 'sample_role' column (only present after "
+                  f"01_clean.py's 2026-09-13 sample_role labeling) -- running on "
+                  f"the full input instead.")
+        else:
+            n_before = len(df)
+            df = df[df["sample_role"] == args.sample_role].copy()
+            role_suffix = f"_{args.sample_role}"
+            print(f"[03_reliability_efa] --sample-role={args.sample_role}: "
+                  f"{n_before} -> {len(df)} rows")
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     # -------------------------------------------------------------
@@ -502,7 +527,7 @@ def main():
     # -------------------------------------------------------------
 
     rel_tab = reliability_table(df)
-    reliability_path = OUTPUT_DIR / "pilot_reliability.csv"
+    reliability_path = OUTPUT_DIR / "pilot_reliability{}.csv".format(role_suffix)
     rel_tab.to_csv(reliability_path, index=False)
 
     print("--- Cronbach's alpha per construct (pilot) ---")
@@ -521,7 +546,7 @@ def main():
     # -------------------------------------------------------------
 
     eng_dim_tab = eng_dimension_reliability_table(df)
-    eng_dim_path = OUTPUT_DIR / "pilot_eng_dimension_reliability.csv"
+    eng_dim_path = OUTPUT_DIR / "pilot_eng_dimension_reliability{}.csv".format(role_suffix)
     eng_dim_tab.to_csv(eng_dim_path, index=False)
 
     print("\n--- ENG within-dimension reliability (Amendment A-12, not pooled) ---")
@@ -532,7 +557,7 @@ def main():
     # -------------------------------------------------------------
 
     loadings_tab = all_outer_loadings(df)
-    loadings_path = OUTPUT_DIR / "pilot_outer_loadings.csv"
+    loadings_path = OUTPUT_DIR / "pilot_outer_loadings{}.csv".format(role_suffix)
     loadings_tab.to_csv(loadings_path, index=False)
 
     print("\n--- Outer loadings (single-factor per construct) ---")
@@ -553,7 +578,7 @@ def main():
     # -------------------------------------------------------------
 
     cr_ave_tab = cr_ave_table(loadings_tab)
-    cr_ave_path = OUTPUT_DIR / "pilot_cr_ave.csv"
+    cr_ave_path = OUTPUT_DIR / "pilot_cr_ave{}.csv".format(role_suffix)
     cr_ave_tab.to_csv(cr_ave_path, index=False)
 
     print("\n--- Composite Reliability (CR) and AVE ---")
@@ -579,7 +604,7 @@ def main():
     # -------------------------------------------------------------
 
     htmt_tab = htmt_table(df)
-    htmt_path = OUTPUT_DIR / "pilot_htmt.csv"
+    htmt_path = OUTPUT_DIR / "pilot_htmt{}.csv".format(role_suffix)
     htmt_tab.to_csv(htmt_path, index=False)
 
     print("\n--- HTMT (discriminant validity) ---")
@@ -603,7 +628,7 @@ def main():
 
     print(f"\n--- EFA AIP-REL cross-loading check ({diag}) ---")
 
-    efa_path = OUTPUT_DIR / "pilot_efa_aip_rel_crossloadings.csv"
+    efa_path = OUTPUT_DIR / "pilot_efa_aip_rel_crossloadings{}.csv".format(role_suffix)
 
     if efa_loadings.empty:
         print(diag)

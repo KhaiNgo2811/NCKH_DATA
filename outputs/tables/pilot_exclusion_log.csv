@@ -1,7 +1,8 @@
 step,n_before,n_dropped_this_step,n_after
-excess_missing_items,102,47,55
-duplicate_response_pattern,55,0,55
-straightlining_near_zero_sd,55,0,55
-TOTAL,102,47,55
-"manipulation_check_group_evidence (report only, n_excluded=0, d=0.449, p=0.0681)",55,0,55
-"manipulation_check_composite_evidence (report only, n_excluded=0, AIP_mean d=0.397, p=0.1372)",55,0,55
+excess_missing_items,665,313,352
+duplicate_response_pattern,352,15,337
+straightlining_near_zero_sd,337,0,337
+TOTAL,665,328,337
+"manipulation_check_group_evidence_MC_AIP (report only, n_excluded=0, d=0.63, p=0.0)",337,0,337
+"manipulation_check_group_evidence_MC_DISC (report only, n_excluded=0, d=1.05, p=0.0)",337,0,337
+"manipulation_check_composite_evidence (report only, n_excluded=0, AIP_mean d=0.622, p=0.0)",337,0,337

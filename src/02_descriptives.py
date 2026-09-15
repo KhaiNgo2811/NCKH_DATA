@@ -10,7 +10,17 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, "src")
-from _config import DEMOGRAPHIC_COLS, AIP_COND_COL, DISC_COL, CONSTRUCT_ITEMS  # noqa: E402
+from _config import (  # noqa: E402
+    DEMOGRAPHIC_COLS, AIP_COND_COL, DISC_COL, CONSTRUCT_ITEMS, REF_COL, REF_LABELS,
+)
+
+# Value -> label maps for demographic columns whose raw codes aren't
+# self-explanatory. REF (2026-09-15, requested by Khai) tracks which team
+# member referred a respondent -- operational bookkeeping, not respondent PII.
+# Add more {column: {value: label}} entries here as other coded columns need it.
+DEMOGRAPHIC_VALUE_LABELS = {
+    REF_COL: REF_LABELS,
+}
 
 
 def cell_balance(df):
@@ -26,6 +36,19 @@ def cell_balance(df):
     return tab
 
 
+def _label_for(col, val):
+    """Look up a human-readable label for a coded demographic value, if this
+    column has a mapping in DEMOGRAPHIC_VALUE_LABELS. Handles float-vs-int
+    codes (pandas often reads whole-number codes as float, e.g. 1.0)."""
+    label_map = DEMOGRAPHIC_VALUE_LABELS.get(col)
+    if label_map is None or pd.isna(val):
+        return ""
+    try:
+        return label_map.get(int(val), "")
+    except (TypeError, ValueError):
+        return label_map.get(val, "")
+
+
 def demographic_summary(df):
     rows = []
     for col in DEMOGRAPHIC_COLS:
@@ -34,8 +57,8 @@ def demographic_summary(df):
             continue
         vc = df[target].value_counts(dropna=False)
         for val, cnt in vc.items():
-            rows.append({"variable": col, "value": val, "n": cnt,
-                         "pct": round(cnt / len(df) * 100, 1)})
+            rows.append({"variable": col, "value": val, "label": _label_for(col, val),
+                         "n": cnt, "pct": round(cnt / len(df) * 100, 1)})
     return pd.DataFrame(rows)
 
 

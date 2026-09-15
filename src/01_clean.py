@@ -9,10 +9,11 @@ from _qualtrics_io import load_and_normalize  # noqa: E402
 from _config import (  # noqa: E402
     FIELDED_ITEMS, CONSTRUCT_ITEMS, DISC_COL, AIP_COND_COL, CELL_COL,
     MC_AIP_COL, MC_DISC_COL, MC_MIDPOINT,
-    STRAIGHTLINE_HARD_SD_THRESHOLD, DUPLICATE_MAX_DIFFERING_ITEMS,
+    STRAIGHTLINE_HARD_SD_THRESHOLD, DUPLICATE_MAX_DIFFERING_ITEMS, DUPLICATE_MIN_OVERLAP_ITEMS,
     MAX_MISSING_ITEM_PCT,
     DEMOGRAPHIC_PNTS_CODE, DEMOGRAPHIC_PNTS_COLS,
     PII_COLUMNS,
+    RECORDED_DATE_COL, MAIN_DATA_START_TIMESTAMP,
 )
 
 # ---------------------------------------------------------------------------
@@ -84,7 +85,12 @@ def breakdown_mc_groups(df, mc_col=MC_AIP_COL, cond_col=AIP_COND_COL, midpoint=M
 def flag_duplicate_response_pattern(df, items):
     """Flag every respondent who has another respondent with an identical or
     near-identical (<= DUPLICATE_MAX_DIFFERING_ITEMS items differing, over the
-    items both answered) response pattern across the full item battery."""
+    items both answered) response pattern across the full item battery.
+
+    Requires >= DUPLICATE_MIN_OVERLAP_ITEMS jointly-answered items before a
+    pair is even considered (see _config.py note) -- otherwise two heavily
+    incomplete responses could match by chance on a handful of shared items
+    and get flagged as duplicates for no real content-overlap reason."""
     mat = df[items].to_numpy(dtype=float)
     n = len(df)
     is_dup = np.zeros(n, dtype=bool)
@@ -92,7 +98,7 @@ def flag_duplicate_response_pattern(df, items):
         for j in range(i + 1, n):
             row_i, row_j = mat[i], mat[j]
             valid = ~(np.isnan(row_i) | np.isnan(row_j))
-            if valid.sum() == 0:
+            if valid.sum() < DUPLICATE_MIN_OVERLAP_ITEMS:
                 continue
             n_diff = np.sum(row_i[valid] != row_j[valid])
             if n_diff <= DUPLICATE_MAX_DIFFERING_ITEMS:
@@ -236,6 +242,59 @@ def flag_extreme_reversers(df, mc_col=MC_AIP_COL, cond_col=AIP_COND_COL,
     return df
 
 
+def compute_collection_phase(df):
+    """Adds two parallel columns, both derived from the same
+    MAIN_DATA_START_TIMESTAMP cutoff compared against RECORDED_DATE_COL
+    (never row order/index -- unstable across re-exports of a growing survey):
+
+      - 'collection_phase': 'pre_LOC' / 'post_LOC' -- the technical marker
+        (whether the LOC demographic item existed yet when this response was
+        recorded). Kept for technical traceability.
+      - 'sample_role': 'pilot' / 'main' -- the OFFICIAL administrative label
+        (2026-09-13, requested by Khai) built on the same cutoff. This is an
+        administrative boundary (when a field was added), NOT a
+        measurement-readiness boundary -- see the printed reminder in main()
+        and the note in _config.py. 04_manipulation_check.py's gate logic is
+        UNCHANGED by this label and must not be loosened just because a
+        'main' bucket now exists.
+
+    Both columns are 'unknown' if RecordedDate can't be parsed."""
+    if RECORDED_DATE_COL not in df.columns:
+        df["collection_phase"] = "unknown"
+        df["sample_role"] = "unknown"
+        return df
+    recorded = pd.to_datetime(df[RECORDED_DATE_COL], errors="coerce")
+    cutoff = pd.to_datetime(MAIN_DATA_START_TIMESTAMP)
+    df["collection_phase"] = np.where(recorded.isna(), "unknown",
+                                       np.where(recorded >= cutoff, "post_LOC", "pre_LOC"))
+    df["sample_role"] = np.where(recorded.isna(), "unknown",
+                                  np.where(recorded < cutoff, "pilot", "main"))
+    return df
+
+
+def collection_checkpoint_log(df):
+    """Checkpoint table keyed by sample_role (with collection_phase carried
+    along for cross-reference): n per role, n/pct by AIP_COND within each
+    role (differential-attrition tracking). Diagnostic only -- filters
+    nobody. Always written to outputs/tables/collection_checkpoint_log.csv
+    (one shared file, not per --phase) so pilot/main can be filtered out of
+    it directly regardless of which --phase this run used."""
+    rows = []
+    if "sample_role" in df.columns:
+        group_cols = ["sample_role"] + (["collection_phase"] if "collection_phase" in df.columns else [])
+        for keys, sub in df.groupby(group_cols):
+            keys = keys if isinstance(keys, tuple) else (keys,)
+            row = dict(zip(group_cols, keys))
+            row["n"] = len(sub)
+            if AIP_COND_COL in df.columns:
+                aip = pd.to_numeric(sub[AIP_COND_COL], errors="coerce")
+                row["n_AIP_low_0"] = int((aip == 0).sum())
+                row["n_AIP_high_1"] = int((aip == 1).sum())
+                row["pct_AIP_high"] = round((aip == 1).mean() * 100, 1) if len(aip.dropna()) else None
+            rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def check_cell_consistency(df):
     """Diagnostic only -- does not drop anyone. Flags CELL vs AIP_COND x
     DISC_COND disagreement (Survey-Flow integrity signal)."""
@@ -312,16 +371,60 @@ def main():
     clean = recode_cond(clean)
     clean = recode_pnts(clean)
     clean = compute_construct_scores(clean)
+    clean = compute_collection_phase(clean)
 
-    # Group-level ITT evidence (report only, n_excluded=0) -- run AFTER filtering.
+    # Group-level ITT evidence (report only, n_excluded=0) -- run AFTER filtering,
+    # and BEFORE the NOTE below so the note can reflect the actual result rather
+    # than a canned line.
     mc_result = report_manipulation_check(clean, MC_AIP_COL, AIP_COND_COL)
     disc_result = report_manipulation_check(clean, MC_DISC_COL, DISC_COL)
     composite_result = report_manipulation_check_composite(clean, AIP_COND_COL)
 
+    # BUGFIX 2026-09-15: this NOTE used to be a fixed string claiming the gate
+    # "has not cleared" regardless of what the data actually showed -- it was
+    # already stale by the time larger batches started passing. Now built from
+    # mc_result/disc_result's own flag_d_below_0.50 (same |d|>=0.50 threshold
+    # 04_manipulation_check.py's gate uses), so it always matches this run.
+    gate_bits = []
+    for label, res in (("MC_AIP", mc_result), ("MC_DISC", disc_result)):
+        if res is None:
+            gate_bits.append(f"{label}: not computed (insufficient n)")
+        else:
+            status = "FAIL" if res["flag_d_below_0.50"] else "PASS"
+            gate_bits.append(f"{label} {status} (d={res['cohens_d']}, p={res['p']})")
+    both_pass = (mc_result is not None and disc_result is not None
+                 and not mc_result["flag_d_below_0.50"] and not disc_result["flag_d_below_0.50"])
+    if both_pass:
+        print(f"\nNOTE: manipulation-check gate CLEARS on this run -- {', '.join(gate_bits)}. "
+              f"sample_role is still an administrative label (LOC field added, not a "
+              f"measurement-readiness decision by itself) -- but the |d|>=0.50 gate "
+              f"04_manipulation_check.py checks is, as of this run, actually met.")
+    else:
+        print(f"\nNOTE: manipulation-check gate does NOT clear on this run -- {', '.join(gate_bits)}. "
+              f"sample_role boundary is administrative (LOC field added), not a "
+              f"measurement-readiness boundary -- and per the above, gate readiness "
+              f"still needs to be re-confirmed on whatever slice you're about to use.")
+
+    checkpoint = collection_checkpoint_log(clean)
+    print("\n[collection_checkpoint_log] n by sample_role (pilot/main) and collection_phase, "
+          "with AIP_COND breakdown:")
+    print(checkpoint.to_string(index=False) if len(checkpoint) else "(no data)")
+    checkpoint_path = "outputs/tables/collection_checkpoint_log.csv"
+    checkpoint.to_csv(checkpoint_path, index=False)
+
     if mc_result is not None:
         log.loc[len(log)] = {
-            "step": f"manipulation_check_group_evidence (report only, n_excluded=0, "
+            "step": f"manipulation_check_group_evidence_MC_AIP (report only, n_excluded=0, "
                     f"d={mc_result['cohens_d']}, p={mc_result['p']})",
+            "n_before": len(clean), "n_dropped_this_step": 0, "n_after": len(clean),
+        }
+    if disc_result is not None:
+        # BUGFIX 2026-09-15: MC_DISC was computed and printed but never logged --
+        # only MC_AIP and the AIP_mean composite got a log row, so a reader of
+        # pilot_exclusion_log.csv alone would see no trace of MC_DISC's d/p.
+        log.loc[len(log)] = {
+            "step": f"manipulation_check_group_evidence_MC_DISC (report only, n_excluded=0, "
+                    f"d={disc_result['cohens_d']}, p={disc_result['p']})",
             "n_before": len(clean), "n_dropped_this_step": 0, "n_after": len(clean),
         }
     if composite_result is not None:
@@ -345,7 +448,7 @@ def main():
 
     print(f"\n[01_clean] input={args.input} phase={args.phase}")
     print(log.to_string(index=False))
-    print(f"[01_clean] wrote {out_csv} (n={len(clean)}) and {out_log}")
+    print(f"[01_clean] wrote {out_csv} (n={len(clean)}), {out_log}, and {checkpoint_path}")
 
 
 if __name__ == "__main__":
