@@ -197,16 +197,13 @@ project-root/
 │   └── Master_Codebook_vN_updated.docx           # variable-level bridge — always check for a newer N
 ├── data/
 │   ├── raw/
-│   │   ├── pilot_real.csv              # REAL pilot export, 47 responses (10 Sep 2026)
-│   │   ├── pilot_n30_synthetic.csv     # scaffold-testing only
-│   │   └── main_n400_synthetic.csv     # scaffold-testing only
+│   │   └── pilot_real.csv         # REAL, live/growing export — the only raw file in use
 │   └── processed/                 # cleaned, scored datasets (script-generated only)
 ├── src/
 │   ├── _config.py                 # single source of truth: column names, item
 │   │                               # lists, exclusion thresholds — see §4
 │   ├── _qualtrics_io.py           # raw-export detector + normalizer (Likert-text
 │   │                               # parsing, VIG_TIME de-duplication, CHAN decode)
-│   ├── 00_generate_synthetic.py   # scaffold-testing data — never used for real results
 │   ├── 01_clean.py                # loads raw or clean CSV, applies exclusions, recodes -98
 │   ├── 02_descriptives.py         # demographics, cell balance, soft-flag summary
 │   ├── 03_reliability_efa.py      # Cronbach's alpha, loadings, CR/AVE, HTMT, EFA,
@@ -408,8 +405,11 @@ Qualtrics metadata rows (question text, ImportId JSON) as if they were data.
   2. Verify `summary(model)$reliability` and `summary(model)$validity$htmt` extract
      correctly against your installed seminr version.
   3. **Run it locally in VS Code first** (install R + `seminr`/`cSEM`/`pwr`, then
-     `python src/run_plssem.py --input data/processed/main_n400_synthetic.csv`) to
-     confirm the rpy2 bridge round-trips before pointing it at real main-collection data.
+     `python src/run_plssem.py --input data/processed/pilot_clean.csv --sample-role main`)
+     to confirm the rpy2 bridge round-trips before pointing it at a larger real
+     main-collection export. `00_generate_synthetic.py` and the synthetic data
+     files it produced were removed 2026-09-15 (real data has been in use
+     throughout since — see §7/§9) — there is no synthetic fallback anymore.
   4. Cross-validate every reported number against SmartPLS 4 output before it goes in
      the manuscript.
 - **Do not run on pilot data for confirmatory purposes** — pilot is
@@ -739,3 +739,42 @@ unstable that number is at n=15.
 python src/04_manipulation_check.py --input data/processed/pilot_clean.csv --sample-role pilot
 python src/03_reliability_efa.py --input data/processed/pilot_clean.csv --sample-role main
 ```
+
+---
+
+## 10. Synthetic-data removal + code-audit fixes — 2026-09-15
+
+Real data (`pilot_real.csv`) has carried the whole pipeline since 10 Sep and has
+grown past 400 raw responses — the synthetic scaffold that existed to smoke-test
+`00`–`07` before real data landed is no longer needed. Removed: `src/00_generate_synthetic.py`,
+`data/raw/pilot_n30_synthetic.csv`, `data/raw/main_n400_synthetic.csv`,
+`data/processed/main_clean.csv` (derived from the synthetic main file), and three
+other stale scaffold-era files that predated `pilot_real.csv` as the working
+dataset: `data/raw/_smoketest_real_2resp_clean_output.csv`,
+`data/raw/pilot_deidentified.csv`, `data/raw/pilot_partial_raw.csv`. `data/raw/`
+now holds only `pilot_real.csv`. If `05_anova_h3.py`/`06_power_analysis.py`/
+`07_plssem_bridge.R` need testing again before real main-collection data (n≥400
+under the real `sample_role="main"` label, not the administrative one) is ready,
+use `--sample-role main` on the real pilot_clean.csv (§9) rather than regenerating
+synthetic data.
+
+Also fixed, from the same-day source-code audit (full file-by-file review of
+`_config.py`, `_qualtrics_io.py`, `01`–`07`, `run_plssem.py`, `strip_pii.py`):
+- **`01_clean.py`: MC_DISC's group-level evidence was computed and printed but
+  never logged** — only MC_AIP and the AIP_mean composite got a row in
+  `{phase}_exclusion_log.csv`. Fixed: both MC_AIP and MC_DISC now get their own
+  log row (`manipulation_check_group_evidence_MC_AIP` /
+  `_MC_DISC`).
+- **`flag_duplicate_response_pattern()` had no minimum-overlap requirement** —
+  two respondents with heavy missingness (e.g. 3-5 jointly-answered items)
+  could match by chance and get flagged as duplicates on pure noise, since
+  `n_diff <= DUPLICATE_MAX_DIFFERING_ITEMS` is trivially satisfied with few
+  shared items. Verified this had NOT yet produced a false positive on real
+  data (both genuinely-flagged pairs had full 34/34 overlap at every checkpoint
+  tested) — but the gap was real. Fixed: added
+  `_config.py::DUPLICATE_MIN_OVERLAP_ITEMS = 15` — a pair is only compared if
+  they share at least that many jointly-answered items.
+- Reviewed and left as-is: `_qualtrics_io.py` importing `CONSENT_COL`/`AGE_COL`/
+  `OMNI_COL`/`CC1_COL`/`CC2_COL` without using them (dead import, harmless,
+  leftover from when this module did anchor-based filtering directly) — not
+  worth a change on its own after the synthetic-file cleanup above.

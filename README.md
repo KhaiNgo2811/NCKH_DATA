@@ -86,7 +86,6 @@ NCKH_DATA/
 │   │                             # thresholds, PII_COLUMNS
 │   ├── _qualtrics_io.py         # raw-export loader/normalizer
 │   ├── strip_pii.py             # de-identify a RAW export before committing
-│   ├── 00_generate_synthetic.py
 │   ├── 01_clean.py              # exclusions (missing/duplicate/straightlining),
 │   │                             # ITT-based manipulation-check reporting, construct
 │   │                             # scores, PII stripping on the CLEANED output too
@@ -104,15 +103,84 @@ NCKH_DATA/
     └── figures/                 # gitignored
 ```
 
-## Typical run (pilot)
+## How to run the pipeline
+
+### 1. Get a raw export in place
+
+`pilot_real.csv` is a **live, growing** Qualtrics export — every re-export can
+change both the row count and (occasionally) the column set (two new
+demographic items, `LOC` and `REF`, were added mid-collection; see `CLAUDE.md`
+§9). Two ways to get a new export in:
 
 ```bash
+# If you have a fresh raw export with PII (IPAddress/location/recipient info):
 python src/strip_pii.py --input <your_export.csv> --output data/raw/pilot_deidentified.csv
-python src/01_clean.py --input data/raw/pilot_deidentified.csv --phase pilot
+
+# If you're just re-running against the export already in data/raw/pilot_real.csv:
+# nothing to do here, skip to step 2.
+```
+
+### 2. Clean + label (`01_clean.py`) — always run this first
+
+```bash
+python src/01_clean.py --input data/raw/pilot_real.csv --phase pilot
+```
+
+This single command:
+- Applies the 3 hard-drop exclusions (missing data, duplicate response
+  pattern, straightlining — see `CLAUDE.md` §6.1).
+- Prints a **before-filtering breakdown** of MC_AIP (genuine miscomprehension
+  vs. dropout) and, after filtering, the **group-level manipulation-check
+  evidence** (Welch's t + Cohen's d for both MC_AIP and MC_DISC, plus a
+  supplementary AIP_mean composite check) — report-only, excludes nobody
+  (Intention-to-Treat design, `CLAUDE.md` §6.1).
+- Adds `{construct}_mean` columns (AIP_mean, REL_mean, ...) and a
+  `flag_extreme_reverser` column (robustness-check flag, never a filter).
+- Adds `collection_phase` (`pre_LOC`/`post_LOC`) and `sample_role`
+  (`pilot`/`main`) — an **administrative** label based on when the `LOC` field
+  was added to the instrument, **not** a measurement-readiness boundary (see
+  `CLAUDE.md` §9). Prints and writes a checkpoint
+  (`outputs/tables/collection_checkpoint_log.csv`) with n and AIP_COND
+  breakdown by both.
+- Strips PII columns before writing the output.
+
+Output: `data/processed/pilot_clean.csv` + `outputs/tables/pilot_exclusion_log.csv`.
+
+### 3. Descriptives, reliability, manipulation check
+
+```bash
 python src/02_descriptives.py --input data/processed/pilot_clean.csv --phase pilot
 python src/03_reliability_efa.py --input data/processed/pilot_clean.csv
 python src/04_manipulation_check.py --input data/processed/pilot_clean.csv
 ```
+
+- `02_descriptives.py` → cell balance (AIP_COND × DISC_COND), demographic
+  summary (including `LOC`/`REF`), and construct-level mean/SD.
+- `03_reliability_efa.py` → Cronbach's α, outer loadings, CR/AVE, HTMT
+  (ENG excluded from the pooled tables per Amendment A-12, gets its own
+  within-dimension table instead), and the AIP/REL EFA cross-loading check.
+- `04_manipulation_check.py` → the pre-registered gate (|d| ≥ 0.50 for both
+  MC_AIP and MC_DISC).
+
+### 4. Optional: filter by `sample_role` (pilot vs. main subset)
+
+`03_reliability_efa.py` and `04_manipulation_check.py` both accept
+`--sample-role {pilot,main,all}` (default `all` = no filtering, identical to
+omitting the flag). This runs the exact same formulas/thresholds on a subset
+of rows and writes to a `_{role}`-suffixed filename, so it never overwrites
+the unfiltered result:
+
+```bash
+python src/04_manipulation_check.py --input data/processed/pilot_clean.csv --sample-role main
+python src/03_reliability_efa.py --input data/processed/pilot_clean.csv --sample-role main
+```
+
+Remember: `sample_role="main"` is a bookkeeping label, not a governance
+sign-off that main collection has formally opened (`CLAUDE.md` §9) — a PASS
+on a `main`-filtered subset does not by itself mean the checklist in
+`CLAUDE.md` §7 is satisfied.
+
+### 5. Main-collection-only scripts
 
 `05_anova_h3.py`, `06_power_analysis.py`, and the PLS-SEM bridge (`07`/`run_plssem.py`)
 are for **main collection (n ≥ 400) only** — do not run them confirmatorily on pilot
@@ -120,21 +188,41 @@ data (see `CLAUDE.md` §7).
 
 ## Current status
 
-See `CLAUDE.md` §7–§9 for what's done and what's still open — it's the living
+See `CLAUDE.md` §7–§10 for what's done and what's still open — it's the living
 record, this section is just a pointer so it doesn't rot the way the paragraph it
 replaced did (REL4 is no longer excluded from the measurement model; that
-reflected a since-reversed Amendment A-9 decision). As of 2026-09-13: pipeline
-runs end-to-end on real pilot data (`data/raw/pilot_real.csv`, a live/growing
-export, 130 raw responses as of this update, n=76 after exclusions); reliability
-is strong across constructs; AIP↔REL discriminant validity (HTMT) is an open
-concern under active investigation; the MC_AIP manipulation check is borderline
-(d≈0.45–0.49, just under the 0.50 gate) and uses an Intention-to-Treat (ITT)
-design (report-only, no individual-level exclusion) — see `CLAUDE.md` §6.1 for
-why. `01_clean.py` now also labels each response `sample_role = pilot/main`
-using an **administrative** cutoff (when the `LOC` field was added,
-2026-09-12 02:15:56) — explicitly not a measurement-readiness boundary; the
-manipulation-check gate has not cleared on either side of it — see `CLAUDE.md`
-§9.
+reflected a since-reversed Amendment A-9 decision).
+
+**No synthetic data as of 2026-09-15** — `00_generate_synthetic.py` and every
+synthetic/stale scaffold-era file under `data/raw/` and `data/processed/` were
+removed; `data/raw/pilot_real.csv` is the only raw file, and it's real
+throughout (see `CLAUDE.md` §10).
+
+As of 2026-09-14: `data/raw/pilot_real.csv` is a live, growing export — 289 raw
+responses as of this update, n=173 after exclusions (`sample_role`: 60 `pilot`
+/ 113 `main`, see step 4 above). Two new demographic items, `LOC` (area of
+residence) and `REF` (referral source — "who did you receive this survey
+from?"), were added to the instrument mid-collection.
+
+**The manipulation-check gate now clears at this n** — MC_AIP d≈0.81–1.04,
+MC_DISC d≈1.20–1.47 depending on whether you look at the full n=173 or the
+`sample_role="main"` n=113 subset (both comfortably above the 0.50 gate; see
+`CLAUDE.md` §9). This is a reversal of the 2026-09-13 status (d≈0.45–0.49,
+failing) — the manipulation looks like it was always fine and the earlier
+numbers were an underpowered pilot n, not a broken vignette. Reliability is
+strong across all constructs (α > 0.85 for most, including PDPL which used to
+have a weak PDPL1 loading — that's resolved at this n). **AIP↔REL discriminant
+validity (HTMT ≈ 0.86, still above the 0.85 threshold) remains the one
+persistent open concern** — it has trended down as n grew (0.95 → 0.86) but
+hasn't cleared, and the specific item driving the EFA cross-loading has moved
+around between checkpoints (AIP2/AIP4/REL2 earlier, REL3 most recently),
+suggesting a genuine content-overlap issue rather than a sampling artifact.
+
+`01_clean.py` labels each response `sample_role = pilot/main` using an
+**administrative** cutoff (when the `LOC` field was added, 2026-09-12
+02:15:56) — this is explicitly not the same as a measurement-readiness
+sign-off; see `CLAUDE.md` §9 before treating `sample_role="main"` as "main
+collection has opened."
 
 ## ⚠️ Known PII exposure in git history (as of 2026-09-11)
 
