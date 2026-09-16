@@ -86,6 +86,39 @@ def breakdown_mc_groups(df, mc_col=MC_AIP_COL, cond_col=AIP_COND_COL, midpoint=M
     return table, mask_a, mask_b
 
 
+def breakdown_attention_groups(df, att1_col=ATT1_COL, att2_col=ATT2_COL,
+                                att1_correct=ATT1_CORRECT, att2_correct=ATT2_CORRECT):
+    """Same idea as breakdown_mc_groups(), applied to step 4
+    (attention_check_fail): split respondents into the two groups the raw
+    funnel count conflates under one label:
+      (a) answered BOTH ATT1 and ATT2, but got at least one wrong (genuine
+          inattention -- a real reason to drop)
+      (b) missing ATT1 and/or ATT2 -- did not reach/finish that point in the
+          survey (dropout, not inattention -- a different reason to drop)
+    ATT2 sits after the ENG block, well past ATT1 (after INT), so a
+    respondent who quit partway through can be missing one, the other, or
+    both -- 'missing' here means missing on either.
+    Returns (table, mask_a, mask_b) -- table is a small summary DataFrame,
+    the masks are boolean Series aligned to df.index for further inspection.
+    """
+    att1 = pd.to_numeric(df[att1_col], errors="coerce") if att1_col in df.columns else pd.Series(np.nan, index=df.index)
+    att2 = pd.to_numeric(df[att2_col], errors="coerce") if att2_col in df.columns else pd.Series(np.nan, index=df.index)
+
+    missing_either = att1.isna() | att2.isna()
+    wrong_answer = (~missing_either) & ((att1 != att1_correct) | (att2 != att2_correct))
+    mask_b = missing_either
+    mask_a = wrong_answer
+    mask_correct = (~missing_either) & (~wrong_answer)
+
+    table = pd.DataFrame([
+        {"group": "(a) answered both, at least one wrong (genuine inattention)", "n": int(mask_a.sum())},
+        {"group": "(b) missing ATT1 and/or ATT2 (dropout, never reached/finished it)", "n": int(mask_b.sum())},
+        {"group": "correct on both", "n": int(mask_correct.sum())},
+        {"group": "TOTAL", "n": len(df)},
+    ])
+    return table, mask_a, mask_b
+
+
 def flag_duplicate_response_pattern(df, items):
     """Flag every respondent who has another respondent with an identical or
     near-identical (<= DUPLICATE_MAX_DIFFERING_ITEMS items differing, over the
@@ -515,6 +548,14 @@ def main():
     mc_table, _, _ = breakdown_mc_groups(df)
     print("[01_clean] MC_AIP breakdown BEFORE filtering (diagnostic only, not a filter step):")
     print(mc_table.to_string(index=False))
+
+    # Same split for step 4 (attention_check_fail, 2026-09-16) -- the 665->296
+    # run showed this step alone dropping 324 respondents; this breaks that
+    # number down into genuine inattention vs. dropout, same reasoning as
+    # breakdown_mc_groups() above.
+    att_table, _, _ = breakdown_attention_groups(df)
+    print("\n[01_clean] ATT1/ATT2 breakdown BEFORE filtering (diagnostic only, not a filter step):")
+    print(att_table.to_string(index=False))
 
     clean, log, hard_drop_masks = apply_exclusions(df)
     clean = recode_cond(clean)
