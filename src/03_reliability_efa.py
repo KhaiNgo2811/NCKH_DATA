@@ -11,30 +11,35 @@ Purpose:
 Important governance rules:
     - DISC is a 0/1 dummy (DISC_COND), NOT a reflective construct.
       Never include DISC in Cronbach's alpha, loadings, CR/AVE, HTMT, or EFA.
-    - Item counts follow the actual fielded instrument (Master Codebook v2.5 /
-      TF v2.9, 8 Sep 2026, cross-checked against pilot_real.csv):
+    - Item counts follow the actual fielded instrument (Master Codebook v2.7/
+      A-20, TF v2.12/A-20, cross-checked against pilot_real.csv):
         AIP = 5, REL = 4 (all analysed), INT = 5, TRU = 6 (see _config.py note),
         ENG = 6, PI = 4, PDPL = 4.
       Do not silently add/drop items here.
-    - ENG standing prohibition (Amendment A-12): no pooled Cronbach's alpha,
-      item-rest correlation, or outer-loading diagnostic across all six ENG
-      items. ENG is EXCLUDED from the pooled reliability/loadings/CR-AVE tables
-      below and instead gets its own within-dimension reliability table
-      (Cognitive Processing: ENG1,ENG2; Affection: ENG3,ENG6; Activation:
-      ENG4,ENG5). ENG_mean (pooled) remains the sole structural-model input --
-      unaffected, computed elsewhere (this script does not compute construct
-      scores).
+    - ENG (Amendment A-20, 15 Sep 2026, SUPERSEDES A-12 on this point): the old
+      "no pooled reliability across all six ENG items" prohibition is WITHDRAWN.
+      ENG now enters the pooled Cronbach's alpha / outer-loading / CR-AVE tables
+      exactly like every other construct (AIP, REL, INT, TRU, PI, PDPL) -- its
+      absence from those tables is now a defect, not compliance. The three
+      within-dimension facets (Cognitive: ENG1,ENG2; Affection: ENG3,ENG6;
+      Activation: ENG4,ENG5) survive only as a SUPPLEMENTARY descriptive table
+      (content labelling, never a basis for item retention) -- see
+      eng_dimension_reliability_table(). ENG4 is retained regardless of its
+      pooled loading (do not drop without a dedicated amendment -- Master
+      Codebook §4.7/OD note). ENG_mean (pooled) remains the sole
+      structural-model input, computed elsewhere (this script does not compute
+      construct scores).
     - This script is for PILOT data only.
 
 Usage:
     python src/03_reliability_efa.py --input data/processed/pilot_clean.csv
 
 Outputs:
-    outputs/tables/pilot_reliability.csv
-    outputs/tables/pilot_outer_loadings.csv
-    outputs/tables/pilot_cr_ave.csv
+    outputs/tables/pilot_reliability.csv           (includes ENG, per A-20)
+    outputs/tables/pilot_outer_loadings.csv        (includes ENG, per A-20)
+    outputs/tables/pilot_cr_ave.csv                (includes ENG, per A-20)
     outputs/tables/pilot_htmt.csv
-    outputs/tables/pilot_eng_dimension_reliability.csv
+    outputs/tables/pilot_eng_dimension_reliability.csv  (supplementary only)
     outputs/tables/pilot_efa_aip_rel_crossloadings.csv
 """
 
@@ -55,10 +60,13 @@ from factor_analyzer.factor_analyzer import (
 sys.path.insert(0, "src")
 from _config import CONSTRUCT_ITEMS, ENG_DIMENSIONS  # noqa: E402
 
-# Constructs entering the pooled per-construct reliability/loadings/CR-AVE tables.
-# ENG is excluded (Amendment A-12 -- see module docstring); it gets its own
-# within-dimension table instead.
-POOLED_CONSTRUCTS = {k: v for k, v in CONSTRUCT_ITEMS.items() if k != "ENG"}
+# Constructs entering the pooled per-construct reliability/loadings/CR-AVE
+# tables. As of Amendment A-20 this is ALL constructs, including ENG -- the
+# A-12 exclusion is withdrawn (see module docstring). Kept as a named alias
+# (rather than using CONSTRUCT_ITEMS directly everywhere below) so a future
+# amendment that needs to exclude a construct again only has to change this
+# one line.
+POOLED_CONSTRUCTS = dict(CONSTRUCT_ITEMS)
 
 
 # ---------------------------------------------------------------------
@@ -140,8 +148,11 @@ def reliability_table(df):
 
 
 def eng_dimension_reliability_table(df):
-    """Within-dimension Cronbach's alpha for ENG (Amendment A-12). Pooling
-    across all six ENG items is prohibited -- see module docstring."""
+    """Within-dimension Cronbach's alpha for ENG -- SUPPLEMENTARY / descriptive
+    only as of Amendment A-20 (content labelling, never a basis for item
+    retention). The pooled six-item alpha/loadings/CR-AVE in the tables above
+    are now the governing diagnostics for ENG, same as every other construct
+    -- see module docstring."""
     rows = []
     for dim, items in ENG_DIMENSIONS.items():
         present = [item for item in items if item in df.columns]
@@ -192,6 +203,19 @@ def construct_outer_loadings(df, construct, items):
     fa.fit(sub)
 
     loadings = fa.loadings_.flatten()
+
+    # Sign normalization: unrotated single-factor PCA extraction has an
+    # arbitrary sign (the factor and its mirror image are equally valid
+    # solutions) -- factor_analyzer doesn't fix this, so a construct can come
+    # back all-negative for no substantive reason (every item is genuinely
+    # positively worded/no reverse-coding in this instrument -- see CLAUDE.md
+    # SS4). Flip the whole vector when the mean loading is negative so the
+    # printed table reads in the natural, positive direction. Reversing every
+    # sign uniformly changes nothing else: flag_below_0.60 already used
+    # .abs(), and CR/AVE (cr_ave_table) only ever use lam.sum()**2 and
+    # lam**2, both sign-invariant under a uniform flip.
+    if loadings.mean() < 0:
+        loadings = -loadings
 
     out = pd.DataFrame(
         {
@@ -314,16 +338,16 @@ def htmt_table(df):
     CONSTRUCT_ITEMS (DISC is excluded automatically since it is not
     a key in CONSTRUCT_ITEMS).
 
-    NOTE: this deliberately uses CONSTRUCT_ITEMS, not POOLED_CONSTRUCTS -- ENG
-    IS included here as a pooled 6-item construct, unlike reliability_table()/
-    all_outer_loadings() above. The Amendment A-12 "no pooled reliability
-    across all six ENG items" prohibition targets ITEM-RETENTION diagnostics
-    (alpha, item-rest correlation, outer loadings) used to decide whether to
-    drop an ENG item -- it does not forbid using ENG's full item set for
-    discriminant validity against OTHER constructs, which is a different
-    question (does ENG as a whole overlap with AIP/REL/etc, not "which ENG
-    item is weak"). Dropping ENG from this table would silently lose HTMT(ENG,
-    other) coverage with no governance basis for doing so.
+    NOTE: uses CONSTRUCT_ITEMS directly (POOLED_CONSTRUCTS would give the same
+    result post-A-20, since it now equals CONSTRUCT_ITEMS) -- ENG IS included
+    here as a pooled 6-item construct for discriminant validity against OTHER
+    constructs, same as it now is in reliability_table()/all_outer_loadings()
+    above. Historically (pre-A-20) this was the one table where ENG stayed
+    pooled even while A-12 excluded it from item-retention diagnostics
+    elsewhere; that distinction is moot now that A-20 pools ENG everywhere,
+    but HTMT's own reasoning (discriminant validity of ENG-as-a-whole vs.
+    other constructs is a different question from "which ENG item is weak")
+    still holds regardless.
 
     Returns
     -------
@@ -540,16 +564,18 @@ def main():
         print("!! WARNING: at least one construct has alpha < 0.70 at pilot.")
 
     # -------------------------------------------------------------
-    # 1b. ENG within-dimension reliability (Amendment A-12 -- ENG is excluded
-    #     from the pooled table above; pooling across all six items is
-    #     prohibited)
+    # 1b. ENG within-dimension reliability -- SUPPLEMENTARY only as of
+    #     Amendment A-20. ENG is now included in the pooled table above like
+    #     every other construct; this table is content-labelling description,
+    #     never a basis for item retention.
     # -------------------------------------------------------------
 
     eng_dim_tab = eng_dimension_reliability_table(df)
     eng_dim_path = OUTPUT_DIR / "pilot_eng_dimension_reliability{}.csv".format(role_suffix)
     eng_dim_tab.to_csv(eng_dim_path, index=False)
 
-    print("\n--- ENG within-dimension reliability (Amendment A-12, not pooled) ---")
+    print("\n--- ENG within-dimension reliability (SUPPLEMENTARY only, Amendment A-20 -- "
+          "see pooled table above for the governing ENG diagnostics) ---")
     print(eng_dim_tab.to_string(index=False))
 
     # -------------------------------------------------------------

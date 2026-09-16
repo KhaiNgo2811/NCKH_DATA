@@ -159,18 +159,34 @@ RECORDED_DATE_COL = "RecordedDate"
 MAIN_DATA_START_TIMESTAMP = "2026-09-12 02:15:56"  # = LOC_ADDED_TIMESTAMP
 
 # ---- Ngưỡng loại bỏ mẫu ----
-# POLICY CHANGE (2026-09-11, requested by Khai, amended same day): 01_clean.py's
-# hard-drop pipeline uses ONLY 3 criteria -- missing data, duplicate response
-# pattern, straightlining. Manipulation check (MC_AIP/MC_DISC) is NOT a filter
-# -- it was briefly a 4th individual-level drop criterion, then removed the same
-# day after being identified as post-treatment conditioning (see CLAUDE.md
-# SS6.1); it is now report-only (Welch's t + Cohen's d, group-level ITT
-# evidence) via 01_clean.py::report_manipulation_check(). The original
-# consent/age/omni/ATT1/ATT2/CC1/CC2/speeding hard drops (pre-2026-09-11) are
-# also no longer applied (constants below kept, unused, in case reinstated).
+# POLICY CHANGE (2026-09-16, requested by Khai): the 2026-09-11 narrowing to
+# 3 criteria is superseded -- 01_clean.py's hard-drop pipeline is back to a
+# 9-step policy (consent, age screener, omni screener, ATT1/ATT2, CC1/CC2,
+# speeder floor, missing item, duplicate pattern, straightlining), in this
+# exact order. SPEEDING_MIN_SECONDS below is back in active use (it was
+# dead/unused between 2026-09-11 and 2026-09-16).
+#
+# The ONE thing NOT reverted: MC_AIP/MC_DISC are still NOT a hard-drop filter.
+# The ITT rationale (Montgomery, Nyhan & Torres, 2018 -- filtering on a
+# post-treatment variable biases the causal estimate of AIP_COND) stands
+# regardless of how many other criteria exist. MC_AIP/MC_DISC now feed
+# 01_clean.py::manipulation_check_sensitivity() (multi-scenario robustness
+# reporting) instead of report_manipulation_check() alone.
+#
+# The pilot/main sample_role split is explicitly KEPT as the
+# MAIN_DATA_START_TIMESTAMP/RecordedDate boundary (Amendment A-19, verified
+# against the real docs -- see CLAUDE.md SS9/SS11) -- NOT reverted to a
+# hardcoded row index, which would silently break on every re-export of this
+# still-growing file.
 SPEEDING_MIN_SECONDS = 120
 STRAIGHTLINE_SD_THRESHOLD = 0.5   # old soft-flag threshold, no longer used by 01_clean.py
-MAX_MISSING_ITEM_PCT = 0.10
+MAX_MISSING_ITEM_PCT = 0.10       # kept, but the missing-item step now uses MISSING_ITEM_TOLERANCE instead
+
+# POLICY CHANGE (2026-09-16): zero-tolerance missing-item rule, overriding the
+# previous <=10% (MAX_MISSING_ITEM_PCT) threshold. A respondent missing ANY of
+# the 34 fielded items is dropped. MAX_MISSING_ITEM_PCT is left defined in
+# case a future amendment reverts to a percentage-based tolerance.
+MISSING_ITEM_TOLERANCE = 0
 
 # Manipulation-check midpoint -- NOT used as a filter (see policy note above).
 # Used only by 01_clean.py::breakdown_mc_groups()/report_manipulation_check()/

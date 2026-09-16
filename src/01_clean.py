@@ -5,49 +5,53 @@ import pandas as pd
 import pingouin as pg
 
 sys.path.insert(0, "src")
-from _qualtrics_io import load_and_normalize  # noqa: E402
+from _qualtrics_io import load_and_normalize, anchor_match  # noqa: E402
 from _config import (  # noqa: E402
     FIELDED_ITEMS, CONSTRUCT_ITEMS, DISC_COL, AIP_COND_COL, CELL_COL,
     MC_AIP_COL, MC_DISC_COL, MC_MIDPOINT,
     STRAIGHTLINE_HARD_SD_THRESHOLD, DUPLICATE_MAX_DIFFERING_ITEMS, DUPLICATE_MIN_OVERLAP_ITEMS,
-    MAX_MISSING_ITEM_PCT,
+    MISSING_ITEM_TOLERANCE,
     DEMOGRAPHIC_PNTS_CODE, DEMOGRAPHIC_PNTS_COLS,
     PII_COLUMNS,
     RECORDED_DATE_COL, MAIN_DATA_START_TIMESTAMP,
+    CONSENT_COL, CONSENT_OK_ANCHOR, AGE_COL, AGE_OK_ANCHOR, OMNI_COL, OMNI_OK_ANCHOR,
+    ATT1_COL, ATT1_CORRECT, ATT2_COL, ATT2_CORRECT,
+    CC1_COL, CC2_COL, CC1_PLATFORM_ANCHOR, CC1_PERSONALIZED_ANCHOR, CC2_YES_ANCHOR, CC2_NO_ANCHOR,
+    SPEEDING_MIN_SECONDS, DURATION_COL,
 )
 
 # ---------------------------------------------------------------------------
-# POLICY CHANGE (2026-09-11, requested by Khai): the sample-filtering criteria
-# were narrowed to exactly four checks (superseding the earlier 9-step
-# consent/age/screener/ATT/CC/speeding set from before that):
-#   1. Missing data
-#   2. Duplicate response pattern
-#   3. Straightlining
-#   (a 4th, manipulation-check-based individual exclusion, was added then
-#    immediately identified as a problem -- see the next policy change below)
+# POLICY HISTORY:
+#   2026-09-11: narrowed from the original 9-step hard-drop set (consent, age,
+#     omni, ATT1/ATT2, CC1/CC2, speeding) down to 3 (missing data, duplicate
+#     pattern, straightlining), and removed individual-level MC_AIP filtering
+#     (ITT redesign, see below).
+#   2026-09-16 (requested by Khai, this policy is CURRENT): reinstated the
+#     9-step hard-drop set, in this order: consent -> age screener -> omni
+#     screener -> attention checks (ATT1/ATT2) -> comprehension checks
+#     (CC1/CC2) -> speeder floor -> missing item (now ZERO tolerance, not
+#     <=10%) -> duplicate response pattern -> straightlining. See
+#     build_hard_drop_masks() / HARD_DROP_STEP_ORDER below and CLAUDE.md SS12.
 #
-# AMENDMENT (2026-09-11, same day, requested by Khai): the individual-level
-# manipulation-check filter on MC_AIP is REMOVED. Dropping respondents based
-# on MC_AIP -- a variable measured AFTER the AIP_COND treatment was
-# administered -- is post-treatment conditioning: it can introduce selection
-# bias into the causal estimate of AIP_COND's effect, because "how someone
-# answered MC_AIP" is itself partly a consequence of the treatment (Montgomery,
-# Nyhan & Torres, 2018, AJPS). The project now follows an
-# Intention-to-Treat (ITT) design for this check:
-#   - MC_AIP is NEVER used to drop individual rows.
+# NOT reverted by the 2026-09-16 change -- the ITT rationale for manipulation
+# checks stands independently of how many other hard-drop criteria exist:
+#   The individual-level manipulation-check filter on MC_AIP/MC_DISC is
+#   REMOVED and stays removed. Dropping respondents based on MC_AIP -- a
+#   variable measured AFTER the AIP_COND treatment was administered -- is
+#   post-treatment conditioning: it can introduce selection bias into the
+#   causal estimate of AIP_COND's effect, because "how someone answered
+#   MC_AIP" is itself partly a consequence of the treatment (Montgomery,
+#   Nyhan & Torres, 2018, AJPS). The project follows an
+#   Intention-to-Treat (ITT) design for this check:
+#   - MC_AIP/MC_DISC are NEVER used to drop individual rows.
 #   - report_manipulation_check() reports group-level manipulation strength
-#     (Welch's t-test + Cohen's d comparing MC_AIP across AIP_COND) AFTER
-#     filtering, for diagnostic/manuscript purposes only -- it excludes no one.
+#     (Welch's t-test + Cohen's d) AFTER filtering -- diagnostic only.
+#   - manipulation_check_sensitivity() (2026-09-16) extends this to several
+#     sample definitions at once (full sample, without the new speeder floor,
+#     by collection_phase, excluding extreme reversers) -- still report-only,
+#     the mechanism for resolving OD-12, not a new exclusion gate.
 #   - flag_extreme_reversers() marks (does not drop) respondents who show a
-#     flatly reversed reading of their assigned condition, for a separate
-#     robustness check (e.g. re-running H2/H3/H7 with/without this group) in
-#     03_reliability_efa.py or a later analysis script -- never in this script.
-#   - A respondent who quit before reaching the MC block (MC_AIP is NaN) is
-#     still excluded, but via the ordinary missing-data screen on the
-#     substantive item battery (since the MC block sits after all 34 items in
-#     the instrument, a genuine mid-survey dropout already fails that screen
-#     on its own merits) -- not via a "manipulation check fail" label, since
-#     that mislabels dropout as miscomprehension.
+#     flatly reversed reading of their assigned condition.
 # ---------------------------------------------------------------------------
 
 
@@ -107,9 +111,84 @@ def flag_duplicate_response_pattern(df, items):
     return pd.Series(is_dup, index=df.index)
 
 
+# Execution order for the 9-step hard-drop policy (2026-09-16). This governs
+# both apply_exclusions()'s funnel table AND which masks
+# manipulation_check_sensitivity() can recombine (e.g. "all steps except the
+# speeder floor") -- see build_hard_drop_masks().
+HARD_DROP_STEP_ORDER = [
+    "consent_fail",
+    "screener_age_fail",
+    "screener_omni_fail",
+    "attention_check_fail",
+    "comprehension_check_fail",
+    "speeder_under_120s",
+    "excess_missing_items",
+    "duplicate_response_pattern",
+    "straightlining_near_zero_sd",
+]
+
+
+def build_hard_drop_masks(df, present_items):
+    """Build one boolean 'keep' mask per hard-drop step (True = passes this
+    step), keyed by the same names as HARD_DROP_STEP_ORDER. Split out from
+    apply_exclusions() so manipulation_check_sensitivity() can recombine a
+    SUBSET of these steps (e.g. every step except the speeder floor) without
+    duplicating the per-step logic."""
+    masks = {}
+
+    if CONSENT_COL in df.columns:
+        masks["consent_fail"] = anchor_match(df[CONSENT_COL], CONSENT_OK_ANCHOR)
+    if AGE_COL in df.columns:
+        masks["screener_age_fail"] = anchor_match(df[AGE_COL], AGE_OK_ANCHOR)
+    if OMNI_COL in df.columns:
+        masks["screener_omni_fail"] = anchor_match(df[OMNI_COL], OMNI_OK_ANCHOR)
+
+    if ATT1_COL in df.columns and ATT2_COL in df.columns:
+        att1_ok = pd.to_numeric(df[ATT1_COL], errors="coerce") == ATT1_CORRECT
+        att2_ok = pd.to_numeric(df[ATT2_COL], errors="coerce") == ATT2_CORRECT
+        masks["attention_check_fail"] = att1_ok & att2_ok
+
+    # CC1/CC2: correct answer is conditional on the assigned cell (Master
+    # Codebook SS4.4) -- CC1 depends on AIP_COND, CC2 depends on DISC_COND.
+    if (CC1_COL in df.columns and CC2_COL in df.columns
+            and AIP_COND_COL in df.columns and DISC_COL in df.columns):
+        aip = pd.to_numeric(df[AIP_COND_COL], errors="coerce")
+        disc = pd.to_numeric(df[DISC_COL], errors="coerce")
+        cc1_val = pd.to_numeric(df[CC1_COL], errors="coerce")
+        cc2_val = pd.to_numeric(df[CC2_COL], errors="coerce")
+        expect_cc1 = np.where(aip == 1, float(CC1_PERSONALIZED_ANCHOR), float(CC1_PLATFORM_ANCHOR))
+        expect_cc2 = np.where(disc == 1, float(CC2_YES_ANCHOR), float(CC2_NO_ANCHOR))
+        masks["comprehension_check_fail"] = (cc1_val == expect_cc1) & (cc2_val == expect_cc2)
+
+    if DURATION_COL in df.columns:
+        dur = pd.to_numeric(df[DURATION_COL], errors="coerce")
+        # Unparseable duration is NOT a drop on this criterion alone -- let
+        # the other 8 steps catch a genuinely broken row instead.
+        masks["speeder_under_120s"] = (dur >= SPEEDING_MIN_SECONDS) | dur.isna()
+
+    if present_items:
+        miss_pct = df[present_items].isna().mean(axis=1)
+        # POLICY CHANGE (2026-09-15/16): zero-tolerance missing-item rule,
+        # overriding the previous <=10% threshold. See Amendment A-21 (write-up
+        # pending -- see CLAUDE.md SS12 governance note).
+        masks["excess_missing_items"] = miss_pct <= MISSING_ITEM_TOLERANCE
+
+    if present_items:
+        dup_flag = flag_duplicate_response_pattern(df, present_items)
+        masks["duplicate_response_pattern"] = ~dup_flag
+
+    if present_items:
+        sd = df[present_items].std(axis=1, skipna=True)
+        masks["straightlining_near_zero_sd"] = sd >= STRAIGHTLINE_HARD_SD_THRESHOLD
+
+    return masks
+
+
 def apply_exclusions(df):
-    """Lọc bỏ các mẫu không hợp lệ (Hard drops) -- 3 tiêu chí. MC_AIP không
-    còn được dùng để loại cá nhân nào (xem policy note ở đầu file)."""
+    """Lọc bỏ các mẫu không hợp lệ (Hard drops) -- 9 tiêu chí (2026-09-16 policy,
+    see HARD_DROP_STEP_ORDER). MC_AIP/MC_DISC vẫn không được dùng để loại cá
+    nhân (ITT design, xem policy note ở đầu file) -- xem
+    manipulation_check_sensitivity() thay vào đó."""
     log_rows = []
     n0 = len(df)
     keep = pd.Series(True, index=df.index)
@@ -125,29 +204,18 @@ def apply_exclusions(df):
                           "n_after": int(keep.sum())})
 
     present_items = [c for c in FIELDED_ITEMS if c in df.columns]
+    masks = build_hard_drop_masks(df, present_items)
 
-    # 1. Missing data (also catches MC-block dropouts -- MC sits after all 34
-    #    items in the instrument, see policy note)
-    if present_items:
-        miss_pct = df[present_items].isna().mean(axis=1)
-        drop_step(miss_pct <= MAX_MISSING_ITEM_PCT, "excess_missing_items")
-
-    # 2. Duplicate / near-duplicate response pattern
-    if present_items:
-        dup_flag = flag_duplicate_response_pattern(df, present_items)
-        drop_step(~dup_flag, "duplicate_response_pattern")
-
-    # 3. Straightlining (hard drop -- SD ~ 0 across the full item battery)
-    if present_items:
-        sd = df[present_items].std(axis=1, skipna=True)
-        drop_step(sd >= STRAIGHTLINE_HARD_SD_THRESHOLD, "straightlining_near_zero_sd")
+    for step in HARD_DROP_STEP_ORDER:
+        if step in masks:
+            drop_step(masks[step], step)
 
     clean = df.loc[keep].copy()
     log = pd.DataFrame(log_rows)
     if len(log):
         log.loc[len(log)] = {"step": "TOTAL", "n_before": n0,
                               "n_dropped_this_step": n0 - len(clean), "n_after": len(clean)}
-    return clean, log
+    return clean, log, masks
 
 
 def report_manipulation_check(df, mc_col=MC_AIP_COL, cond_col=AIP_COND_COL):
@@ -223,6 +291,87 @@ def report_manipulation_check_composite(df, cond_col=AIP_COND_COL):
     if result["flag_d_below_0.50"]:
         print("    !! WARNING: |d| < 0.50 on the AIP_mean composite check too.")
     return result
+
+
+def _welch_d(sub_df, mc_col, cond_col):
+    """Bare Welch's t-test + Cohen's d for one (mc_col, cond_col) pair on one
+    sample -- no printing, no side effects. Shared by
+    manipulation_check_sensitivity() across several sample definitions.
+    Returns None if either group has fewer than 2 observations."""
+    if mc_col not in sub_df.columns or cond_col not in sub_df.columns:
+        return None
+    cond = pd.to_numeric(sub_df[cond_col], errors="coerce")
+    mc = pd.to_numeric(sub_df[mc_col], errors="coerce")
+    g0 = mc[cond == 0].dropna()
+    g1 = mc[cond == 1].dropna()
+    if len(g0) < 2 or len(g1) < 2:
+        return None
+    res = pg.ttest(g1, g0, correction=True)
+    d = pg.compute_effsize(g1, g0, eftype="cohen")
+    p_col = "p_val" if "p_val" in res.columns else "p-val"
+    return {
+        "n_group0": len(g0), "n_group1": len(g1),
+        "cohens_d": round(d, 3), "p": round(res[p_col].iloc[0], 4),
+        "flag_d_below_0.50": bool(abs(d) < 0.50),
+    }
+
+
+def manipulation_check_sensitivity(df_raw, clean, masks):
+    """Manipulation-check ROBUSTNESS reporting across several sample
+    definitions (2026-09-16, requested by Khai) -- the mechanism for
+    resolving OD-12, NOT a new exclusion gate. Drops nobody; MC_AIP/MC_DISC
+    remain non-filters per the ITT design (see policy note at top of file).
+
+    Scenarios:
+      1. full_cleaned_sample        -- the final 9-step-cleaned sample (baseline)
+      2. excluding_speeder_floor    -- re-adds the respondents the speeder-floor
+                                        step (step 6) removed, all other 8 steps
+                                        still applied, to show what that one
+                                        step changes
+      3. phase_pre_LOC / phase_post_LOC -- `clean` split by collection_phase
+      4. excluding_extreme_reversers    -- `clean` minus flag_extreme_reverser rows
+
+    `df_raw` is the post-load_and_normalize, pre-exclusion dataframe (needed
+    for scenario 2, since rows the speeder floor alone removed aren't in
+    `clean`). `masks` is build_hard_drop_masks()'s output on that same
+    `df_raw`, reused here (not recomputed) to avoid duplicating the per-step
+    logic.
+    """
+    rows = []
+
+    def add_scenario(scenario_name, sub_df):
+        for mc_col, cond_col in ((MC_AIP_COL, AIP_COND_COL), (MC_DISC_COL, DISC_COL)):
+            res = _welch_d(sub_df, mc_col, cond_col) if sub_df is not None else None
+            row = {"scenario": scenario_name, "mc_column": mc_col, "cond_column": cond_col}
+            if res is None:
+                row.update({"n_group0": None, "n_group1": None, "cohens_d": None,
+                            "p": None, "flag_d_below_0.50": None})
+            else:
+                row.update(res)
+            rows.append(row)
+
+    # 1. Baseline -- full cleaned sample.
+    add_scenario("full_cleaned_sample", clean)
+
+    # 2. Excluding the speeder floor -- every OTHER step still applied, on the
+    #    ORIGINAL (pre-exclusion) df_raw that `masks` was computed from.
+    if "speeder_under_120s" in masks:
+        other_steps = [s for s in HARD_DROP_STEP_ORDER if s != "speeder_under_120s" and s in masks]
+        keep_without_speeder = pd.Series(True, index=df_raw.index)
+        for step in other_steps:
+            keep_without_speeder &= masks[step].reindex(df_raw.index).fillna(False)
+        add_scenario("excluding_speeder_floor", df_raw.loc[keep_without_speeder])
+
+    # 3. By collection_phase.
+    if "collection_phase" in clean.columns:
+        for phase_val in sorted(clean["collection_phase"].dropna().unique()):
+            add_scenario(f"phase_{phase_val}", clean[clean["collection_phase"] == phase_val])
+
+    # 4. Excluding extreme reversers.
+    if "flag_extreme_reverser" in clean.columns:
+        add_scenario("excluding_extreme_reversers", clean[~clean["flag_extreme_reverser"]])
+
+    return pd.DataFrame(rows)
 
 
 def flag_extreme_reversers(df, mc_col=MC_AIP_COL, cond_col=AIP_COND_COL,
@@ -367,11 +516,15 @@ def main():
     print("[01_clean] MC_AIP breakdown BEFORE filtering (diagnostic only, not a filter step):")
     print(mc_table.to_string(index=False))
 
-    clean, log = apply_exclusions(df)
+    clean, log, hard_drop_masks = apply_exclusions(df)
     clean = recode_cond(clean)
     clean = recode_pnts(clean)
     clean = compute_construct_scores(clean)
     clean = compute_collection_phase(clean)
+    # Extreme-reverser flag computed here (moved up from later in this
+    # function, 2026-09-16) so manipulation_check_sensitivity()'s
+    # "excluding_extreme_reversers" scenario has the column available.
+    clean = flag_extreme_reversers(clean)
 
     # Group-level ITT evidence (report only, n_excluded=0) -- run AFTER filtering,
     # and BEFORE the NOTE below so the note can reflect the actual result rather
@@ -405,6 +558,16 @@ def main():
               f"measurement-readiness boundary -- and per the above, gate readiness "
               f"still needs to be re-confirmed on whatever slice you're about to use.")
 
+    # Manipulation-check sensitivity analysis (2026-09-16, requested by Khai) --
+    # additive robustness evidence for OD-12, printed right after the gate
+    # NOTE above, not a replacement for it.
+    sensitivity_tab = manipulation_check_sensitivity(df, clean, hard_drop_masks)
+    print("\n[manipulation_check_sensitivity] Welch's t + Cohen's d across sample definitions "
+          "(report only, n_excluded=0 -- OD-12 robustness evidence, not a new gate):")
+    print(sensitivity_tab.to_string(index=False) if len(sensitivity_tab) else "(no data)")
+    sensitivity_path = f"outputs/tables/{args.phase}_manipulation_check_sensitivity.csv"
+    sensitivity_tab.to_csv(sensitivity_path, index=False)
+
     checkpoint = collection_checkpoint_log(clean)
     print("\n[collection_checkpoint_log] n by sample_role (pilot/main) and collection_phase, "
           "with AIP_COND breakdown:")
@@ -434,8 +597,6 @@ def main():
             "n_before": len(clean), "n_dropped_this_step": 0, "n_after": len(clean),
         }
 
-    # Extreme-reverser flag (for a separate robustness check -- not a filter).
-    clean = flag_extreme_reversers(clean)
     n_reversers = int(clean["flag_extreme_reverser"].sum())
     print(f"\n[flag_extreme_reversers] flagged (not dropped): {n_reversers} / {len(clean)}")
 
@@ -448,7 +609,8 @@ def main():
 
     print(f"\n[01_clean] input={args.input} phase={args.phase}")
     print(log.to_string(index=False))
-    print(f"[01_clean] wrote {out_csv} (n={len(clean)}), {out_log}, and {checkpoint_path}")
+    print(f"[01_clean] wrote {out_csv} (n={len(clean)}), {out_log}, {checkpoint_path}, "
+          f"and {sensitivity_path}")
 
 
 if __name__ == "__main__":

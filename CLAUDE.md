@@ -117,31 +117,46 @@ item and is **fully included** in α, AVE, HTMT, loadings, and `REL_mean`.
   for the team's judgement (further sourcing vs. self-development), not a
   pipeline blocker.
 
-### 1.3 ENG: single composite in the model, within-dimension reliability at pilot
+### 1.3 ENG: single composite in the model, POOLED reliability (Amendment A-20 supersedes A-12)
 
 Amendment A-12 (1 Sep 2026) gave ENG an explicit three-dimension structure
 (Cognitive: ENG1,ENG2; Affection: ENG3,ENG6; Activation: ENG4,ENG5), sourced to
 Hollebeek, Glynn & Brodie (2014) rather than Brodie et al. (2011) (conceptual only,
-no item battery). This **does not** make ENG a second-order structural construct —
-H5, H6b, E1, E2 still use `ENG_mean` (mean of all 6 items) as a single reflective
-composite, for the same parsimony reason TRU isn't modeled as second-order despite
-an equally multidimensional source theory.
+no item battery), and required Cronbach's α/item-rest correlation/outer-loading
+diagnostics to be computed **within dimension**, never pooled.
 
-What it *does* change: Cronbach's α, item-rest correlation, and outer-loading
-diagnostics for ENG must be computed **within dimension**, never pooled across all
-six items — pooling compares items with genuinely different content and produces
-misleading item-retention decisions. This reverses an earlier provisional plan to
-drop ENG4 (which had a pooled outer loading of −0.381 at pilot n=46, looking like
-a REL4-style exclusion candidate); within-dimension, ENG4's problem is *low
-Activation-facet reliability* (r(ENG4,ENG5) = 0.212, α = 0.345 at n=46), not a bad
-item — dropping it would leave Activation as an unassessable single-item facet.
-**ENG4 is retained; report the weak Activation reliability transparently in
-Limitations.**
+**Amendment A-20 (15 Sep 2026) withdraws that pooling prohibition** (Master
+Codebook v2.7/A-20, TF v2.12/A-20 — verified against both docx files directly,
+not carried over from an older CLAUDE.md draft). ENG's reliability (α, ρ_A),
+outer loadings, CR, and AVE are now computed on the **full pooled six-item
+set**, exactly like every other construct (AIP, REL, INT, TRU, PI, PDPL) — its
+absence from the pooled tables is now a defect, not compliance. The
+three-dimension structure survives only as a **supplementary descriptive
+label** (`ENG_cog_mean`/`ENG_aff_mean`/`ENG_act_mean`, content description
+only) — it no longer governs how diagnostics are computed or whether an item
+gets dropped.
 
-`03_reliability_efa.py` implements this: ENG is excluded from the pooled
-alpha/loadings/CR-AVE tables and gets its own
-`pilot_eng_dimension_reliability.csv` (α per dimension) instead. `ENG_mean` for
-the structural model is computed elsewhere (not by this diagnostic script).
+What did **not** change: ENG is still **not** a second-order structural
+construct — H5, H6b, E1, E2 still use `ENG_mean` (mean of all 6 items) as one
+first-order reflective composite, same parsimony reason TRU isn't second-order
+despite an equally multidimensional source theory. **ENG4 is still retained**
+regardless of its pooled loading (which was −0.381 at pilot n=46, looking like
+a REL4-style exclusion candidate, but climbed to a clean ~0.74 at n=337 — see
+§9/§10 result history) — dropping it without a dedicated amendment would leave
+Activation represented by ENG5 alone and delete the dimension Hollebeek et
+al.'s framework treats as behaviourally diagnostic.
+
+`03_reliability_efa.py` implements A-20: `POOLED_CONSTRUCTS` now equals
+`CONSTRUCT_ITEMS` (ENG included in every pooled table), and
+`pilot_eng_dimension_reliability.csv` is now labeled supplementary-only in
+both the module docstring and the printed header. Outer loadings are also
+sign-normalized now (`construct_outer_loadings()` flips the whole vector when
+the mean is negative) — single-factor unrotated PCA extraction has an
+arbitrary sign, so a construct could print all-negative for no substantive
+reason; this was previously masked only by `.abs()` in the below-0.60 flag,
+not fixed in the printed table. `ENG_mean` for the structural model is still
+computed elsewhere (`01_clean.py::compute_construct_scores()`), not by this
+diagnostic script.
 
 ### 1.4 PDPL Awareness: generic items, generic preamble, statute named nowhere in Qualtrics (OD-11, closed A-17)
 
@@ -431,9 +446,15 @@ Qualtrics metadata rows (question text, ImportId JSON) as if they were data.
   (§1.6) — they're indicative of construct behaviour, not confirmatory of the
   finalized item wording.
 
-### 6.1 Sample-filtering criteria (amended twice on 2026-09-11 — see below; log any further change)
+### 6.1 Sample-filtering criteria — SUPERSEDED 2026-09-16, see §12
 
-**Current (as of the 2026-09-11 ITT amendment, requested by Khai):**
+**This whole subsection describes the 2026-09-11 3-criteria policy, which is
+no longer in effect.** As of 2026-09-16 the hard-drop policy is back to 9
+steps — see §12 for the current table and rationale. Left here for history;
+the ITT reasoning for why MC_AIP/MC_DISC are never a hard-drop filter (below)
+is the one part that's still fully accurate.
+
+**As implemented 2026-09-11 (historical):**
 
 | Rule | Threshold | Type | Location |
 |---|---|---|---|
@@ -778,3 +799,112 @@ Also fixed, from the same-day source-code audit (full file-by-file review of
   `OMNI_COL`/`CC1_COL`/`CC2_COL` without using them (dead import, harmless,
   leftover from when this module did anchor-based filtering directly) — not
   worth a change on its own after the synthetic-file cleanup above.
+
+---
+
+## 11. ENG pooling reverses per Amendment A-20; a co-submitted `01_clean.py` rewrite was declined — 2026-09-16
+
+Two changes arrived together in one request: (a) un-exclude ENG from
+`03_reliability_efa.py`'s pooled tables, justified by "Amendment A-20"; (b) a
+large, fully-specified rewrite of `01_clean.py`'s hard-drop policy back to a
+9-step scheme (consent/age/omni/ATT1/ATT2/CC1/CC2/speeding + zero-tolerance
+missing-item + a **hardcoded row-index-110** pilot/main split), citing
+"Amendment A-19", "Amendment A-21", "OD-12", "OD-14".
+
+**(a) was verified true** against the actual current docs
+(`docs/Master_Codebook_v2_7_A20.docx`, `docs/Theoretical_Foundations_v2_12_A20.docx`)
+and implemented — see §1.3.
+
+**(b) was checked against the same two files and declined.** What the docs
+actually say:
+- **Amendment A-19 is the timestamp-based `sample_role` boundary already
+  implemented** (Codebook: *"Administrative label (Amendment A-19), set by
+  01_clean.py::compute_collection_phase() from RecordedDate against
+  MAIN_DATA_START_TIMESTAMP"*) — i.e. the request's framing ("revert
+  Amendment A-19's timestamp boundary") has it backwards: A-19 **is** the
+  timestamp boundary, not something that superseded it.
+- **No "Amendment A-21" or "OD-14" exists in either doc.** `OD-12` in the real
+  text is about re-verifying PDPL statutory anchors against `luat_PDPL.pdf` —
+  unrelated to exclusion criteria.
+- Nothing in either doc calls for reinstating the pre-2026-09-11 9-step
+  screener/attention/comprehension hard-drops, a zero-tolerance missing-item
+  rule, or a row-index split — all three would reverse specific, reasoned
+  decisions made earlier in this same project history (§6.1's ITT redesign
+  rationale; §9's explicit "never row order/index — unstable across
+  re-exports" reasoning, which `pilot_real.csv`'s growth from 47 to 700+ rows
+  during this project has already demonstrated in practice).
+
+Not implemented. If a real amendment authorizing this exists somewhere this
+session hasn't seen, bring the actual doc text (not just an amendment number)
+before it's implemented — reverting `01_clean.py` to a hardcoded row index in
+particular would silently break on every future re-export of a still-growing
+file.
+
+---
+
+## 12. Hard-drop policy reverted to 9 steps, with the pilot/main split explicitly kept on timestamp — 2026-09-16
+
+Following §11's decline of the row-index part of the request, Khai explicitly
+authorized the rest: **the 9-step hard-drop policy is adopted, with the
+pilot/main `sample_role` split kept exactly as-is (`RecordedDate` vs.
+`MAIN_DATA_START_TIMESTAMP`, Amendment A-19) rather than switched to a
+hardcoded row index.** This is now the current policy — §6.1's table
+describes the superseded 2026-09-11 state.
+
+**Current 9-step order** (`01_clean.py::HARD_DROP_STEP_ORDER`,
+`build_hard_drop_masks()`):
+
+| # | Step | Rule | Constant(s) |
+|---|---|---|---|
+| 1 | `consent_fail` | `CONSENT` must match `CONSENT_OK_ANCHOR` (1) | `_config.py::CONSENT_COL/CONSENT_OK_ANCHOR` |
+| 2 | `screener_age_fail` | `SCR_AGE` must match `AGE_OK_ANCHOR` (1) | `AGE_COL/AGE_OK_ANCHOR` |
+| 3 | `screener_omni_fail` | `SCR_OMNI` must match `OMNI_OK_ANCHOR` (1) | `OMNI_COL/OMNI_OK_ANCHOR` |
+| 4 | `attention_check_fail` | `ATT1==5` AND `ATT2==2` | `ATT1_COL/ATT1_CORRECT`, `ATT2_COL/ATT2_CORRECT` |
+| 5 | `comprehension_check_fail` | `CC1`/`CC2` correct answer is conditional on `AIP_COND`/`DISC_COND` (Master Codebook §4.4) | `CC1_COL/CC2_COL`, `CC1_PLATFORM_ANCHOR/CC1_PERSONALIZED_ANCHOR/CC2_YES_ANCHOR/CC2_NO_ANCHOR` |
+| 6 | `speeder_under_120s` | `Duration (in seconds) < 120`; unparseable duration is NOT dropped on this step alone | `SPEEDING_MIN_SECONDS`, `DURATION_COL` (re-enabled — was dead 2026-09-11→16) |
+| 7 | `excess_missing_items` | **Zero tolerance** — any missing item among the 34 → drop (was ≤10%) | `MISSING_ITEM_TOLERANCE = 0` (new; `MAX_MISSING_ITEM_PCT` kept, unused by this step) |
+| 8 | `duplicate_response_pattern` | Unchanged from 2026-09-11/15 | `DUPLICATE_MAX_DIFFERING_ITEMS`, `DUPLICATE_MIN_OVERLAP_ITEMS` |
+| 9 | `straightlining_near_zero_sd` | Unchanged from 2026-09-11 | `STRAIGHTLINE_HARD_SD_THRESHOLD` |
+
+Anchor-based steps (1–3) use `anchor_match()` from `_qualtrics_io.py` (handles
+both numeric `"1"` and Qualtrics choice-text forms), not a bare `!=` — the
+raw-export format has changed at least once already this project (choice text
+→ bare integers), so this needs to keep working either way.
+
+**Explicitly NOT reverted — the ITT design for MC_AIP/MC_DISC stands
+independently of how many other hard-drop criteria exist** (§6.1's rationale,
+Montgomery, Nyhan & Torres 2018 on post-treatment conditioning, is unaffected
+by this change). New: `01_clean.py::manipulation_check_sensitivity(df_raw,
+clean, masks)` — report-only, drops nobody — computes Welch's t + Cohen's d
+for both MC_AIP×AIP_COND and MC_DISC×DISC_COND across 5 sample definitions:
+`full_cleaned_sample`, `excluding_speeder_floor` (adds back whoever only the
+new speeder floor removed, everything else still applied — isolates that
+one step's effect), `phase_pre_LOC`/`phase_post_LOC` (split by
+`collection_phase`), and `excluding_extreme_reversers`. Printed in `main()`
+right after the existing dynamic gate-status NOTE (§10) — additive evidence
+for OD-12, not a replacement for that NOTE or for `04_manipulation_check.py`'s
+gate. Written to `outputs/tables/{phase}_manipulation_check_sensitivity.csv`.
+
+`apply_exclusions()` now returns `(clean, log, masks)` — the third value
+(`build_hard_drop_masks()`'s per-step keep-masks on the pre-exclusion `df`) is
+consumed by `manipulation_check_sensitivity()` to reconstruct the
+"without the speeder floor" sample without duplicating per-step logic. Any
+future caller of `apply_exclusions()` needs to unpack 3 values now, not 2.
+
+**Result on `pilot_real.csv` (665 raw, 2026-09-16):** 665 → 296 after all 9
+steps (funnel: consent −3 → age −6 → omni −27 → attention −324(!) → comprehension
+−0 → speeder −0 → missing −0 → duplicate −9 → straightlining −0). The
+attention-check step is by far the largest cut under this policy — worth
+watching as more data comes in. Manipulation check on the resulting n=296:
+MC_AIP d=0.733, MC_DISC d=1.181, both clear the 0.50 gate comfortably.
+Sensitivity table: `phase_pre_LOC`'s MC_AIP is markedly weaker (d=0.418,
+p=0.093, n=32/20) than `phase_post_LOC` (d=0.826) — consistent with the
+"pilot" bucket being smaller and noisier, not a sign the manipulation itself
+differs by phase. `excluding_extreme_reversers` naturally shows a very large
+d (3.53) since that scenario removes by construction the respondents whose
+MC_AIP most contradicts their assigned condition — expected, not a "true"
+population effect size.
+
+Reliability/EFA (`03_reliability_efa.py`) at this n=296, post-A-20 pooling
+(§1.3/§11): all seven constructs (including ENG, α=.859) clear α≥0.70; ENG4's
+pooled loading is clean and positive (sign-normalized per §11).
