@@ -908,3 +908,224 @@ population effect size.
 Reliability/EFA (`03_reliability_efa.py`) at this n=296, post-A-20 pooling
 (§1.3/§11): all seven constructs (including ENG, α=.859) clear α≥0.70; ENG4's
 pooled loading is clean and positive (sign-normalized per §11).
+
+---
+
+## 13. R environment verified working; `breakdown_attention_groups()`; extreme-reversers robustness check; inner VIF (CMB) — 2026-09-17
+
+**R/rpy2 bridge confirmed working end-to-end for the first time.** R 4.6.1 +
+Rtools were already installed on this machine (via `winget install --id
+RProject.R` / `RProject.Rtools`), just not on `PATH`; added permanently. R
+packages `seminr`, `cSEM`, `pwr` were already installed too. `rpy2.robjects`
+now imports without error (previously blocked — see §5's `07_plssem_bridge.R`
+entry, "R CMD config --ldflags returns empty without Rtools/make on PATH").
+`run_plssem.py` has been run successfully multiple times since (exit code 0,
+all 7 output tables written) — **still not independently cross-validated
+against SmartPLS 4**, that requirement is unchanged.
+
+**Bug found and fixed on first real run:** `run_plssem.py`'s
+`pd.DataFrame(ro.conversion.rpy2py(r_obj))` silently dropped R's
+rownames/colnames for every matrix result (path coefficients, HTMT,
+reliability, f², bootstrap paths) — every table printed/saved with bare
+integer row/column labels (0,1,2,...) instead of construct names, making a
+10×10 path-coefficient matrix unreadable (no way to tell AIP's row from
+INT*PDPL's). This was never caught earlier because `run_plssem.py` had never
+actually executed successfully before this session. Fixed: `_to_named_df()`
+fetches R's `rownames()`/`colnames()` separately and reapplies them.
+
+**`run_plssem.py` and `05_anova_h3.py` gained `--sample-role {pilot,main,all}`**
+(same pattern as `03`/`04`) — default `all` preserves prior behavior exactly;
+`main`/`pilot` filters and appends `_{role}` to every output filename, and
+(for both scripts) prints a warning if the filtered n is still below 400
+("this is NOT the confirmatory run yet").
+
+**`01_clean.py::breakdown_attention_groups()`** (new, mirrors
+`breakdown_mc_groups()`): splits the `attention_check_fail` step's raw count
+into (a) genuinely answered both ATT1/ATT2 with at least one wrong vs. (b)
+missing either (dropout, never reached/finished that point). On the
+665-raw-response checkpoint this step dropped 324 respondents; the breakdown
+showed only 55 were genuine inattention — 375 (of the 430 counted at a later,
+792-raw checkpoint) were dropout. Printed before filtering, same position as
+the MC breakdown, diagnostic only.
+
+**Extreme-reversers (`flag_extreme_reverser`) investigated as requested —
+finding is NOT random noise.** At n=321 `sample_role="main"`: 37.3% flagged
+overall, but the breakdown by `AIP_COND` is starkly asymmetric —
+**112/169 (66%) of `AIP_COND=0` (Low) respondents are flagged, vs. only 2/152
+(1.3%) of `AIP_COND=1` (High)**. I.e. two-thirds of people in the Low-AIP
+condition self-reported high perceived personalization (MC_AIP≥5) anyway.
+This reads as a genuine vignette-discrimination problem for the Low-AIP
+condition, not measurement noise evenly distributed across conditions.
+
+Robustness re-run (with vs. without the flagged group), both via
+`05_anova_h3.py`-equivalent ANOVA and via `run_plssem.py`:
+
+| Test | With reversers (n=321) | Without (n=207) | Stable? |
+|---|---|---|---|
+| H3 (DISC→INT) | p=.371 | p=.240 | ✅ stable (not supported either way) |
+| **AIP×DISC interaction (exploratory)** | **p=.023** | **p=.583** | ❌ **effect vanishes** — likely an artifact of the reverser group, not a real interaction |
+| H1 AIP→REL | β=.708, p<.001 | β=.718, p<.001 | ✅ stable |
+| H2 AIP→INT | β=.033, p=.670 | β=.021, p=.835 | ✅ stable (ns either way) |
+| H4 REL→TRU | β=.349, p<.001 | β=.318, p<.001 | ✅ stable |
+| **H5 REL→ENG** | β=.115, p=.119 (ns) | **β=.179, p=.036 (supported)** | ❌ **conclusion flips** |
+| **H6a INT→TRU** | β=−.171, p=.012 | **β=−.317, p<.001** | ⚠️ stays significant, effect size nearly doubles |
+| H6b INT→ENG | β=.006, p=.976 | β=−.031, p=.590 | ✅ stable (ns either way) |
+| H6c INT→PI | β=−.125, p=.007 | β=−.132, p=.017 | ✅ stable |
+| H7a β_M1 | β=−.082, p=.242 | β=−.041, p=.475 | ✅ stable (ns either way) |
+| H7b β_M2 | β=−.023, p=.656 | β=.041, p=.652 | ✅ stable (ns either way) |
+
+**Action implied, not yet taken:** H1/H2/H4/H6b/H6c/H7a/H7b are robust to this
+group either way. **H5 and the AIP×DISC interaction are not** — and H6a's
+effect size is sensitive even though its significance survives. Given the
+66%-vs-1.3% asymmetry above, the Low-AIP vignette likely needs a content
+review (task-B2.10-style rewrite) before main collection is trusted, same
+category of fix as the AIP↔REL discriminant-validity concern (§7/§9/§10).
+
+**Inner VIF (collinearity / Common Method Bias, Kock 2015 convention) added
+to the PLS-SEM bridge.** `summary(model)$vif_antecedents` is a named R list
+(one entry per endogenous construct, each a named numeric vector of that
+construct's own predictors' VIFs) — NOT a rectangular matrix, so it needed
+flattening to a tidy `(to, from, vif)` data.frame in `07_plssem_bridge.R`
+before it could survive the rpy2 round-trip; `run_plssem.py` writes it to
+`outputs/tables/plssem_inner_vif_{role}.csv` and warns on any VIF > 3.3.
+Result at n=321/328: **max VIF ≈ 1.25 (ENG←TRU) — no CMB signal**, well under
+both the 3.3 (full-collinearity/CMB) and 5 (generic multicollinearity)
+thresholds.
+
+See README.md's "Latest 05/06/07 results" for the fullest current
+path-coefficient/power/H3 table in one place — update both together.
+
+**`06_power_analysis.py` gained `compute_observed_f2()` and `--input`/`--sample-role`**
+(same day). Previously the script only evaluated two *assumed* f² scenarios
+(0.02 a priori target, 0.009 conservative risk band) — neither ever checked
+against real data.
+
+**Superseded later the same day, see the "per-term refit" note right below —
+the original version of `compute_observed_f2()` fit only 2 models (full vs.
+BOTH interaction terms dropped at once) and reported one joint f² for
+"M1/M2 combined." That version's headline numbers (n=328: f²=0.0121→n=654;
+n=380: f²=0.0132→n=603) are superseded by the per-term numbers below and are
+kept here only as a historical record of what this section originally said.**
+
+**Per-term refit, requested by Khai (2026-09-17, same day):** a joint f² for
+"M1 and M2 combined" isn't a real quantity in this model — β_M1 (H7a) and
+β_M2 (H7b) are two independent interaction terms (§1.5/Amendment A-8), each
+with its own effect size, and the two could easily be masking very different
+individual magnitudes underneath one blended number. `compute_observed_f2()`
+was rewritten to fit **three** PLS-SEM models instead of two: FULL (both
+M1,M2), WITHOUT-M1-only (M2 kept), WITHOUT-M2-only (M1 kept) — via a single
+parameterized `fit_model(data, include_m1, include_m2)` R function
+(`do.call(constructs, ...)`/`do.call(relationships, ...)` building the model
+dynamically) — and computes each term's OWN incremental f² holding the other
+interaction term fixed in the model: f²_M1 = (R²_full − R²_no_M1)/(1−R²_full),
+f²_M2 = (R²_full − R²_no_M2)/(1−R²_full). This is the standard per-predictor
+f² convention (Cohen 1988; Hair et al. 2022) and replaces the old joint
+number. `compute_observed_f2_perceived()` (§14) was updated the same way —
+it now also reports f²_M1 as a consistency check (PDPL/H7a is unchanged by
+the DISC_COND→MC_DISC swap, so its f²_M1 should be close to, though not
+necessarily identical to, `compute_observed_f2()`'s, since the perceived run
+requires one more complete-case column, `MC_DISC`).
+
+**Result on `pilot_clean.csv --sample-role main` (n=328, 2026-09-17):**
+
+| Term | R²_full | R²_without | f² | required n (k=6, α=.05, power=.80) |
+|---|---|---|---|---|
+| H7a (β_M1, INT×PDPL) | 0.2275 | 0.2193 | **0.0106** | **748** |
+| H7b (β_M2, INT×DISC) | 0.2275 | 0.2268 | **0.0008** | **>5000 (not achievable in any realistic quota)** |
+
+**Result on the full sample, `--sample-role all` (n=380, including pilot,
+2026-09-17):**
+
+| Term | β (path coef., full model) | R²_full | R²_without | f² | p (incremental F-test) | required n |
+|---|---|---|---|---|---|---|
+| H7a (β_M1, INT×PDPL) | **−0.0832** | 0.2470 | 0.2395 | **0.0099** | 0.0554 | **800** |
+| H7b (β_M2, INT×DISC) | **−0.0463** | 0.2470 | 0.2451 | **0.0025** | 0.3346 | **3143** |
+
+`beta` (new, 2026-09-17, requested by Khai) is each term's own path
+coefficient (`INT*PDPL -> TRU` / `INT*DISC -> TRU`) pulled directly from
+`model_full$path_coef` in the same R fit — the real seminr coefficient, not
+an OLS proxy. Both are close to (though not identical to, different n/model
+variant) the bootstrap-run values in `run_plssem.py`'s own output at n=328
+(β_M1=−0.089, β_M2=−0.027, §13's robustness table) — a useful cross-check
+that `06_power_analysis.py`'s duplicated model definitions still match
+`07_plssem_bridge.R`'s.
+
+**H7a and H7b's true effect sizes look meaningfully different once separated**
+— H7a sits close to the conservative risk band (0.009), needing n≈750–800,
+and its p=0.0554 is just above .05 at n=380 (i.e. right at the edge — more
+data could well flip this to significant); H7b is far smaller (0.0008–0.0025,
+p=0.3346 — nowhere close to significant at this n) and would need a sample
+size well outside any realistic quota (3143 at n=380, off the 5000-cap grid
+at n=328). The original blended number (§13's superseded 0.0121/0.0132)
+averaged over this difference and made both terms look similarly detectable
+— they are not.
+
+**p_value added (2026-09-17, requested by Khai), `f2_significance()`:** the
+incremental-F-test significance of each term's own f² — central F,
+df_num=1, df_denom=n−k−1, i.e. the standard OLS-analogue test for "does
+adding this one term significantly increase R²(TRU)?" This is **not** the
+real PLS-SEM bootstrap p-value for β_M1/β_M2 (that's `run_plssem.py`'s
+10,000-resample bootstrap CI, e.g. H7a p=.199/H7b p=.610 at n=328 per §13's
+robustness table) — it's a sample-size-planning sanity check that pairs with
+the f²/required-n numbers already in this table, same OLS-cross-check caveat
+as the rest of this script. Cross-validate against the real bootstrap p
+before drawing any conclusion.
+
+**Still only exploratory** (n<400 caveat, small-sample PLS-SEM f² noise —
+same caveats as everywhere else in §13): re-run once n≥400 real main data
+exists before using either number for a quota decision. `README.md`'s "Latest
+05/06/07 results" table has both rows.
+
+## 14. "As-perceived" H7b f² (DISC_COND → MC_DISC) — checked against a
+mismatched premise, implemented the closest valid analog — 2026-09-17
+
+**Context-honesty note:** the request asked to substitute `AIP_COND` (assigned,
+binary) for `MC_AIP` (measured, continuous 1–7) inside "the interaction term
+related to H7a/H7b," to test whether misclassification error in an assigned
+condition was suppressing the observed f² from §13. Checked directly against
+`07_plssem_bridge.R`'s actual structural model before implementing anything:
+**`AIP_COND` does not appear anywhere in the PLS-SEM model** — it's ANOVA-only
+(`05_anova_h3.py`, H3). H7a's moderator (`PDPL`) is already a full continuous
+multi-item construct, so there's no assigned/perceived distinction to test
+there at all. H7b's moderator (`DISC`) does wrap an assigned 0/1 dummy — but
+it's `DISC_COND`, not `AIP_COND`. Flagged this to Khai (`AskUserQuestion`), who
+confirmed the closest valid analog: swap `DISC_COND` for `MC_DISC` in the
+`DISC` composite for **H7b only**, leaving `PDPL`/H7a completely unchanged.
+
+**Implemented:** `06_power_analysis.py::compute_observed_f2_perceived()` +
+`--perceived-disc` flag (opt-in, requires `--input`). Same full-vs-reduced
+PLS-SEM / Cohen's f² methodology as `compute_observed_f2()` (§13) — only the
+`DISC` composite's single item changes (`_R_DISC_COMPOSITE_ASSIGNED` vs.
+`_R_DISC_COMPOSITE_PERCEIVED`, factored out of the shared `_R_MEASUREMENT_COMMON`/
+`_R_STRUCTURE_COMMON` R-script templates so both variants stay in sync). Keeps
+**all n** (no additional exclusion) — `MC_DISC` is just one more required
+column for the complete-case filter, not a filter of its own.
+
+**Updated 2026-09-17 (same day) for the per-term f² refit above:** these
+numbers now compare f²_M2 specifically (H7b's own term, holding H7a/M1 fixed
+in the model), not the old blended M1+M2 number. **Result — perceived is
+LOWER than assigned at both n levels, not higher:**
+
+| Sample | f²_M2(assigned) | p(assigned) | f²_M2(perceived) | p(perceived) | Δf² |
+|---|---|---|---|---|---|
+| `--sample-role main` (n=328) | 0.0008 | — | (not re-run at this n; see n=380 below) | — | — |
+| `--sample-role all` (n=380) | 0.0025 | 0.3346 | 0.0002 | 0.7740 | −0.0023 |
+
+Neither assigned nor perceived H7b is anywhere close to significant at n=380
+(incremental-F p=.33 and p=.77 respectively) — consistent with both readings
+of the finding: H7b's true effect is small, and swapping in `MC_DISC` doesn't
+recover a hidden significant effect.
+
+**Answer to the original question ("is misclassification in the assigned
+variable suppressing the observed f²?"): no evidence of that for H7b.** If
+misclassification error in `DISC_COND` were suppressing the true effect,
+`MC_DISC` (continuous, presumably closer to what respondents actually
+perceived) should have produced a *higher* f² than `DISC_COND`. It produced a
+lower one at both n=328 and n=380 — consistent, not a fluke of one sample cut.
+Plausible reading: `MC_DISC` is a single self-report item measured well after
+the DISC vignette, and any noise in HOW respondents interpreted that question
+(a different source of measurement error, not "misclassification of the
+assigned condition") may outweigh whatever attenuation `DISC_COND`'s binary
+coarseness introduces. Not a resolved question — this is one exploratory cut
+on n<400 data, same caveat as everything else in §13. H7a/PDPL is unaffected
+by any of this since PDPL was never assigned in the first place.

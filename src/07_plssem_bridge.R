@@ -113,6 +113,25 @@ run_plssem <- function(data) {
   # name for rhoA in your installed seminr version (see file header note).
   reliability_tab <- summary(model)$reliability
 
+  # Inner VIF (2026-09-17, requested by Khai) -- the standard PLS-SEM
+  # collinearity/CMB diagnostic (Kock, 2015 "full collinearity" convention:
+  # inner VIF > 3.3 is a red flag for common method bias; > 5 is the more
+  # lenient generic-multicollinearity threshold). summary(model)$vif_antecedents
+  # is NOT a rectangular matrix -- it's a named list, one entry per ENDOGENOUS
+  # (dependent) construct, each a named numeric vector of VIF values for that
+  # construct's own predictors (verified directly against a live model: 5
+  # entries -- REL, INT, TRU, ENG, PI -- each holding only its own
+  # antecedents' VIFs, e.g. TRU's entry has 6 values for
+  # REL/INT/PDPL/DISC/INT*PDPL/INT*DISC). Flatten to a tidy (to, from, vif)
+  # data.frame here so it survives the rpy2/pandas round-trip in
+  # run_plssem.py cleanly, instead of shipping the nested list across.
+  vif_list <- summary(model)$vif_antecedents
+  vif_rows <- do.call(rbind, lapply(names(vif_list), function(to_construct) {
+    v <- vif_list[[to_construct]]
+    data.frame(to = to_construct, from = names(v), vif = as.numeric(v),
+               stringsAsFactors = FALSE)
+  }))
+
   list(
     loadings = model$outer_loadings,
     weights = model$outer_weights,
@@ -121,6 +140,7 @@ run_plssem <- function(data) {
     f_squared = summary(model)$fSquare,   # individual f2 per path, incl. beta_M1/beta_M2
     htmt = summary(model)$validity$htmt,  # HTMT() is not exported by seminr; the
                                            # matrix lives under summary(model)$validity
+    vif = vif_rows,                       # inner VIF, tidy (to, from, vif) -- see note above
     boot_paths = summary(boot)$bootstrapped_paths
   )
 }

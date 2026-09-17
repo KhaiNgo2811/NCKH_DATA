@@ -27,8 +27,30 @@ def score_int(df):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--input", required=True)
+    ap.add_argument("--sample-role", choices=["pilot", "main", "all"], default="all",
+                     help="Optional row filter on the 'sample_role' column (see "
+                          "CLAUDE.md SS9/SS12). Default 'all' preserves prior "
+                          "behavior exactly. 'main' does NOT by itself mean this "
+                          "run counts as the confirmatory H3 test -- that requires "
+                          "real n>=400 main-collection data (TF SS C.1.1).")
     args = ap.parse_args()
     df = pd.read_csv(args.input)
+
+    role_suffix = ""
+    if args.sample_role != "all":
+        if "sample_role" not in df.columns:
+            print(f"!! WARNING: --sample-role={args.sample_role} requested but the "
+                  f"input has no 'sample_role' column -- running on the full input instead.")
+        else:
+            n_before = len(df)
+            df = df[df["sample_role"] == args.sample_role].copy()
+            role_suffix = f"_{args.sample_role}"
+            print(f"[05_anova_h3] --sample-role={args.sample_role}: {n_before} -> {len(df)} rows")
+            if args.sample_role == "main" and len(df) < 400:
+                print(f"!! WARNING: n={len(df)} is below the n>=400 main-collection target -- "
+                      f"this is NOT the confirmatory H3 test yet, just an exploratory look "
+                      f"(sample_role='main' is an administrative label, Amendment A-19, "
+                      f"not a sign main collection has reached its target n).")
 
     df = df.copy()
     df["INT_mean"] = score_int(df)
@@ -37,7 +59,7 @@ def main():
 
     aov = pg.anova(data=df, dv="INT_mean", between=[aip_col, "DISC_label"],
                     detailed=True, effsize="np2")
-    aov.to_csv("outputs/tables/H3_anova_disclosure_main_effect.csv", index=False)
+    aov.to_csv(f"outputs/tables/H3_anova_disclosure_main_effect{role_suffix}.csv", index=False)
     print("--- Two-way ANOVA: INT ~ AIP_COND * DISC_COND ---")
     print(aov.to_string(index=False))
 

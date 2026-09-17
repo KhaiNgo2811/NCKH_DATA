@@ -30,6 +30,16 @@ from _config import CONSTRUCT_ITEMS, DISC_COL  # noqa: E402
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--input", required=True)
+    ap.add_argument("--sample-role", choices=["pilot", "main", "all"], default="all",
+                     help="Optional row filter on the 'sample_role' column "
+                          "(01_clean.py::compute_collection_phase(), an ADMINISTRATIVE "
+                          "pilot/main label, see CLAUDE.md SS9/SS12 -- not a "
+                          "measurement-readiness boundary, and not a substitute for "
+                          "the real n>=400 confirmatory-run gate). Default 'all' "
+                          "preserves the original behavior (no filtering) exactly; "
+                          "'main' or 'pilot' filters rows and appends _{role} to every "
+                          "output filename so a filtered run never overwrites the "
+                          "unfiltered one.")
     args = ap.parse_args()
 
     if not RPY2_AVAILABLE:
@@ -39,6 +49,26 @@ def main():
         sys.exit(1)
 
     df = pd.read_csv(args.input)
+
+    role_suffix = ""
+    if args.sample_role != "all":
+        if "sample_role" not in df.columns:
+            print(f"!! WARNING: --sample-role={args.sample_role} requested but the "
+                  f"input has no 'sample_role' column (only present after "
+                  f"01_clean.py's 2026-09-13 sample_role labeling) -- running on "
+                  f"the full input instead.")
+        else:
+            n_before = len(df)
+            df = df[df["sample_role"] == args.sample_role].copy()
+            role_suffix = f"_{args.sample_role}"
+            print(f"[run_plssem] --sample-role={args.sample_role}: {n_before} -> {len(df)} rows")
+            if args.sample_role == "main" and len(df) < 400:
+                print(f"!! WARNING: n={len(df)} is below the n>=400 main-collection "
+                      f"target -- per CLAUDE.md SS5, do NOT treat this as a "
+                      f"confirmatory PLS-SEM run. sample_role='main' is an "
+                      f"administrative label (Amendment A-19), not a sign that main "
+                      f"collection has actually reached its target n.")
+
     needed_cols = [c for items in CONSTRUCT_ITEMS.values() for c in items] + [DISC_COL]
     missing = [c for c in needed_cols if c not in df.columns]
     if missing:
@@ -59,26 +89,56 @@ def main():
     # forcing a manual re-extraction from the R session for anything beyond
     # path coefficients.
     r_result_names = {
-        "loadings": "plssem_outer_loadings.csv",
-        "weights": "plssem_outer_weights.csv",
-        "reliability": "plssem_reliability.csv",
-        "path_coefficients": "plssem_path_coefficients.csv",
-        "f_squared": "plssem_f_squared.csv",
-        "htmt": "plssem_htmt.csv",
-        "boot_paths": "plssem_bootstrap_paths.csv",
+        "loadings": f"plssem_outer_loadings{role_suffix}.csv",
+        "weights": f"plssem_outer_weights{role_suffix}.csv",
+        "reliability": f"plssem_reliability{role_suffix}.csv",
+        "path_coefficients": f"plssem_path_coefficients{role_suffix}.csv",
+        "f_squared": f"plssem_f_squared{role_suffix}.csv",
+        "htmt": f"plssem_htmt{role_suffix}.csv",
+        "vif": f"plssem_inner_vif{role_suffix}.csv",
+        "boot_paths": f"plssem_bootstrap_paths{role_suffix}.csv",
     }
 
+    def _to_named_df(r_obj):
+        """Convert an R matrix/data.frame to a pandas DataFrame, preserving R's
+        rownames/colnames when present.
+
+        BUGFIX (2026-09-17, first real end-to-end run once R/rpy2 finally
+        worked): rpy2's default matrix->numpy conversion drops dimnames, so
+        `pd.DataFrame(ro.conversion.rpy2py(r_obj))` silently produced bare
+        integer row/column labels (0,1,2,...) for every one of these 7
+        tables -- e.g. a 10x10 path-coefficient matrix with no way to tell
+        which row was AIP vs. REL vs. INT*PDPL. This was never caught earlier
+        because run_plssem.py had never actually executed successfully
+        before (no R/Rtools in any prior environment). Rownames/colnames are
+        fetched separately via R's own rownames()/colnames() and reapplied."""
+        with localconverter(ro.default_converter + pandas2ri.converter):
+            arr = ro.conversion.rpy2py(r_obj)
+        df = pd.DataFrame(arr)
+        try:
+            rn = ro.r["rownames"](r_obj)
+            if rn is not ro.NULL and len(rn) == len(df.index):
+                df.index = list(rn)
+        except Exception:
+            pass
+        try:
+            cn = ro.r["colnames"](r_obj)
+            if cn is not ro.NULL and len(cn) == len(df.columns):
+                df.columns = list(cn)
+        except Exception:
+            pass
+        return df
+
     dfs = {}
-    with localconverter(ro.default_converter + pandas2ri.converter):
-        for r_name, out_filename in r_result_names.items():
-            try:
-                r_obj = result.rx2(r_name)
-            except Exception as e:
-                print(f"!! WARNING: could not extract '{r_name}' from the R result: {e}")
-                continue
-            py_df = pd.DataFrame(ro.conversion.rpy2py(r_obj))
-            dfs[r_name] = py_df
-            py_df.to_csv(f"outputs/tables/{out_filename}")
+    for r_name, out_filename in r_result_names.items():
+        try:
+            r_obj = result.rx2(r_name)
+        except Exception as e:
+            print(f"!! WARNING: could not extract '{r_name}' from the R result: {e}")
+            continue
+        py_df = _to_named_df(r_obj)
+        dfs[r_name] = py_df
+        py_df.to_csv(f"outputs/tables/{out_filename}")
 
     print("--- PLS-SEM path coefficients (structural model) ---")
     if "path_coefficients" in dfs:
@@ -95,6 +155,18 @@ def main():
     print("\n--- HTMT (discriminant validity) ---")
     if "htmt" in dfs:
         print(dfs["htmt"])
+    print("\n--- Inner VIF (collinearity / common method bias, Kock 2015 convention: "
+          "flag > 3.3, and > 5 on the generic-multicollinearity threshold) ---")
+    if "vif" in dfs:
+        vif_df = dfs["vif"]
+        print(vif_df.to_string(index=False))
+        flagged = vif_df[vif_df["vif"] > 3.3]
+        if not flagged.empty:
+            print("!! WARNING: inner VIF > 3.3 (possible CMB / collinearity) for:")
+            for _, r in flagged.iterrows():
+                print(f"    {r['from']} -> {r['to']} : VIF={r['vif']:.3f}")
+        else:
+            print("OK: no inner VIF exceeds 3.3.")
 
     written = [f"outputs/tables/{r_result_names[name]}" for name in dfs]
     print(f"\n[run_plssem] wrote: {', '.join(written)}")

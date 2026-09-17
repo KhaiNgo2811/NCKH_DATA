@@ -1,14 +1,14 @@
 step,n_before,n_dropped_this_step,n_after
-consent_fail,792,4,788
-screener_age_fail,788,6,782
-screener_omni_fail,782,32,750
-attention_check_fail,750,388,362
-comprehension_check_fail,362,0,362
-speeder_under_120s,362,0,362
-excess_missing_items,362,0,362
-duplicate_response_pattern,362,10,352
-straightlining_near_zero_sd,352,0,352
-TOTAL,792,440,352
-"manipulation_check_group_evidence_MC_AIP (report only, n_excluded=0, d=0.693, p=0.0)",352,0,352
-"manipulation_check_group_evidence_MC_DISC (report only, n_excluded=0, d=1.152, p=0.0)",352,0,352
-"manipulation_check_composite_evidence (report only, n_excluded=0, AIP_mean d=0.721, p=0.0)",352,0,352
+consent_fail,854,4,850
+screener_age_fail,850,6,844
+screener_omni_fail,844,37,807
+attention_check_fail,807,415,392
+comprehension_check_fail,392,0,392
+speeder_under_120s,392,0,392
+excess_missing_items,392,0,392
+duplicate_response_pattern,392,12,380
+straightlining_near_zero_sd,380,0,380
+TOTAL,854,474,380
+"manipulation_check_group_evidence_MC_AIP (report only, n_excluded=0, d=0.659, p=0.0)",380,0,380
+"manipulation_check_group_evidence_MC_DISC (report only, n_excluded=0, d=1.13, p=0.0)",380,0,380
+"manipulation_check_composite_evidence (report only, n_excluded=0, AIP_mean d=0.738, p=0.0)",380,0,380
