@@ -1129,3 +1129,93 @@ assigned condition") may outweigh whatever attenuation `DISC_COND`'s binary
 coarseness introduces. Not a resolved question — this is one exploratory cut
 on n<400 data, same caveat as everything else in §13. H7a/PDPL is unaffected
 by any of this since PDPL was never assigned in the first place.
+
+## 15. Full 01→04 + `run_plssem.py` re-run on the grown raw export (888 raw,
+n=388 clean) — MC gate now clears; run-log added — 2026-09-17
+
+**Context-honesty note on the triggering request:** it asked for "toàn bộ path
+H1-H9" — this project's hypothesis codes are locked at H1–H7b (§0); there is
+no H8 or H9 anywhere in TF/Codebook. Read as shorthand for "every path in the
+model" (which is what's reported below), not as a claim that H8/H9 exist. It
+also asked to switch to "p-value bootstrap thật (percentile, không dùng
+OLS-analogue)" — checked `run_plssem.py`'s actual output against seminr's
+installed source (`seminr:::parse_boot_array`, seminr 2.5.0) before changing
+anything: the "Bootstrap P Val" column this script has printed since §13 was
+**already** `2 * min(mean(boot_array <= 0), mean(boot_array > 0))` — the
+standard empirical percentile bootstrap p-value, computed straight from the
+10,000-resample distribution. It was never an OLS/t-distribution analogue —
+that phrase only ever applied to `06_power_analysis.py`'s separate
+`f2_significance()` (§13/§14), a different, clearly-labeled sanity check for
+sample-size planning, not for testing an already-estimated model. No code
+change was needed for the p-value method itself; the module docstring in
+`run_plssem.py` now spells out the exact formula so this doesn't need
+re-verifying next time.
+
+**Implemented:** `run_plssem.py` now prints the final n actually going into
+`estimate_pls()` (after `--sample-role` filtering and the PLS-SEM
+complete-case requirement) and cross-checks it against the row count right
+before that filter, warning if they differ (would mean some row has a missing
+`DISC_COND`/item despite passing `01_clean.py`'s zero-tolerance missing-item
+step). Every run now also appends one row (UTC timestamp, input file,
+`--sample-role`, n before/after the complete-case filter) to
+`outputs/tables/plssem_run_log.csv` — created with a header on first run,
+appended after that — so repeated runs on the still-growing `pilot_real.csv`
+can be told apart instead of only ever showing the latest numbers.
+
+**Full pipeline re-run, no `--sample-role` filter (`pilot_real.csv` grown to
+888 raw responses):**
+
+```
+consent −5 → age −6 → omni −37 → attention −440 → comprehension −0 →
+speeder −0 → missing −0 → duplicate −12 → straightlining −0
+888 raw → n=388 clean
+```
+
+n=388 confirmed as the exact n `run_plssem.py` used (`[run_plssem] n going
+into PLS-SEM: 388 ... 0 more dropped for missing values` — matches
+`pilot_clean.csv` exactly, logged in `plssem_run_log.csv`).
+
+**Manipulation-check gate now clears outright, both checks:** MC_AIP
+d=0.632 (p<.001), MC_DISC d=1.119 (p<.001) — both comfortably above the
+|d|≥0.50 gate for the first time in this project's history (earlier
+checkpoints, e.g. §12's n=296 or §7's early pilot numbers, were borderline or
+failing for MC_AIP specifically). **HTMT is now clean everywhere**, including
+AIP↔REL (0.800, was flagged >0.85 at multiple earlier pilot checkpoints,
+§7/§9/§10) — `03_reliability_efa.py` prints "OK: no construct pair exceeds
+the 0.85 HTMT threshold" for the first time.
+
+**Full PLS-SEM path table at n=388, α=.05, real percentile bootstrap p (10,000
+resamples):**
+
+| Path | β | p (bootstrap, percentile) | Verdict |
+|---|---|---|---|
+| H1 AIP→REL | 0.715 | <.001 | Supported |
+| H2 AIP→INT | 0.040 | .531 | Not supported |
+| H4 REL→TRU | 0.341 | <.001 | Supported |
+| H5 REL→ENG | 0.107 | .082 | Not supported |
+| **H6a INT→TRU** | **−0.240** | **<.001** | Supported — effect size grew noticeably vs. n=328 (was −0.178, §13) |
+| H6b INT→ENG | −0.017 | .709 | Not supported |
+| H6c INT→PI | −0.142 | <.001 | Supported |
+| E1 TRU→ENG | 0.404 | <.001 | — |
+| E2 ENG→PI | 0.617 | <.001 | — |
+| DISC→INT (spec. term) | −0.059 | .253 | — |
+| DISC→TRU (spec. term) | 0.043 | .321 | — |
+| **PDPL→TRU (spec. term)** | **0.103** | **.046** | newly crosses .05 at this n (was .084 at n=328) |
+| H7a INT×PDPL→TRU (β_M1) | −0.083 | .185 | Not supported |
+| H7b INT×DISC→TRU (β_M2) | −0.063 | .255 | Not supported |
+
+H7a/H7b are still not significant at n=388, consistent with §13/§14's power
+analysis (both need n well above 388 to reliably detect at their observed
+effect sizes). **Reliability**: all 7 substantive constructs clear α/ρ_A/ρ_C
+> 0.70, AVE > 0.50. **Inner VIF**: max ≈1.29 (ENG←TRU) — still no CMB signal.
+The 3-cell f² gap (INT→TRU, DISC→TRU, PDPL→TRU showing `NaN` in
+`plssem_f_squared.csv`) from §13 persists unchanged at this n — still an open
+item, not investigated yet.
+
+**n=388 is still below the n≥400 main-collection target** (CLAUDE.md §5) —
+this remains an exploratory run, not the confirmatory one. It is, however,
+the strongest checkpoint so far: MC gate clears, HTMT is clean, and H6a's
+effect has both grown and tightened. `README.md`'s "Latest 05/06/07 results"
+table still shows the older n=328/380 numbers from §13/§14 — not yet
+reconciled with this n=388 run since this request only covered `01`→`04` +
+`run_plssem.py`, not `05_anova_h3.py`/`06_power_analysis.py`.

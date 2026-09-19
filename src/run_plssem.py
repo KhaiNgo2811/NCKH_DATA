@@ -7,11 +7,33 @@ ONLY for n>=400 main collection. NEVER run this on pilot (n=30) data for confirm
 purposes - pilot is reliability/EFA/manipulation-check only (TF v2.2 SS C.3 mandatory
 pilot gate). See CLAUDE.md SS5.
 
+BOOTSTRAP P-VALUE METHOD (context-honesty note, 2026-09-17): a request asked this
+script to switch to "real percentile bootstrap p-values, not an OLS-analogue" for
+every path. Checked against seminr's actual source (seminr:::parse_boot_array,
+installed seminr 2.5.0) before changing anything: the "Bootstrap P Val" column this
+script has already been extracting and printing all along is
+`2 * min(mean(boot_array <= 0), mean(boot_array > 0))` -- the standard EMPIRICAL
+PERCENTILE bootstrap p-value (proportion of the 10,000 resampled path estimates on
+each side of zero, doubled for two-sided), computed directly from the resample
+distribution. It has never been an OLS/t-distribution analogue (that phrase only
+applies to 06_power_analysis.py's separate, clearly-labeled f2_significance() sanity
+check, added the same day for a different purpose -- picking a sample-size target,
+not testing significance of an already-estimated model). No change was needed here;
+this note just makes the fact explicit and citable, since the file itself never
+spelled out the formula before.
+
+RUN LOG (2026-09-17, requested by Khai): every run appends one row (timestamp, input
+file, --sample-role, n before the PLS-SEM complete-case filter, final n actually
+estimated) to outputs/tables/plssem_run_log.csv, so repeated runs on a growing
+pilot_real.csv can be told apart instead of only ever showing the latest numbers.
+
 Usage:
     python src/run_plssem.py --input data/processed/main_clean.csv
 """
 import argparse
 import sys
+from datetime import datetime, timezone
+from pathlib import Path
 
 import pandas as pd
 
@@ -75,12 +97,38 @@ def main():
         print(f"ERROR: input is missing required columns: {missing}")
         sys.exit(1)
 
+    n_before_complete_case = len(df)
+    complete_df = df[needed_cols].dropna()
+    n_final = len(complete_df)
+    print(f"[run_plssem] n going into PLS-SEM: {n_final} "
+          f"(input after --sample-role filter had {n_before_complete_case} rows; "
+          f"{n_before_complete_case - n_final} more dropped for missing values in "
+          f"one of the {len(needed_cols)} PLS-SEM item/DISC columns).")
+    if n_before_complete_case != n_final:
+        print(f"!! NOTE: {n_before_complete_case - n_final} row(s) had a missing "
+              f"value in a PLS-SEM column despite passing 01_clean.py's "
+              f"zero-tolerance missing-item hard-drop (CLAUDE.md SS12 step 7) -- "
+              f"this can happen if DISC_COND itself (Embedded Data, not one of the "
+              f"34 fielded items) is missing on some row. Investigate if this "
+              f"count is large.")
+
     ro.r("source('src/07_plssem_bridge.R')")
     with localconverter(ro.default_converter + pandas2ri.converter):
-        r_df = ro.conversion.py2rpy(df[needed_cols].dropna())
+        r_df = ro.conversion.py2rpy(complete_df)
 
     ro.globalenv["input_data"] = r_df
     result = ro.r("run_plssem(input_data)")
+
+    log_path = Path("outputs/tables/plssem_run_log.csv")
+    log_row = pd.DataFrame([{
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "input_file": args.input,
+        "sample_role": args.sample_role,
+        "n_after_role_filter": n_before_complete_case,
+        "n_final_into_plssem": n_final,
+    }])
+    log_row.to_csv(log_path, mode="a", header=not log_path.exists(), index=False)
+    print(f"[run_plssem] logged this run to {log_path} (n_final_into_plssem={n_final})")
 
     # 07_plssem_bridge.R's run_plssem() returns a named list with 7 elements
     # (loadings, weights, reliability, path_coefficients, f_squared, htmt,
