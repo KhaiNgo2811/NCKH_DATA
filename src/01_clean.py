@@ -38,7 +38,7 @@ from _config import (  # noqa: E402
 #   The individual-level manipulation-check filter on MC_AIP/MC_DISC is
 #   REMOVED and stays removed. Dropping respondents based on MC_AIP -- a
 #   variable measured AFTER the AIP_COND treatment was administered -- is
-#   post-treatment conditioning: it can introduce selection bias into the
+#   post-treatment conditioning: it can introduce sel   ection bias into the
 #   causal estimate of AIP_COND's effect, because "how someone answered
 #   MC_AIP" is itself partly a consequence of the treatment (Montgomery,
 #   Nyhan & Torres, 2018, AJPS). The project follows an
@@ -84,6 +84,30 @@ def breakdown_mc_groups(df, mc_col=MC_AIP_COL, cond_col=AIP_COND_COL, midpoint=M
         {"group": "TOTAL", "n": len(df)},
     ])
     return table, mask_a, mask_b
+
+
+def breakdown_cc_gate_terminations(df, cc1_col=CC1_COL, cc2_col=CC2_COL, items=None):
+    """Diagnostic only -- drops nobody. Flags respondents who answered CC1/CC2
+    (i.e. reached the CC_Gate) but answered NO substantive item (AIP1 onward).
+    The Qualtrics Survey Flow has a "Then Branch If CC1/CC2 mismatch -> End of
+    Survey" between CC_Gate and Show Block: M_AIP, so these are terminations at
+    the gate, not mid-survey dropout. They are already excluded by
+    apply_exclusions() (all fail the excess_missing_items mask, though in the
+    sequential funnel table an earlier step removes them first, so that row can
+    show 0); this only labels them for the audit trail / sample-flow diagram in Method."""
+    if items is None:
+        items = FIELDED_ITEMS
+    present_items = [c for c in items if c in df.columns]
+    reached_cc = pd.Series(False, index=df.index)
+    if cc1_col in df.columns:
+        reached_cc |= df[cc1_col].notna()
+    if cc2_col in df.columns:
+        reached_cc |= df[cc2_col].notna()
+    if present_items:
+        answered_any_substantive = df[present_items].notna().any(axis=1)
+    else:
+        answered_any_substantive = pd.Series(True, index=df.index)
+    return reached_cc & ~answered_any_substantive
 
 
 def breakdown_attention_groups(df, att1_col=ATT1_COL, att2_col=ATT2_COL,
@@ -501,6 +525,23 @@ def recode_pnts(df):
     return df
 
 
+def export_smartpls_input(clean, out_path):
+    """Numeric-only, NA-free export for SmartPLS 4 (2026-09-20, requested by Khai):
+    the 34 fielded items + DISC_COND + AIP_COND + MAIN (1 = sample_role 'main',
+    0 = 'pilot'). No PII, no text columns. Aborts if any value is missing, since
+    SmartPLS needs a complete numeric matrix. NOTE the SmartPLS moderator variable
+    is DISC_COND (the column called DISC in the R sketch does not exist here)."""
+    cols = list(FIELDED_ITEMS) + [DISC_COL, AIP_COND_COL]
+    out = clean[cols].copy()
+    out = out.apply(pd.to_numeric, errors="raise")
+    out["MAIN"] = (clean["sample_role"] == "main").astype(int)
+    if out.isna().any().any():
+        bad = out.columns[out.isna().any()].tolist()
+        raise ValueError(f"smartpls_input would contain missing values in: {bad}")
+    out.to_csv(out_path, index=False)
+    return out
+
+
 def strip_pii(df):
     """Drop PII columns (Law 91/2025/QH15 Art. 2) before writing the processed
     output. strip_pii.py only de-identifies the RAW export before commit; this
@@ -549,6 +590,14 @@ def main():
     print("[01_clean] MC_AIP breakdown BEFORE filtering (diagnostic only, not a filter step):")
     print(mc_table.to_string(index=False))
 
+    cc_term_mask = breakdown_cc_gate_terminations(df)
+    print(f"\n[01_clean] CC_Gate termination diagnostic (reached CC1/CC2, "
+          f"zero substantive items answered): {int(cc_term_mask.sum())} of "
+          f"{len(df)} raw rows -- these all fail the "
+          f"excess_missing_items mask and are excluded by the hard-drop funnel below "
+          f"(the sequential funnel row for that step can show 0 because earlier steps "
+          f"already removed them); this line is informational only.")
+
     # Same split for step 4 (attention_check_fail, 2026-09-16) -- the 665->296
     # run showed this step alone dropping 324 respondents; this breaks that
     # number down into genuine inattention vs. dropout, same reasoning as
@@ -558,6 +607,12 @@ def main():
     print(att_table.to_string(index=False))
 
     clean, log, hard_drop_masks = apply_exclusions(df)
+    cc_term_idx = set(df.index[cc_term_mask])
+    n_term_dropped = len(cc_term_idx - set(clean.index))
+    n_term_survived = len(cc_term_idx & set(clean.index))
+    print(f"  -> {n_term_dropped} of these were excluded as expected "
+          f"(100% missing on the substantive battery); {n_term_survived} "
+          f"unexpectedly survived filtering (investigate if > 0).")
     clean = recode_cond(clean)
     clean = recode_pnts(clean)
     clean = compute_construct_scores(clean)
@@ -647,6 +702,20 @@ def main():
     out_log = f"outputs/tables/{args.phase}_exclusion_log.csv"
     clean.to_csv(out_csv, index=False)
     log.to_csv(out_log, index=False)
+    # 3-way split (2026-09-20, requested by Khai): the same cleaned sample written as
+    # pilot-only, main-only and pooled (pilot+main), plus the SmartPLS numeric export
+    # for each. sample_role is the ADMINISTRATIVE label (CLAUDE.md SS9/A-19), not a
+    # measurement-readiness boundary. {phase}_clean.csv above is kept unchanged (it is
+    # the pooled file existing scripts read); clean_pooled.csv is an identical copy
+    # under an explicit name.
+    splits = {"pilot": clean[clean["sample_role"] == "pilot"],
+              "main": clean[clean["sample_role"] == "main"],
+              "pooled": clean}
+    for tag, part in splits.items():
+        part.to_csv(f"data/processed/clean_{tag}.csv", index=False)
+        sp = export_smartpls_input(part, f"data/processed/smartpls_input_{tag}.csv")
+        print(f"[01_clean] split '{tag}': n={len(part)} -> data/processed/clean_{tag}.csv, "
+              f"smartpls_input_{tag}.csv ({sp.shape[1]} cols, no missing values)")
 
     print(f"\n[01_clean] input={args.input} phase={args.phase}")
     print(log.to_string(index=False))

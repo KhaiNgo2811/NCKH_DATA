@@ -132,12 +132,135 @@ run_plssem <- function(data) {
                stringsAsFactors = FALSE)
   }))
 
+  # Fornell-Larcker criterion (2026-09-19, requested by Khai): sqrt(AVE) on the
+  # diagonal, inter-construct correlations on the lower triangle -- discriminant
+  # validity holds when each diagonal exceeds every correlation in its row/column.
+  # Restricted to the 7 reflective constructs: DISC and the two interaction terms
+  # are single-item composites (AVE = 1 by construction), so FL says nothing
+  # about them (same reason DISC never gets HTMT/alpha reporting, CLAUDE.md SS0).
+  # Outer VIF (item-level collinearity WITHIN a construct; distinct from the inner
+  # VIF above, which is construct-level and used for CMB). Flattened to tidy
+  # (construct, item, vif); single-item constructs skipped for the same reason.
+  # PDPL before PI = seminr's own construct order, so the lower triangle stays lower.
+  reflective <- c("AIP", "REL", "INT", "TRU", "ENG", "PDPL", "PI")
+  fl_full <- summary(model)$validity$fl_criteria
+  fl_tab <- fl_full[reflective, reflective]
+  vif_items_list <- summary(model)$validity$vif_items
+  outer_vif_rows <- do.call(rbind, lapply(reflective, function(cn) {
+    v <- vif_items_list[[cn]]
+    data.frame(construct = cn, item = names(v), vif = as.numeric(v),
+               stringsAsFactors = FALSE)
+  }))
+
+  # f2 gap fix (2026-09-19): seminr's model_fsquares() deliberately sets f2 = NA
+  # for every COMPONENT of an interaction term (here INT, PDPL, DISC -> TRU),
+  # with its own comment that omitting them "will cause model estimation to
+  # fail". That is not a formula error (no R2_reduced > R2_full or divide-by-0):
+  # it is a blanket skip. Checked directly: dropping INT->TRU or DISC->TRU DOES
+  # estimate (each still has other structural paths), so seminr's own per-path
+  # fSquared() is called on them here. PDPL->TRU genuinely cannot be
+  # estimated without the path ("subscript out of bounds": PDPL would then
+  # appear only inside the interaction term), so it stays NA.
+  f2_tab <- summary(model)$fSquare
+  for (iv in c("INT", "PDPL", "DISC")) {
+    f2_tab[iv, "TRU"] <- tryCatch(seminr:::fSquared(model, iv, "TRU"),
+                                  error = function(e) NA_real_)
+  }
+
+  # Specific indirect effects (2026-09-19, requested by Khai; extended 2026-09-23
+  # for the manuscript's Table 10 -- "and other indirect paths"): product of the
+  # path coefficients along from->through->to, evaluated on EVERY one of the same
+  # 10,000 bootstrap resamples used for the path table (same boot object, same
+  # seed), so the CI is the percentile CI of the product -- not a Sobel/normal
+  # approximation. `through` can be a vector (seminr::specific_effect_significance
+  # supports serial mediation chains up to 4 mediators) -- used here for the two
+  # 3-step chains through TRU then ENG.
+  ind_specs <- list(
+    list(from = "REL", through = "TRU", to = "ENG"),          # H4 x E1
+    list(from = "INT", through = "TRU", to = "ENG"),          # H6a x E1
+    list(from = "REL", through = "ENG", to = "PI"),           # H5 x E2
+    list(from = "INT", through = "ENG", to = "PI"),           # H6b x E2
+    list(from = "REL", through = c("TRU", "ENG"), to = "PI"), # H4 x E1 x E2 (serial)
+    list(from = "INT", through = c("TRU", "ENG"), to = "PI")  # H6a x E1 x E2 (serial)
+  )
+  indirect_rows <- do.call(rbind, lapply(ind_specs, function(sp) {
+    r <- specific_effect_significance(boot, from = sp$from, through = sp$through, to = sp$to)
+    data.frame(effect = paste(c(sp$from, sp$through, sp$to), collapse = "->"),
+               estimate = as.numeric(r[1, "Original Est."]),
+               boot_mean = as.numeric(r[1, "Bootstrap Mean"]),
+               boot_sd = as.numeric(r[1, "Bootstrap SD"]),
+               ci_low = as.numeric(r[1, "2.5% CI"]),
+               ci_high = as.numeric(r[1, "97.5% CI"]),
+               p_boot = as.numeric(r[1, "Bootstrap P Val"]),
+               stringsAsFactors = FALSE)
+  }))
+
+  # R^2 / Adjusted R^2 per endogenous construct (2026-09-23, requested by Khai,
+  # for the manuscript's "R^2 and Q2predict" table). model$rSquared is a 2-row
+  # matrix (Rsq, AdjRsq) x endogenous constructs -- transposed here into a tidy
+  # (construct, R2, AdjR2) data.frame.
+  rsq_m <- model$rSquared
+  rsquared_tab <- data.frame(construct = colnames(rsq_m),
+                              R2 = as.numeric(rsq_m["Rsq", ]),
+                              AdjR2 = as.numeric(rsq_m["AdjRsq", ]),
+                              stringsAsFactors = FALSE)
+
+  # Q2predict (Shmueli, Ray, Estrada & Danks, 2019 PLSpredict routine): 10-fold,
+  # 10-repetition out-of-sample prediction via seminr::predict_pls(). Q2predict
+  # per indicator = 1 - SSE/SSO, SSE from the held-out prediction error returned
+  # by predict_pls(), SSO from each indicator's deviation around the FULL-SAMPLE
+  # mean (the standard reporting approximation -- predict_pls() does not expose
+  # per-fold training-set means, which the strict blindfolding definition uses).
+  # Reported per ENDOGENOUS construct (REL, INT, TRU, ENG, PI) as the mean across
+  # that construct's own indicators, alongside the PLS-vs-LM-benchmark RMSE
+  # comparison Shmueli et al. (2019) use to grade predictive power (High = PLS
+  # beats the naive linear-model benchmark on every indicator; Medium = majority;
+  # Low/none = minority or none).
+  set.seed(123)
+  pred <- predict_pls(model, noFolds = 10, reps = 10, cores = NULL)
+  pred_sum <- summary(pred)
+  pe <- pred_sum$prediction_error
+  pls_rmse <- pred_sum$PLS_out_of_sample["RMSE", ]
+  lm_rmse <- pred_sum$LM_out_of_sample["RMSE", ]
+  endogenous_items <- list(
+    REL = multi_items("REL", 1:4), INT = multi_items("INT", 1:5),
+    TRU = multi_items("TRU", 1:6), ENG = multi_items("ENG", 1:6),
+    PI = multi_items("PI", 1:4)
+  )
+  q2predict_tab <- do.call(rbind, lapply(names(endogenous_items), function(cons) {
+    items <- endogenous_items[[cons]]
+    q2_item <- sapply(items, function(it) {
+      e <- pe[[it]]
+      sso <- sum((data[[it]] - mean(data[[it]]))^2)
+      1 - sum(e^2) / sso
+    })
+    n_pls_better <- sum(pls_rmse[items] < lm_rmse[items])
+    # Q2predict <= 0 means NO predictive relevance regardless of the RMSE-vs-LM
+    # comparison (Shmueli et al. 2019) -- checked here first so a construct like
+    # INT (tiny/negative R2, so its indicators are barely predictable by anything)
+    # cannot be mislabeled "High" purely because PLS's poor predictions still beat
+    # an equally poor LM benchmark on RMSE.
+    power <- if (mean(q2_item) <= 0) "None (Q2predict <= 0)" else
+      if (n_pls_better == length(items)) "High" else
+      if (n_pls_better > length(items) / 2) "Medium" else "Low"
+    data.frame(construct = cons, Q2predict = mean(q2_item),
+               n_items_PLS_lt_LM_RMSE = n_pls_better, n_items_total = length(items),
+               predictive_power = power, stringsAsFactors = FALSE)
+  }))
+
   list(
+    indirect = indirect_rows,
+    rsquared = rsquared_tab,
+    q2predict = q2predict_tab,
+    boot_obj = boot,                      # kept for ad hoc reuse of the fitted bootstrap object; no in-repo consumer as of the 2026-09-23 cleanup (was 09_h7_supplementary.py, removed)
+    model_obj = model,
+    fornell_larcker = fl_tab,
+    outer_vif = outer_vif_rows,
     loadings = model$outer_loadings,
     weights = model$outer_weights,
     reliability = reliability_tab,        # alpha, rhoC, AVE, rhoA per construct
     path_coefficients = model$path_coef,
-    f_squared = summary(model)$fSquare,   # individual f2 per path, incl. beta_M1/beta_M2
+    f_squared = f2_tab,                   # individual f2 per path, incl. beta_M1/beta_M2
     htmt = summary(model)$validity$htmt,  # HTMT() is not exported by seminr; the
                                            # matrix lives under summary(model)$validity
     vif = vif_rows,                       # inner VIF, tidy (to, from, vif) -- see note above

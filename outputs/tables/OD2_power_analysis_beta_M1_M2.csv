@@ -1,5 +1,5 @@
 scenario,beta,f2,k,alpha,target_power,required_n,achieved_power_at_n,p_value
 a priori target (TF v2.3 SS C.2),,0.02,6,0.05,0.8,400,0.8006,
 conservative risk band (Aguinis et al. 2005 median),,0.009,6,0.05,0.8,880,0.8004,
-"observed H7a (empirical PLS-SEM, n=394)",-0.0836,0.01,6,0.05,0.8,794,0.8001,0.0502
-"observed H7b (empirical PLS-SEM, n=394)",-0.0623,0.0046,6,0.05,0.8,1706,0.8001,0.1819
+"observed H7a (empirical PLS-SEM, n=397)",-0.0841,0.0101,6,0.05,0.8,783,0.8005,0.0476
+"observed H7b (empirical PLS-SEM, n=397)",-0.0627,0.0047,6,0.05,0.8,1677,0.8002,0.1765

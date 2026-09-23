@@ -62,6 +62,10 @@ def main():
                           "'main' or 'pilot' filters rows and appends _{role} to every "
                           "output filename so a filtered run never overwrites the "
                           "unfiltered one.")
+    ap.add_argument("--tag", default="",
+                     help="Optional extra suffix for every output filename (e.g. "
+                          "'smartpls_main'), so a run on a different input file never "
+                          "overwrites the default plssem_*.csv results.")
     args = ap.parse_args()
 
     if not RPY2_AVAILABLE:
@@ -90,6 +94,9 @@ def main():
                       f"confirmatory PLS-SEM run. sample_role='main' is an "
                       f"administrative label (Amendment A-19), not a sign that main "
                       f"collection has actually reached its target n.")
+
+    if args.tag:
+        role_suffix += f"_{args.tag}"
 
     needed_cols = [c for items in CONSTRUCT_ITEMS.values() for c in items] + [DISC_COL]
     missing = [c for c in needed_cols if c not in df.columns]
@@ -144,7 +151,12 @@ def main():
         "f_squared": f"plssem_f_squared{role_suffix}.csv",
         "htmt": f"plssem_htmt{role_suffix}.csv",
         "vif": f"plssem_inner_vif{role_suffix}.csv",
+        "indirect": f"plssem_indirect_effects{role_suffix}.csv",
+        "fornell_larcker": f"plssem_fornell_larcker{role_suffix}.csv",
+        "outer_vif": f"plssem_outer_vif{role_suffix}.csv",
         "boot_paths": f"plssem_bootstrap_paths{role_suffix}.csv",
+        "rsquared": f"plssem_rsquared{role_suffix}.csv",
+        "q2predict": f"plssem_q2predict{role_suffix}.csv",
     }
 
     def _to_named_df(r_obj):
@@ -200,6 +212,12 @@ def main():
     print("\n--- f-squared (incl. beta_M1/beta_M2 individual effect sizes) ---")
     if "f_squared" in dfs:
         print(dfs["f_squared"])
+    print("\n--- R^2 / Adjusted R^2 (endogenous constructs) ---")
+    if "rsquared" in dfs:
+        print(dfs["rsquared"].to_string(index=False))
+    print("\n--- Q2predict (Shmueli et al. 2019 PLSpredict, 10-fold x 10 rep, seed 123) ---")
+    if "q2predict" in dfs:
+        print(dfs["q2predict"].to_string(index=False))
     print("\n--- HTMT (discriminant validity) ---")
     if "htmt" in dfs:
         print(dfs["htmt"])
@@ -215,6 +233,76 @@ def main():
                 print(f"    {r['from']} -> {r['to']} : VIF={r['vif']:.3f}")
         else:
             print("OK: no inner VIF exceeds 3.3.")
+
+    print("\n--- Indirect effects (percentile bootstrap, same 10,000 resamples as the "
+          "path table) + Zhao, Lynch & Chen (2010) classification ---")
+    if "indirect" in dfs and "boot_paths" in dfs:
+        ind, bp = dfs["indirect"], dfs["boot_paths"]
+        # direct_of maps an indirect-effect chain to the ultimate from->to direct path
+        # IN THE MODEL, for Zhao/Lynch/Chen (2010) classification. Not every chain has
+        # one: REL->PI is never estimated as a direct path (only INT->PI, H6c, is) --
+        # those chains report the indirect effect itself but skip classification rather
+        # than compare against a path that doesn't exist.
+        direct_of = {
+            "REL->TRU->ENG": "REL  ->  ENG", "INT->TRU->ENG": "INT  ->  ENG",
+            "INT->ENG->PI": "INT  ->  PI", "INT->TRU->ENG->PI": "INT  ->  PI",
+        }
+        out_rows = []
+        for _, r in ind.iterrows():
+            key = direct_of.get(r["effect"])
+            ind_sig = (r["ci_low"] > 0) or (r["ci_high"] < 0)
+            if key is None:
+                out_rows.append({**r.to_dict(), "direct_beta": None, "direct_p": None,
+                                 "ci_excludes_0": ind_sig,
+                                 "classification": "N/A (no direct path in model)"})
+                continue
+            d = bp.loc[key]
+            dir_sig = d["Bootstrap P Val"] < 0.05
+            if ind_sig and not dir_sig:
+                cls = "Indirect-only mediation (full)"
+            elif ind_sig and dir_sig:
+                same = (r["estimate"] * d["Original Est."]) > 0
+                cls = "Complementary (partial)" if same else "Competitive (partial)"
+            elif dir_sig:
+                cls = "Direct-only (no mediation)"
+            else:
+                cls = "No effect (no mediation)"
+            out_rows.append({**r.to_dict(), "direct_beta": d["Original Est."],
+                             "direct_p": d["Bootstrap P Val"],
+                             "ci_excludes_0": ind_sig, "classification": cls})
+        ind_out = pd.DataFrame(out_rows)
+        print(ind_out.round(4).to_string(index=False))
+        ind_out.to_csv(f"outputs/tables/{r_result_names['indirect']}", index=False)
+
+    print("\n--- Fornell-Larcker criterion (diagonal = sqrt(AVE), lower triangle = "
+          "construct correlations; 7 reflective constructs only) ---")
+    if "fornell_larcker" in dfs:
+        fl = dfs["fornell_larcker"]
+        print(fl.round(3).to_string())
+        import numpy as np
+        m = fl.to_numpy(dtype=float)
+        sym = np.where(np.isnan(m), m.T, m)  # mirror lower triangle
+        fl_bad = []
+        for i, c in enumerate(fl.index):
+            others = np.delete(np.abs(sym[i]), i)
+            if np.nanmax(others) >= sym[i, i]:
+                fl_bad.append(c)
+        if fl_bad:
+            print(f"!! WARNING: Fornell-Larcker violated for: {fl_bad}")
+        else:
+            print("OK: sqrt(AVE) exceeds every inter-construct correlation for all 7 constructs.")
+    print("\n--- Outer VIF (item-level collinearity within construct; flag > 5, "
+          "> 3.3 stricter) ---")
+    if "outer_vif" in dfs:
+        ov = dfs["outer_vif"]
+        print(ov.to_string(index=False))
+        hi = ov[ov["vif"] > 3.3]
+        if hi.empty:
+            print("OK: no outer VIF exceeds 3.3.")
+        else:
+            print("!! outer VIF > 3.3 (>5 = problematic):")
+            for _, r in hi.iterrows():
+                print(f"    {r['construct']}/{r['item']}: {r['vif']:.3f}")
 
     written = [f"outputs/tables/{r_result_names[name]}" for name in dfs]
     print(f"\n[run_plssem] wrote: {', '.join(written)}")

@@ -1,3 +1,3 @@
 mc_column,group_col,n_low_or_no,n_high_or_with,mean_low_or_no,mean_high_or_with,t,p,cohens_d,gate_pass_d>=0.50
-MC_AIP,AIP_COND,209,179,4.78,5.69,6.449,0.0,0.632,True
-MC_DISC,DISC_COND,176,212,4.09,5.82,10.47,0.0,1.119,True
+MC_AIP,AIP_COND,213,184,4.76,5.71,6.811,0.0,0.661,True
+MC_DISC,DISC_COND,179,218,4.11,5.83,10.556,0.0,1.119,True

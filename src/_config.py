@@ -28,6 +28,48 @@ CONSTRUCT_ITEMS = {
 }
 ALL_ITEMS = [it for items in CONSTRUCT_ITEMS.values() for it in items]
 
+# English item wording (2026-09-23, requested by Khai for the manuscript's item-level
+# reliability table, Table 5), transcribed verbatim from Master Codebook v2.7/A-20's
+# "Item (EN)" column for each block (SS on AIP/REL/INT/TRU/ENG/PI/PDPL) -- the finalized
+# main-collection text (PROJ_MAIN_final_v2), not the earlier pilot-stage wording. DISC
+# has no item wording (it is a manipulated 0/1 dummy, never a Likert item, CLAUDE.md SS0).
+ITEM_WORDING_EN = {
+    "AIP1": "ShopWave can analyze my consumption level.",
+    "AIP2": "ShopWave can analyze my personal characteristics (e.g., gender, age group, preferred style).",
+    "AIP3": "ShopWave is able to identify my shopping habits and suggest products I may be interested in or need.",
+    "AIP4": "Regardless of which channel I use (app or website), ShopWave gives me recommendations that reflect the same understanding of me.",
+    "AIP5": "ShopWave's promotions and recommendations reflect my personal profile, regardless of which channel I am using.",
+    "REL1": "The product list I just saw matches my current shopping needs.",
+    "REL2": "The product list I saw was consistent with the type of product I was looking for.",
+    "REL3": "The product list I saw was consistent with what I had previously searched for.",
+    "REL4": "Overall, the product list I saw was useful to me.",
+    "INT1": "I feel this product list interferes with my normal shopping experience.",
+    "INT2": "I feel annoyed because this product list disrupts my shopping.",
+    "INT3": "I feel this product list is intrusive and hard to ignore.",
+    "INT4": "I feel this experience invades my privacy.",
+    "INT5": "I feel the way products are shown to me is imposing, beyond my control.",
+    "TRU1": "I believe ShopWave is competent enough to make good product recommendations.",
+    "TRU2": "I believe ShopWave is honest in how it uses my information for personalisation.",
+    "TRU3": "I believe ShopWave acts in my best interest, not just its own.",
+    "TRU4": "I feel secure about relying on ShopWave for my shopping decisions.",
+    "TRU5": "I feel comfortable about relying on ShopWave for my shopping decisions.",
+    "TRU6": "I feel content about relying on ShopWave for my shopping decisions.",
+    "ENG1": "Using the ShopWave platform gets me thinking about ShopWave.",
+    "ENG2": "I pay close attention to content related to ShopWave's recommendations.",
+    "ENG3": "I feel positive emotions when interacting with ShopWave.",
+    "ENG4": "Among the online shopping platforms I use, ShopWave is the one I choose first.",
+    "ENG5": "Compared with other shopping platforms, I spend more time using ShopWave.",
+    "ENG6": "I feel enthusiastic when using ShopWave.",
+    "PI1": "Given the opportunity, I intend to buy the products ShopWave recommends.",
+    "PI2": "I think I will purchase on the ShopWave platform in the future.",
+    "PI3": "Based on the scenario I just read, I am likely to continue shopping on ShopWave.",
+    "PI4": "The likelihood that I would buy the products ShopWave recommends is high.",
+    "PDPL1": "I am aware that Vietnam has a law regulating the protection of personal data.",
+    "PDPL2": "I know that I have the right to request that a business delete my personal data or stop using it.",
+    "PDPL3": "I understand that a business must obtain my consent before collecting my data for personalisation.",
+    "PDPL4": "I know that I have the right to be informed about how my personal data is being processed.",
+}
+
 # ENG dimension structure (Amendment A-12, TF v2.6/v2.9). ENG1-ENG6 still enter the
 # structural model (H5, H6b, E1, E2) as ONE pooled reflective composite via ENG_mean
 # / CONSTRUCT_ITEMS["ENG"] -- that is unchanged. But per the standing prohibition
@@ -115,6 +157,31 @@ REF_LABELS = {
     3: "Đức Thiện",
     4: "Trọng Phúc",
     5: "Như Quỳnh",
+}
+
+# Demographic value labels (2026-09-23, requested by Khai, for the manuscript's
+# Table 1 demographic-profile table), transcribed verbatim from Master Codebook
+# v2.7/A-20 SS4.8's variable table, except LOC (see its own comment below).
+DEMOGRAPHIC_VALUE_LABELS = {
+    "AGE_BAND": {1: "18-24", 2: "25-34", 3: "35-44", 4: "45-54", 5: "55+"},
+    "GEN": {1: "Nam / Male", 2: "Nữ / Female", 3: "Khác / Other"},
+    "EDU": {1: "THPT trở xuống / High school or below", 2: "Trung cấp-Cao đẳng / Vocational-Associate",
+            3: "Đại học / Bachelor's", 4: "Sau đại học / Postgraduate"},
+    "INC": {1: "< 5tr VND", 2: "5-10tr VND", 3: ">10-20tr VND", 4: ">20-40tr VND", 5: ">40tr VND"},
+    "FREQ": {1: "Rất ít khi / Rarely", 2: "Vài lần mỗi năm / A few times a year",
+             3: "Khoảng mỗi tháng / About monthly", 4: "Khoảng mỗi tuần / About weekly",
+             5: "Nhiều lần mỗi tuần / Several times a week"},
+    "PLAT": {1: "Shopee", 2: "Lazada", 3: "TikTok Shop", 4: "Tiki", 5: "Khác / Other"},
+    "PRIOR": {1: "< 6 tháng / months", 2: "6-12 tháng / months", 3: "1-3 năm / years",
+              4: "> 3 năm / years"},
+    # LOC (2026-09-23, supplied directly by Khai -- not documented anywhere in the
+    # Master Codebook, which only says "choice numbers" for this item): 1/2/3 given
+    # verbatim by Khai; code 4 has never appeared in the data and is left unlabeled
+    # if it ever does; code 5 is inferred, not given directly -- the Codebook's own
+    # LOC row says "LOC_5_TEXT carries the free-text 'other' answer", the same
+    # 5="Khác/Other + free-text companion" pattern PLAT already uses above, so 5 is
+    # labeled "Khac / Other" on that basis, not from a value Khai stated himself.
+    "LOC": {1: "Hồ Chí Minh", 2: "Hà Nội", 3: "Đà Nẵng", 5: "Khác / Other"},
 }
 
 CHAN_COL = "CHAN"

@@ -1,0 +1,705 @@
+
+MASTER CODEBOOK
+Study 1 — Integrated 2 × 2 Survey-Experiment · Version 2.7
+How AI-Driven Personalization Shapes Customer Engagement in Omnichannel Retail: A Privacy-Aware AI Agent Approach
+Governing document: Theoretical Foundations v2.12 (Amendments A-1 - A-20) - Instrument: PROJ_MAIN_final_v2 - Pipeline: _config.py
+15 September 2026 (cross-artifact reconciliation reissue — Amendment A-20)
+1. Purpose and authority
+This codebook is the variable-level bridge between three artefacts that must never disagree: the Qualtrics instrument (PROJ_MAIN_final_v2), the analysis pipeline (src/_config.py and scripts 00–07), and the governing specification (Theoretical Foundations v2.12). Where any two disagree, TF v2.12 prevails on substance and this codebook records the reconciliation.
+Every entry below matches PROJ_MAIN_final_v2, the wording finalized for main collection under Amendment A-13 — not the earlier pilot-stage wording. Pilot (n = 46) reliability statistics quoted in this codebook were computed on the pre-A-13 wording for AIP, INT, TRU, PDPL, and PI; they are indicative of construct behaviour, not confirmatory of this exact item text. See §2, v2.2.
+Verification basis (Amendment A-20). Every item stem in §4.7 below was checked character-by-character against the question-text header row of the live Qualtrics export (data/raw/pilot_real.csv, 481 responses, 15 September 2026). All 34 stems match B1.5 — Measurement Scales v3 exactly. Where this codebook previously disagreed with B1.5 — the TRU item set and wording, ENG wording, PI1–PI2 wording, INT1–INT5 English wording, REL4 provenance, and the PDPL statutory anchors — B1.5 is correct and this codebook was stale. Those entries are corrected here; the instrument is not changed. PDPL1–PDPL4 item wording and administration are unaffected by Amendments A-16/A-17 — both concern only where the statute’s name is documented (never in the fielded instrument, per A-17); see §4.7a.
+Reading rule. “Fielded” means the respondent was asked the item and it exists in the raw export. “Analysed” means the item enters the measurement model. These are not the same set — see §5.2.
+2. Version and amendment log
+Version
+Date
+Change
+Authority
+1.0
+Aug 2026
+Initial codebook against the fielded instrument.
+—
+2.0
+26 Aug 2026
+(i) H7 interaction variables respecified: the three-way term INT_x_PDPL_x_DISC is deleted; two second-order terms INT_x_PDPL (β_M1) and INT_x_DISC (β_M2) are the hypothesis-bearing derived variables. PDPL_x_DISC deleted. (ii) REL4 reclassified from analysed indicator to fielded, excluded from measurement model, retained for sensitivity analysis; REL_mean is now the mean of REL1–REL3. (iii) TRU and ENG item counts reconciled to the fielded instrument (TRU1–TRU5, ENG1–ENG6). (iv) Item-count constants split into fielded (33) and analysed (32) with an explicit rule per use.
+TF v2.4, Amendments A-8, A-9, A-10
+2.1
+1 Sep 2026
+(i) ENG given an explicit three-dimension item structure: Cognitive Processing (ENG1, ENG2), Affection (ENG3, ENG6), Activation (ENG4, ENG5). Reliability/item-retention diagnostics for ENG must be computed within dimension going forward, never pooled across all six items. [Superseded by Amendment A-20 / codebook v2.7 — ENG diagnostics revert to the pooled six-item set. Retained here for audit trail only.] (ii) ENG measurement citation corrected to Hollebeek, Glynn, & Brodie (2014); Brodie et al. (2011) retained for conceptual grounding only. (iii) Provisional plan to exclude ENG4 (by analogy to REL4) is reversed — ENG4 is retained; excluding it would leave Activation as an unassessable single-item facet. (iv) New diagnostic-only derived variables added:
+ENG_cog_mean, ENG_aff_mean, ENG_act_mean (§5.1). ENG_mean (pooled) remains the sole structural-model input — unchanged. TF v2.6, Amendment A-12
+2.2
+1 Sep 2026
+(i) Item wording for AIP1–6, INT1–5, TRU1, TRU3, PDPL1–4, and PI1–2 updated to the finalized main-collection text (PROJ_MAIN_final_v2), superseding the pilot-stage wording in v2.0/2.1 — mostly clarifying clause additions, not construct redefinition. (ii) TRU2 corrected: the pilot fielded a double-barreled item (“…honestly and reliably / always keeps its commitments to customers”); finalized wording reverts to the single-claim original (“…honestly and reliably.”). (iii) Minor EN-only wording updates on ENG2–3/5–6, REL4, CC1–2, SCR1 (no VI/construct change). (iv) Governance caveat added throughout: pilot (n=46) reliability statistics apply to the pre-A-13 wording, not confirmatory of finalized text — main collection is the authoritative test.
+TF v2.7, Amendment A-13
+2.3
+8 Sep 2026
+(i) Block M_PDPL preamble split into two administration segments: a generic segment (no statute name) before PDPL1, and a segment naming Law 91/2025/QH15 (effective 1 Jan 2026) inserted after PDPL1 and before PDPL2. (ii) PDPL1–PDPL4 item text is unchanged — this closes OD-11 via preamble design, not item revision; an interim draft that inserted “(Law No. 91/2025/QH15)” into the PDPL1 stem is explicitly rejected and must not be fielded. (iii) PDPL1 relabelled in this codebook as the pre-anchor item and PDPL2–PDPL4 as post-anchor items — a distinction with no effect on scoring (PDPL_mean is still the mean of all four) but required in the Method section’s instrument-development narrative. (iv) OD-11 status updated to Closed.
+TF v2.8, Amendment A-16
+2.4 2.5
+8 Sep 2026 13 Sep 2026
+[SUPERSEDES 2.3 the same day.] (i) Block M_PDPL’s two-segment preamble (v2.3) is withdrawn; the block reverts to the single generic preamble used before v2.3 – no segment anywhere names Law 91/2025/QH15. (ii) The pre-anchor / post-anchor labelling introduced in v2.3 is removed from the PDPL item table; PDPL1-PDPL4 are administered identically. (iii) PDPL1-PDPL4 item text remains unchanged throughout (v2.2, v2.3, v2.4 alike). (iv) OD-11 re-closed: resolution is now “state the limitation in Method/Limitations; document the statute in Chapter 2 and the instrument-development narrative” – with no in-instrument feature (item or preamble) carrying the statute’s name. A-18 / A-19 absorbed. (i) LOC (area of residence) added to the fielded instrument mid-collection; collection_phase (pre_LOC / post_LOC) is recorded for transparency and does not gate inclusion. (ii) sample_role (pilot / main) added, keyed to MAIN_DATA_START_TIMESTAMP = 2026-09-12 02:15:56 — an administrative boundary (when LOC went live), never a measurement-readiness determination. (iii) OD-12 logged: the MC_AIP manipulation-check gate (|d| ≥ 0.50) and the differential-attrition-by-AIP_COND risk remain open pending faculty-advisor ratification. TF v2.10 / v2.11, Amendments A-18, A-19
+TF v2.9, Amendment A-17 (supersedes A-16)
+2.6
+14 Sep 2026
+Pipeline-alignment pass. (i) REF (recruitment-source item) added as a demographic/covariate. (ii) The PII column list (IPAddress, LocationLatitude, LocationLongitude, recipient name/email fields, ExternalReference) formalised as a single source of truth shared by strip_pii.py and 01_clean.py; no processed dataset may be written before stripping. (iii) Hard-drop policy recorded as actually implemented in 01_clean.py: missing data, duplicate response pattern, straightlining only — the manipulation check is report-only (group-level ITT), not an individual-level filter. Team decisions, 11–14 Sep 2026; recorded here, ratification pending (§9, OD-14)
+
+2.7
+15 Sep 2026
+Amendment A-20 — cross-artifact reconciliation to B1.5 v3. (i) TRU = 6 items (TRU1–TRU6), wording per B1.5: TRU1–TRU3 cognitive (McKnight et al., 2002); TRU4–TRU6 affective — secure / comfortable / content (Komiak & Benbasat, 2006). A-10’s 5-item reconciliation is superseded for TRU. (ii) REL4 provenance fixed to one chain: Klar (1990) → as reproduced in Ahluwalia, Unnava & Burnkrant (2001) → repurposed as perceived relevance by De Keyzer, Dens & De Pelsmacker (2015), α = .937. Every statement attributing REL4 to Yin, Qiu & Wang (2025) is withdrawn as an error. (iii) ENG diagnostics revert to the pooled 6-item set — α, EFA/CFA, outer loadings, CR and AVE are computed across ENG1–ENG6; the three-dimension labelling is retained as content description only. A-12’s with
+in-dimension-only prohibition is superseded on this point. (iv) ENG, PI1–PI2 and INT English wording aligned to B1.5 and to the live export. (v) PDPL statutory anchors aligned to B1.5 and re-flagged for verification (OD-13). Ratified by project lead, 15 September 2026, on item-level verification of all 34 stems against the live Qualtrics export.
+3. Dataset inventory
+Stage
+File
+Produced by
+Contents
+Raw
+data/raw/.csv
+Qualtrics export
+3 header rows (names, question text, ImportId JSON); Likert values as choice text; VIG_TIME_* duplicated 4× (one set per vignette block)
+Normalized
+in-memory
+_qualtrics_io.load_and_normalize()
+Metadata rows stripped; Likert text parsed to integers; VIG_TIME_* coalesced; CHAN decoded to booleans
+Clean
+data/processed/{pilot│main}_clean.csv
+01_clean.py
+Hard exclusions applied; soft flags added; condition variables cast to Int64
+Analysis
+derived in-script / SmartPLS
+03–07, SmartPLS 4
+Construct scores and interaction terms per §5
+Never analyse the raw export directly. Every Likert column arrives as choice text (e.g. “3 - Không đồng ý một phần(Partly disagree)”); a script reading it without the loader coerces the entire battery to NaN.
+4. Variable register
+4.1 System and administrative
+Variable
+Type
+Values
+Role
+ResponseId
+string
+Qualtrics ID
+Primary key. Never analysed.
+sample_role
+string
+pilot / main
+Administrative label (Amendment A-19), set by 01_clean.py::compute_collection_phase() from RecordedDate against MAIN_DATA_START_TIMESTAMP = 2026-09-12 02:15:56. Marks when the LOC field went live — not a measurement-readiness determination, and not evidence that the manipulation-check gate or the AIP–REL discriminant-validity question is resolved.
+collection_phase
+string
+pre_LOC / post_LOC
+Transparency flag (Amendment A-18). Retained for reporting; does not gate inclusion in any analysis.
+Duration (in seconds)
+integer
+seconds
+Speeding exclusion (§6.1). Note the spaces and parentheses in the column name.
+Finished, Progress, RecordedDate
+mixed
+Qualtrics native
+Descriptive only.
+VIG_TIME_First Click, VIG_TIME_Last Click, VIG_TIME_Page Submit, VIG_TIME_Click Count
+numeric
+seconds / count
+Vignette exposure timing. Physically duplicated 4× in the raw export; coalesced by the loader before use. Descriptive / attention diagnostics only.
+4.2 Consent and screener
+All three are terminate-on-fail in the Survey Flow; rows reaching the cleaning script that fail are treated as hard drops.
+Variable
+Item (VI / EN)
+Values
+Rule
+CONSENT
+Anh/Chị có đồng ý tham gia khảo sát này không? / Do you agree to participate in this survey?
+1 = Tôi đồng ý tham gia; 0 = Tôi không đồng ý
+Keep only 1. Anchor must retain Vietnamese diacritics — an ASCII-stripped anchor matches zero real responses and silently drops the entire sample.
+SCR_AGE
+Anh/Chị có đủ 18 tuổi trở lên không? / Are you 18 or older?
+1 = Có; 0 = Không
+Keep only 1. Ethics requirement, not a sampling preference.
+SCR1
+Trong 3 tháng gần đây… qua ít nhất 2 kênh khác nhau không? / …through at least 2 different channels?
+1 = Có; 0 = Không
+Keep only 1. This is the operational definition of “omnichannel consumer” for the sampling frame.
+4.3 Experimental design variables (Embedded Data)
+Variable
+Type
+Values
+Role in analysis
+AIP_COND
+numeric
+0 = Low AIP, 1 = High AIP
+Between-subjects factor. ANOVA factor (H1/H2 experimental replication). Not a latent construct.
+DISC_COND
+numeric
+0 = No Disclosure, 1 = With Disclosure
+The DISC variable. ANOVA factor — sole confirmatory test of H3. Observed dummy predictor in the SEM (DISC → INT specification term). Moderator in H7b via INT_x_DISC.
+CELL
+numeric
+1 = (0,0), 2 = (0,1), 3 = (1,0), 4 = (1,1)
+Redundant cross-check on Survey-Flow integrity only. Never analysed as a variable in its own right; disagreement with AIP_COND × DISC_COND raises flag_cell_mismatch.
+Governance rule 4 (TF v2.4). DISC is never a Likert or reflective construct. It has no items, no loadings, no α, no AVE, no CR, and no HTMT row. Any measurement-model table containing a DISC row is a structural error. There is no DISC1 / DISC2 column and none may be created.
+4.4 Comprehension checks (CC_Gate)
+Correct answer is conditional on the assigned cell. Failures are hard drops in 01_clean.py (the instrument terminates on failure, so surviving rows with wrong answers indicate a flow anomaly).
+Variable
+Item (VI / EN)
+Options
+Correct answer
+CC1
+Danh sách sản phẩm được hiển thị theo cách nào? / How was the product list displayed?
+1 = bán chạy toàn nền tảng; 2 = chọn riêng cho tôi; 3 = không nhớ
+AIP_COND = 0 → 1; AIP_COND = 1 → 2
+CC2
+ShopWave có hiển thị thông báo về quyền riêng tư không? / Did ShopWave display a privacy notice?
+1 = Có; 2 = Không; 3 = không nhớ
+DISC_COND = 1 → 1; DISC_COND = 0 → 2
+4.5 Attention checks
+Variable
+Item
+Correct
+Rule
+ATT1
+Instructed-response item, placed after the INT block
+5
+Hard drop if ≠ 5
+ATT2
+Instructed-response item, placed after the ENG block
+2
+Hard drop if ≠ 2
+Both are 7-point Likert-formatted and parsed by the same loader path as the substantive items. Neither enters any construct.
+4.6 Manipulation checks
+Variable
+Item (VI / EN)
+Scale
+Test
+MC_AIP
+Tôi cảm thấy danh sách sản phẩm mà mình nhìn thấy đã được cá nhân hóa theo sở thích của riêng tôi. / I feel that the product list I saw was personalized according to my own preferences.
+7-point Likert
+Independent-samples t-test across AIP_COND. Gate: │d│ ≥ 0.50.
+MC_DISC
+Tôi nhận thấy nền tảng này đã cung cấp thông báo về quyền riêng tư trước khi tôi tiếp tục duyệt xem. / I noticed that the platform provided a privacy notice before I continued browsing.
+7-point Likert
+Independent-samples t-test across DISC_COND. Gate: │d│ ≥ 0.50. Pilot result: d = 1.412 — clears.
+Column names are MC_AIP and MC_DISC, not MC1 / MC2. Manipulation-check items never enter the measurement model.
+4.7 Measurement items
+All 34 items (AIP 5, REL 4, INT 5, TRU 6, ENG 6, PI 4, PDPL 4 — 5 + 4 + 5 + 6 + 6 + 4 + 4 = 34; updated from the prior 33-item count following the AIP/REL/PI correction pass, and confirmed item-by-item against the live export by Amendment A-20) use an identical 7-point agreement scale, exported as choice text and parsed to integers 1–7 by _qualtrics_io.parse_likert_text():
+Code
+Anchor (VI)
+Anchor (EN)
+1
+Hoàn toàn không đồng ý
+Strongly disagree
+2
+Không đồng ý
+Disagree
+3
+Không đồng ý một phần
+Partly disagree
+4
+Trung lập
+Neutral
+5
+Đồng ý một phần
+Partly agree
+6
+Đồng ý
+Agree
+7
+Hoàn toàn đồng ý
+Strongly agree
+No item is reverse-coded. Missing = system missing (NaN); there is no user-missing code on the item battery.
+AIP — AI Personalization Intensity (5 items, all analysed)
+Block M_AIP. RETRACTED SOURCE: the previous attribution to Awad & Krishnan (2006) was checked against that paper's actual instrument and found not to contain matching items; this citation is retracted, not superseded. Current sourcing (verified item-level, PDF-checked): AIP1–AIP3 adapted from Yin, Qiu & Wang (2025), Journal of Theoretical and Applied Electronic Commerce Research (JTAER) 20(1), Art. 21, "Insightful Experience (IS)" dimension, items IS3/IS4/IS6 of the final CFA-confirmed scale (Table A3). AIP4–AIP5 adapted from Rahman, Carlson, Gudergan, Wetzels & Grewal (2022), Journal of Retailing, 98(4), "Personalization (PERS)" dimension. Anchor: the ShopWave platform. Wording is deliberately mechanism-facing (data-analysis capability, cross-channel consistency), avoiding relevance/fit vocabulary ("relevant," "matches," "fits," "suitable") reserved for REL, per faculty guidance.
+Var
+Item (VI)
+Item (EN)
+AIP1
+ShopWave có khả năng phân tích mức chi tiêu của tôi.
+ShopWave can analyze my consumption level.
+AIP2
+ShopWave có khả năng phân tích các đặc điểm cá nhân của tôi (ví dụ: giới tính, độ tuổi, phong cách yêu thích).
+ShopWave can analyze my personal characteristics (e.g., gender, age group, preferred style).
+AIP3
+ShopWave có khả năng nhận diện thói quen mua sắm của tôi và gợi ý những sản phẩm tôi có thể quan tâm hoặc cần.
+ShopWave is able to identify my shopping habits and suggest products I may be interested in or need.
+AIP4
+Dù tôi dùng kênh nào (ứng dụng hay website), ShopWave vẫn đưa ra gợi ý cho thấy cùng một sự hiểu biết về tôi.
+Regardless of which channel I use (app or website), ShopWave gives me recommendations that reflect the same understanding of me.
+AIP5
+Dù tôi đang dùng kênh nào, các khuyến mãi và gợi ý của ShopWave vẫn thể hiện đúng hồ sơ cá nhân của tôi.
+ShopWave's promotions and recommendations reflect my personal profile, regardless of which channel I am using.
+Content-validity note. AIP4 and AIP5 remain near-neighbours in content (both address cross-channel consistency). The former self-reference item ("...rather than treating me as a generic shopper," Tam & Ho, 2006) has been removed entirely per faculty guidance, as it was flagged as the highest-risk item for AIP–REL overlap; AIP is now 5 items (previously 6). Pilot HTMT/EFA (n = 46) was computed on item wording that no longer matches AIP1–3 and should not be relied on for the current item set — a new pilot pass or expert content-validity review is recommended before main collection. The decisive test for this construct remains the AIP–REL HTMT pair (< 0.85).
+REL — Perceived Relevance (4 items, all analysed)
+Block M_REL. RETRACTED SOURCE: the previous attribution to Xu et al. (2011) and the intermediate attribution to Shanahan, Tran & Taylor (2019) "via Aydin (2026)" were both checked against primary-source PDFs; neither contains matching items. Both citation chains are retracted, not superseded — no item in REL should ever be re-attributed to Aydin (2026) in any of its versions. Current sourcing (verified item-level, PDF-checked): REL1 adapted from Srinivasan, Anderson & Ponnavolu (2002), Journal of Retailing, 78(1), item (a). REL2 and REL3 adapted from Yin, Qiu & Wang (2025), JTAER 20(1), Art. 21, "Relevance Experience (RE)" dimension, items RE4 and RE1 respectively (REL2 = category fit, "type of product I was looking for"; REL3 = search-history fit, "what I had previously searched for"; same source paper as AIP, different and discriminantly-validated dimension — r = .622 in the source paper — so no item-level overlap with AIP). REL4 provenance — single ratified chain (Amendment A-20). REL4 (“Overall, the product list I saw was useful to me”) derives from a 2-item semantic-differential pair (“relevant/irrelevant”; “not at all useful / of very great use”) originating in an information-diagnosticity scale, Klar (1990), as reproduced in Ahluwalia, Unnava & Burnkrant (2001), Journal of Marketing Research, 38(4) — where the 3-item diagnosticity scale reports α = .70 and carries a third “indicative / not indicative” anchor, dropped here as too specific to diagnosticity. The pair was repurposed as a measure of perceived relevance by De Keyzer, Dens & De Pelsmacker (2015), Journal of Interactive Advertising, 15(2), who report α = .937 for that repurposed use — a figure describing De Keyzer et al.’s own data, not Ahluwalia et al.’s. This is the only ratified provenance for REL4. Any attribution of REL4 to Yin, Qiu & Wang (2025) is withdrawn as an error. That attribution appeared in TF §A.2, the TF A-9 amendment row, and this codebook; all three are corrected by Amendment A-20. Yin’s Relevance Experience dimension supplies REL2 and REL3 only, and contains no item matching REL4’s wording. Carried open flag (OD-16): Klar (1990) has not been independently verified at item level — REL4 is the only item in the 34-item battery without a PDF-verified primary source, which is in tension with the project’s citation-integrity rule. Resolve by further sourcing or self-development before final ratification. Separately, Amendment A-9’s REL4-exclusion logic no longer applies: the item formerly coded REL4 (Tam & Ho, 2006, decision-usefulness wording) was removed from the instrument entirely in an earlier pass, and the current REL4 is an unrelated item — do not confuse the two.
+Var
+Item (VI)
+Item (EN)
+Status
+REL1
+Danh sách sản phẩm tôi vừa xem phù hợp với nhu cầu mua sắm hiện tại của tôi.
+The product list I just saw matches my current shopping needs.
+Analysed
+REL2
+Danh sách sản phẩm tôi vừa xem đúng với loại sản phẩm tôi đang tìm kiếm.
+The product list I saw was consistent with the type of product I was looking for.
+Analysed
+REL3
+Danh sách sản phẩm tôi vừa xem đúng với những gì tôi đã tìm kiếm trước đó.
+The product list I saw was consistent with what I had previously searched for.
+Analysed
+REL4
+Nhìn chung, danh sách sản phẩm tôi vừa xem hữu ích với tôi.
+Overall, the product list I saw was useful to me.
+Analysed
+Wording discipline. REL items reference the appraised outcome only (matches my needs, consistent with my situation/search history, useful to me) and deliberately avoid any mechanism verb ("tailor," "customize," "adjust," "personalize," "analyze") reserved for AIP. REL2's source item originally used "tailored to my situation" (Srinivasan item c); this was replaced with the current RE4-based wording specifically to remove that action-verb overlap with AIP's register.
+Residual risk. REL4 carries an open governance flag (repurposed generic item pair, primary source Klar 1990 not independently verified) and should be prioritised for either further sourcing or self-development before formal ratification. Pilot statistics from earlier item wording (α = .947, historical) do not apply to the current 4-item set; REL requires a new pilot pass or expert content-validity review before main collection.
+INT — Perceived Intrusiveness (5 items, all analysed)
+Block M_INT. Source: Li, Edwards & Lee (2002), Journal of Advertising, 31(2), 37-47 (previously miscited in this codebook as "Li et al. (2017)"; corrected to match B1.5).
+Var
+Item (VI)
+Item (EN)
+INT1
+Tôi cảm thấy danh sách sản phẩm này gây cản trở trải nghiệm mua sắm thông thường của tôi.
+I feel this product list interferes with my normal shopping experience.
+INT2
+Tôi cảm thấy khó chịu vì danh sách sản phẩm này làm gián đoạn việc mua sắm của tôi.
+I feel annoyed because this product list disrupts my shopping.
+INT3
+Tôi cảm thấy danh sách sản phẩm này quấy rầy và khó có thể lờ đi.
+I feel this product list is intrusive and hard to ignore.
+INT4
+Tôi cảm thấy trải nghiệm này xâm phạm quyền riêng tư của tôi.
+I feel this experience invades my privacy.
+INT5
+Tôi cảm thấy cách sản phẩm được hiển thị cho tôi mang tính áp đặt, nằm ngoài tầm kiểm soát của tôi.
+I feel the way products are shown to me is imposing, beyond my control.
+INT is the focal path of both H7a and H7b. It is the only construct entering an interaction term.
+TRU — Consumer Trust (6 items, all analysed) — count reverted to 6 by Amendment A-20
+Block M_TRU. TRU1–TRU3 are cognitive trusting beliefs (competence, integrity, benevolence), adapted from McKnight, Choudhury & Kacmar (2002), Information Systems Research, 13(3), 334–359. TRU4–TRU6 are discrete affective trusting-intention items — secure, comfortable, content — adapted from Komiak & Benbasat (2006), MIS Quarterly, 30(4), 941–960. All six stems verified against the live Qualtrics export, 15 September 2026.
+Var
+Item (VI)
+Item (EN)
+Facet
+TRU1
+Tôi tin ShopWave có đủ năng lực để đưa ra những gợi ý mua sắm tốt.
+I believe ShopWave is competent enough to make good product recommendations.
+Cognitive — competence
+TRU2
+Tôi tin rằng ShopWave trung thực trong cách sử dụng thông tin của tôi để cá nhân hóa.
+I believe ShopWave is honest in how it uses my information for personalisation.
+Cognitive — integrity
+TRU3
+Tôi tin rằng ShopWave hành động vì lợi ích của tôi, chứ không chỉ vì lợi ích của họ.
+I believe ShopWave acts in my best interest, not just its own.
+Cognitive — benevolence
+TRU4
+Tôi cảm thấy an toàn khi dựa vào ShopWave để đưa ra quyết định mua sắm của mình.
+I feel secure about relying on ShopWave for my shopping decisions.
+Affective — secure
+TRU5
+Tôi cảm thấy thoải mái khi dựa vào ShopWave để đưa ra quyết định mua sắm của mình.
+I feel comfortable about relying on ShopWave for my shopping decisions.
+Affective — comfortable
+TRU6
+Tôi cảm thấy an lòng khi dựa vào ShopWave để đưa ra quyết định mua sắm của mình.
+I feel content about relying on ShopWave for my shopping decisions.
+Affective — content
+Amendment A-20 supersedes A-10 for TRU. Amendment A-10 (26 August 2026) reduced TRU to five items (TRU1–TRU5) to reconcile the register against what it took the fielded instrument to be. That reconciliation rested on a stale reading. Direct inspection of the live Qualtrics export confirms six TRU items are fielded, with exactly the wording above — matching B1.5 v3 and _config.py::CONSTRUCT_ITEMS["TRU"], and matching the six TRU columns present in every cleaned dataset. The TRU1 / TRU2 / TRU4 / TRU5 wording recorded in Master Codebook v2.2–v2.6 (“hiểu đúng nhu cầu mua sắm”, “luôn hành động một cách trung thực và đáng tin cậy”, “an toàn khi tương tác”, “Nhìn chung, tôi tin tưởng”) was never fielded in that form and is withdrawn. Note also that the 34-item total asserted in §4.7 is arithmetically consistent only with TRU = 6; the v2.4–v2.6 codebook asserted both, which could not be true at once.
+Double-barrel correction retained (A-13). TRU2 was fielded to the first pilot as a double-barrelled item conflating honesty with commitment-keeping. The single-claim wording above is the finalized text and the one in the current export.
+Trustee-anchoring risk (carried). All six items must be read against a single trustee — the ShopWave platform — rather than mixing recommendation competence with data-protection conduct. TRU2 sits closest to that boundary; monitor its loading, since a split trustee attenuates both H4 and H6a.
+ENG — Customer Engagement (6 items, all analysed) — pooled diagnostics (Amendment A-20)
+Block M_ENG. Source: Hollebeek, Glynn & Brodie (2014), Journal of Interactive Marketing, 28(2), 149–165 — Consumer Brand Engagement (CBE) scale, abbreviated to two items per dimension (original: three per dimension). Conceptual grounding: Brodie et al. (2011), FP1/FP4 — retained for the theoretical rationale behind H5 and H6b only, never as the measurement source (citation corrected by Amendment A-12; unchanged by A-20). All six stems verified against the live Qualtrics export, 15 September 2026.
+Var
+Item (VI)
+Item (EN)
+Dimension (content label only)
+ENG1
+Việc sử dụng nền tảng ShopWave khiến tôi nghĩ đến ShopWave.
+Using the ShopWave platform gets me thinking about ShopWave.
+Cognitive Processing
+ENG2
+Tôi chú ý đến những nội dung liên quan đến các gợi ý của ShopWave.
+I pay close attention to content related to ShopWave’s recommendations.
+Cognitive Processing
+ENG3
+Tôi cảm nhận những cảm xúc tích cực khi tương tác với ShopWave.
+I feel positive emotions when interacting with ShopWave.
+Affection
+ENG4
+Trong số các nền tảng mua sắm trực tuyến tôi dùng, ShopWave là lựa chọn tôi ưu tiên chọn đầu tiên.
+Among the online shopping platforms I use, ShopWave is the one I choose first.
+Activation
+ENG5
+So với các nền tảng mua sắm khác, tôi dành nhiều thời gian sử dụng ShopWave hơn.
+Compared with other shopping platforms, I spend more time using ShopWave.
+Activation
+ENG6
+Tôi cảm thấy hào hứng khi sử dụng ShopWave.
+I feel enthusiastic when using ShopWave.
+Affection
+Diagnostic rule — pooled (Amendment A-20; supersedes A-12 on this point only). ENG reliability (Cronbach’s α, ρ_A), EFA/CFA, outer loadings, CR, AVE and item-retention decisions are computed on the full pooled six-item set, exactly as for the other six constructs. The three-dimension labelling above is retained as theoretical and content description; it no longer governs how diagnostics are computed.
+Rationale, recorded so the reversal stays auditable. (i) Consistency with the structural model. ENG_mean — one pooled composite — has always been the sole structural input for H5, H6b, E1 and E2. Under A-12’s within-dimension-only rule, ENG was excluded from the pooled reliability, loadings and CR/AVE tables, leaving the construct that carries four paths as the only one in the model with no reported CR and no reported AVE. (ii) The empirical ground for A-12 has weakened. A-12 rested on pilot within-dimension reliabilities at n = 46 (Cognitive α = 0.768; Affection α = 0.532; Activation α = 0.345). At n = 277 these read Cognitive 0.695, Affection 0.788, Activation 0.776 — the two facets A-12 was protecting are no longer weak. (iii) A-12’s substantive outcome is preserved. ENG4 is still retained, the Hollebeek citation still stands, and ENG remains a single first-order reflective composite, not a second-order construct. What changes is only how the diagnostics are computed.
+ENG4 retention (unchanged). ENG4’s pooled outer loading at pilot n = 46 was −0.381, which looked like an exclusion candidate. It is retained regardless: dropping it would leave Activation represented by a single item and would delete the dimension Hollebeek et al.’s framework treats as behaviourally diagnostic. Re-estimate ENG4’s pooled loading at main collection and report it transparently in Method/Limitations; do not drop it without a dedicated amendment.
+Diagnostic-only derived variables retained. ENG_cog_mean, ENG_aff_mean and ENG_act_mean (§5.1) remain available as supplementary descriptive diagnostics for the Limitations discussion. Under A-20 they are not the basis for item retention, and they are never structural-model inputs.
+Pipeline consequence. 03_reliability_efa.py currently excludes ENG from the pooled reliability, loadings and CR/AVE tables via its POOLED_CONSTRUCTS filter, and CLAUDE.md §1.3 still states the A-12 prohibition. Both must be updated before the next analysis run: ENG must appear in every pooled table alongside AIP, REL, INT, TRU, PI and PDPL.
+PI — Purchase Intention (4 items, all analysed)
+Block M_PI. Source: Pavlou (2003) for PI1–PI3 (the construct's own three-item maximum — Pavlou (2003) does not contain a fourth item). PI4 adapted from Dodds, Monroe & Grewal (1991), Journal of Marketing Research, 28(3), Appendix, “Willingness to Buy” indicator 1/4 (“The likelihood/probability of purchasing this product is...”), converted from semantic differential to Likert format; the price-specific framing (“at the price shown”) used in two of that scale's five items was dropped as not applicable to this vignette. Verified against the original PDF.
+Var
+Item (VI)
+Item (EN)
+PI1
+Nếu có cơ hội, tôi có ý định mua các sản phẩm được nền tảng ShopWave gợi ý.
+Given the opportunity, I intend to buy the products ShopWave recommends.
+PI2
+Tôi nghĩ rằng trong tương lai tôi sẽ mua hàng trên nền tảng ShopWave.
+I think I will purchase on the ShopWave platform in the future.
+PI3
+Dựa trên tình huống vừa đọc, nhiều khả năng tôi sẽ tiếp tục mua sắm trên ShopWave.
+Based on the scenario I just read, I am likely to continue shopping on ShopWave.
+PI4
+Khả năng tôi sẽ mua các sản phẩm mà ShopWave gợi ý là cao.
+The likelihood that I would buy the products ShopWave recommends is high.
+PDPL — PDPL Awareness (4 items, all analysed)
+Block M_PDPL. Newly developed on the content of Law 91/2025/QH15 (Arts. 8–10, 28). Item stems are unchanged and remain generic — this has never changed across A-13, A-16, or A-17.
+§4.7a Administration — single generic preamble (Amendment A-17, superseding A-16’s split preamble). Block M_PDPL is administered under one generic preamble before PDPL1. No segment anywhere in the block names Law 91/2025/QH15:
+Segment
+Position
+Vietnamese
+English
+Preamble (generic, only segment)
+Before PDPL1
+Các câu hỏi sau đây liên quan đến quyền và nghĩa vụ theo quy định pháp luật Việt Nam về bảo vệ dữ liệu cá nhân.
+The following questions relate to rights and obligations under Vietnamese law on personal data protection.
+A second, statute-naming segment (to be inserted after PDPL1, before PDPL2) was drafted under Amendment A-16 and fielded briefly in TF v2.8 / Master Codebook v2.3. It is withdrawn by Amendment A-17 the same day: no part of block M_PDPL’s administration names the statute. Do not reintroduce it.
+Var
+Item (VI)
+Item (EN)
+Statutory anchor
+PDPL1
+Tôi biết Việt Nam hiện có luật quy định về bảo vệ dữ liệu cá nhân.
+I am aware that Vietnam has a law regulating the protection of personal data.
+Art. 1; Art. 38
+PDPL2
+Tôi biết mình có quyền yêu cầu doanh nghiệp xóa hoặc ngừng sử dụng dữ liệu cá nhân của mình.
+I know that I have the right to request that a business delete my personal data or stop using it.
+Art. 4(1)(d); Art. 14
+PDPL3
+Tôi hiểu rằng doanh nghiệp phải xin sự đồng ý của tôi trước khi thu thập dữ liệu để cá nhân hóa.
+I understand that a business must obtain my consent before collecting my data for personalisation.
+Art. 11(1); Art. 9
+PDPL4
+Tôi biết mình có quyền được thông báo về việc dữ liệu cá nhân của mình đang được xử lý như thế nào.
+I know that I have the right to be informed about how my personal data is being processed.
+Art. 4(1)(a)
+OD-11 — Closed by Amendment A-17 (8 Sep 2026), superseding the same-day A-16. Final resolution: item stems remain generic (unchanged, as always), and the fielded preamble is also generic with no statute-naming addition. Faculty advisor confirmed the statute need not be named anywhere in the instrument – all four items already trace to specific articles, and this is standard practice for scales built on an established construct. The statute’s name and its relationship to PDPL Awareness are documented in the literature review (Chapter 2) and the Method section’s instrument-development narrative only – never in Qualtrics. Rejected alternatives (both drafted, both reverted, neither may be fielded): (a) inserting “(Law No. 91/2025/QH15)” directly into the PDPL1 stem; (b) A-16’s two-segment preamble naming the statute after PDPL1. The stems must never reference Decree 13/2023/NĐ-CP.
+Scoring is unaffected: PDPL_mean remains the mean of PDPL1–PDPL4 regardless of anchor status (§5.1). The pre-/post-anchor distinction is a Method-section reporting requirement, not a scoring or reliability-computation change.
+Statutory-anchor status (Amendment A-20). The anchors above are B1.5 v3’s mapping and are now the single ratified set. The earlier mapping recorded in this codebook (“Art. 10 / Art. 9 / Art. 8 & 28”) and the coarser “Arts. 8–10, 28” summary in TF Table 5 are both withdrawn. Carried open item (OD-13): Amendment A-11 (26 August 2026) closed OD-4 by verifying article citations against the full statute text — but it verified the earlier mapping. The B1.5 mapping adopted here has not itself been checked article-by-article against luat_PDPL.pdf. Re-run that verification before the Method section is drafted; do not carry A-11’s “all citations verified accurate” finding over to this set.
+PDPL is the moderator in H7a via INT_x_PDPL.
+4.8 Demographics and covariates
+All demographic items carry a Không muốn nêu / Prefer not to say option coded −98 except FREQ, PLAT and PRIOR, which do not. −98 must be recoded to missing before any statistic is computed — treating it as a valid ordinal value would place “prefer not to say” below the lowest substantive category.
+Variable
+Item
+Values
+AGE_BAND
+Nhóm tuổi / Age group
+1 = 18–24; 2 = 25–34; 3 = 35–44; 4 = 45–54; 5 = 55+; −98 = prefer not to say
+GEN
+Giới tính / Gender
+1 = Nam; 2 = Nữ; 3 = Khác; −98 = prefer not to say
+EDU
+Trình độ học vấn / Highest education
+1 = THPT trở xuống; 2 = Trung cấp–Cao đẳng; 3 = Đại học; 4 = Sau đại học; −98
+INC
+Thu nhập cá nhân hằng tháng / Monthly personal income
+1 = < 5tr; 2 = 5–10tr; 3 = >10–20tr; 4 = >20–40tr; 5 = >40tr VND; −98
+FREQ
+Tần suất mua sắm trực tuyến / Online shopping frequency
+1 = rất ít khi; 2 = vài lần mỗi năm; 3 = khoảng mỗi tháng; 4 = khoảng mỗi tuần; 5 = nhiều lần mỗi tuần
+PLAT
+Nền tảng mua nhiều nhất / Most-used platform
+1 = Shopee; 2 = Lazada; 3 = TikTok Shop; 4 = Tiki; 5 = Khác
+PLAT_5_TEXT
+Free text for PLAT = 5
+string
+PRIOR
+Thời gian sử dụng nền tảng / Tenure on that platform
+1 = < 6 tháng; 2 = 6–12 tháng; 3 = 1–3 năm; 4 = 3 năm
+LOC
+Nơi sinh sống / Area of residence C
+hoice numbers; LOC_5_TEXT carries the free-text “other” answer. Added mid-collection (Amendment A-18). Rows recorded before 2026-09-12 02:15:56 are structurally missing on LOC — this is not a data-quality exclusion and must not count toward MAX_MISSING_ITEM_PCT.
+REF
+Nguồn nhận khảo sát / Recruitment source
+1–5, no free-text companion. Records which team member’s invite the respondent came through — team bookkeeping, not respondent identity. Labelled in 02_descriptives.py via _config.py::REF_LABELS.
+CHAN
+Kênh đã mua (chọn nhiều) / Channels used (multi-select)
+Comma-separated choice numbers 1–5
+PLAT is piped into the PRIOR and CHAN stems via Qualtrics piped text, so those two items are conditional on the PLAT answer.
+CHAN decoding. The loader expands CHAN into five booleans:
+Derived column
+Choice
+Channel
+CHAN_APP
+1
+Ứng dụng di động / platform mobile app
+CHAN_WEB
+2
+Website của nền tảng / platform website
+CHAN_LIVE
+3
+Livestream bán hàng / platform livestream sales
+CHAN_STORE
+4
+Cửa hàng vật lý / physical store of the same retailer
+CHAN_SOC
+5
+Kênh mạng xã hội của nhà bán lẻ / retailer’s social media channel
+Channel breadth (count of TRUE across the five) is available as a sample-description statistic and as a candidate control variable; it is not a construct and carries no hypothesis.
+5. Derived variables
+5.1 Construct scores
+Computed as the unweighted mean of the analysed items only. Used for the ANOVA, descriptives, and the two-stage interaction terms — not for the PLS measurement model, which works from the indicators directly.
+Derived
+Formula
+Note
+AIP_mean
+mean(AIP1…AIP5)
+
+REL_mean
+mean(REL1…REL4)
+All 4 items analysed; no exclusion. Amendment A-9's REL4-exclusion logic and REL_mean_4item are retired — do not reuse these variable names for the current 4-item REL.
+INT_mean
+mean(INT1…INT5)
+Dependent variable of the two-way ANOVA (H3)
+TRU_mean
+mean(TRU1…TRU6)
+
+ENG_mean
+mean(ENG1…ENG6)
+Primary score — one pooled composite for the structural model (H5, H6b, E1, E2). Under Amendment A-20 the pooled set is also the basis for α, CR, AVE, outer loadings and EFA/CFA.
+ENG_cog_mean
+mean(ENG1, ENG2)
+Supplementary descriptive diagnostic only (Amendment A-20) — Cognitive Processing facet. Not a basis for item retention; never a structural-model input.
+ENG_aff_mean
+mean(ENG3, ENG6)
+Supplementary descriptive diagnostic only — Affection facet.
+ENG_act_mean
+mean(ENG4, ENG5)
+Supplementary descriptive diagnostic only — Activation facet. The pilot figure (α = 0.345, n = 46) rose to 0.776 at n = 277; report the main-collection figure, not the pilot one.
+PI_mean
+mean(PI1…PI4)
+
+PDPL_mean
+mean(PDPL1…PDPL4)
+
+5.2 Interaction terms — H7a and H7b
+This subsection changed substantially in v2.0. Read it against any older codebook copy before running anything.
+Derived
+Term
+Coefficient
+Hypothesis
+Status
+INT_x_PDPL
+INT × PDPL Awareness
+β_M1
+H7a: β_M1 0 Act
+ive. Generated by the two-stage approach (Becker et al., 2018) in SmartPLS 4 / seminr.
+INT_x_DISC
+INT × DISC_COND
+β_M2
+H7b: β_M2 0 Act
+ive. Same generation method; DISC enters as the observed 0/1 dummy.
+PDPL_x_DISC
+PDPL × DISC
+β_M3
+—
+DELETED (A-8). No theoretical role once the three-way term is retired. Not estimated.
+INT_x_PDPL_x_DISC
+INT × PDPL × DISC
+β_M4
+H7 (old)
+DELETED (A-8). The three-way product term is retired project-wide.
+Migration note. Any SmartPLS model file, R script, Python script, results table, figure or slide still containing β_M3, β_M4, a three-way product term, or the phrase “moderated moderation” predates TF v2.3 and must be corrected. This includes the –k predictor count in 06_power_analysis.py (the model now has fewer terms) and the interaction block in 07_plssem_bridge.R.
+Both interactions predict TRU and moderate the H6a path (INT → TRU) only — never H6b (INT → ENG), never H6c (INT → PI).
+5.3 Lower-order specification terms
+Estimated because an interaction is uninterpretable without its components (Aiken & West, 1991). Reported in the structural-model table; carry no hypothesis; not drawn as arrows in the figure.
+Term
+Note
+PDPL → TRU (main effect)
+Specification term. Not a hypothesis.
+DISC → TRU (main effect)
+Specification term. Not a hypothesis.
+DISC → INT
+Specification term only. H3 is tested by the ANOVA main effect, never by this path (A-5). Reporting this path as a second H3 test is a governance violation.
+6. Exclusion and flag variables
+6.1 Hard drops (pre-registered)
+Applied in this order by 01_clean.py. Every threshold lives in _config.py as a named constant and is changed only there, with the change and reason logged.
+Step
+Rule
+Constant
+1
+CONSENT ≠ agree
+CONSENT_OK_ANCHOR
+2
+SCR_AGE ≠ 18+
+AGE_OK_ANCHOR
+3
+SCR1 ≠ yes (omnichannel screener)
+OMNI_OK_ANCHOR
+4
+ATT1 ≠ 5
+ATT1_CORRECT
+5
+ATT2 ≠ 2
+ATT2_CORRECT
+6
+CC1 ≠ cell-correct answer
+computed from AIP_COND
+7
+CC2 ≠ cell-correct answer
+computed from DISC_COND
+8
+Duration (in seconds) < threshold
+SPEEDING_MIN_SECONDS
+9
+Missing 10% of the 34 fielded items MAX
+_MISSING_ITEM_PCT
+Step 9 uses the fielded item count (now 34). The historical fielded (33) vs. analysed (32) distinction no longer applies: it existed only because the earlier REL4 was fielded but excluded from analysis. The current instrument has no fielded-but-excluded items — fielded and analysed counts are identical (34) — so this screen and every other item-count reference in this codebook should use 34 uniformly going forward.
+6.2 Soft flags (reported, not dropped)
+Flag
+Meaning
+Basis
+flag_straightliner
+SD across the 34 fielded items below threshold
+STRAIGHTLINE_SD_THRESHOLD
+flag_cell_mismatch
+CELL disagrees with AIP_COND × DISC_COND
+Survey-Flow integrity signal, not a respondent-quality issue
+Soft flags drive a with/without sensitivity check in the descriptives, not an exclusion.
+7. Analysis role matrix
+Hypothesis / test
+Variables
+Method
+Script / tool
+H1 AIP → REL (+)
+AIP items, REL1–REL4
+PLS-SEM path
+SmartPLS 4 · 07_plssem_bridge.R
+H2 AIP → INT (+)
+AIP items, INT items
+PLS-SEM path
+SmartPLS 4 · 07
+H3 DISC → INT (−)
+DISC_COND, INT_mean
+Two-way ANOVA main effect — sole confirmatory test
+05_anova_h3.py
+H4 REL → TRU (+)
+REL1–REL4, TRU items
+PLS-SEM path
+SmartPLS 4 · 07
+H5 REL → ENG (+)
+REL1–REL4, ENG items
+PLS-SEM path
+SmartPLS 4 · 07
+H6a INT → TRU (−)
+INT, TRU items
+PLS-SEM path
+SmartPLS 4 · 07
+H6b INT → ENG (−)
+INT, ENG items
+PLS-SEM path
+SmartPLS 4 · 07
+H6c INT → PI (−)
+INT, PI items
+PLS-SEM path
+SmartPLS 4 · 07
+H7a PDPL × INT → TRU
+INT_x_PDPL → TRU
+PLS-SEM interaction, two-stage; β_M1, BCa CI 10,000, individual f²
+SmartPLS 4 · 07
+H7b DISC × INT → TRU
+INT_x_DISC → TRU
+PLS-SEM interaction, two-stage; β_M2, BCa CI 10,000, individual f²
+SmartPLS 4 · 07
+E1 TRU → ENG
+TRU, ENG items
+PLS-SEM path (reported, not hypothesised)
+SmartPLS 4 · 07
+E2 ENG → PI
+ENG, PI items
+PLS-SEM path (reported, not hypothesised)
+SmartPLS 4 · 07
+H1/H2 experimental replication
+AIP_COND → INT_mean, REL_mean
+ANOVA main effect (not H-numbered)
+05_anova_h3.py
+AIP × DISC on INT
+both factors
+Exploratory only — must not be H-numbered
+05_anova_h3.py
+Manipulation checks
+MC_AIP, MC_DISC
+t-test, Cohen’s d, gate ≥ 0.50
+04_manipulation_check.py
+Reliability / EFA (pilot)
+analysed items only
+α, 2-factor EFA on AIP + REL
+03_reliability_efa.py
+ENG within-dimension reliability (diagnostic)
+ENG_cog_mean, ENG_aff_mean, ENG_act_mean
+α per dimension — supplementary description only under Amendment A-20; ENG’s reliability, loadings, CR and AVE a
+re computed on the pooled six-item set 03_reliability_efa.py (add-on, §9)
+Competing model TRU → PI
+TRU, PI items
+Separate run, Discussion only; no H-number, no E-label
+SmartPLS 4
+8. Standing prohibitions
+These are the errors that have actually occurred or been narrowly avoided on this project. Each is cheap to prevent and expensive to discover late.
+No DISC measurement model. No α, loadings, AVE, CR or HTMT for DISC, ever. No DISC1/DISC2 column may be created.
+No three-way interaction. β_M3 and β_M4 do not exist. Retired by A-8.
+RETIRED RULE — no longer applies. This rule (“REL4 excluded from the measurement model”) applied only to the earlier REL4 item (Tam & Ho, 2006 wording), which has since been removed from the instrument entirely. The current REL4 (Yin, Qiu & Wang, 2025) is a different item and is fully included in α, AVE, HTMT, loadings and REL_mean, alongside REL1–REL3. Do not exclude it.
+RETIRED RULE — no longer applies (Amendment A-20). The prohibition “no pooled reliability across all six ENG items” (A-12) is withdrawn. ENG α, item-rest correlation, outer loadings, CR, AVE and EFA/CFA are computed on the pooled six-item set, like every other construct; the three-dimension labels survive as content description only. ENG must appear in every reliability, loadings and CR/AVE table — its absence from those tables is now a defect, not compliance.
+No dropping ENG4. Unchanged by A-20. Dropping ENG4 leaves Activation represented by ENG5 alone and deletes the dimension Hollebeek et al. treat as behaviourally diagnostic. A weak pooled loading is reported in Limitations, not resolved by item deletion. Any removal requires a dedicated amendment.
+No “PDPD” and no “Decree 13/2023/NĐ-CP” as the operative instrument, in any code, comment, variable name, output label, figure or manuscript text. The anchor is Law 91/2025/QH15.
+No second test of H3. The ANOVA main effect is the confirmatory test; the SEM’s DISC → INT path is descriptive.
+No Study 2 metrics in Study 1. Precision@10, NDCG@10 and Green Exposure Rate belong to the DSR artifact evaluation and never appear in Study 1 reporting. Study 2 carries no H-numbered hypothesis.
+No ASCII-stripped Vietnamese anchors. Consent and screener anchors must retain full diacritics; an ASCII anchor matches zero real responses and silently drops the whole sample.
+No confirmatory PLS-SEM on pilot data. The pilot is reliability, EFA and manipulation checks only.
+No −98 in a computed statistic. Recode “prefer not to say” to missing before any demographic summary.
+No silent item-count drift. Any change to the item set is an amendment to TF first, then this codebook, then _config.py — in that order.
+No two sources of truth for item wording. B1.5 v3 is the item-level source of truth for stems, source attribution and response format; this codebook is the variable-level source of truth for coding, derivation and exclusion. Where they overlap they must be identical — and as of Amendment A-20 they are, both having been verified against the live export.
+No sign-unnormalised loadings in a reported table. A single-factor extraction is sign-indeterminate, so an entire construct can emerge with uniformly negative loadings (observed at n = 277 for AIP, REL, TRU, PI and PDPL). Orient each construct’s loading vector positive before reporting; a negative loading in a manuscript table reads as a coding error even when its magnitude is correct.
+No personal data in a committed file, ever. IPAddress, LocationLatitude, LocationLongitude, recipient name/email fields and ExternalReference are personal data under Law 91/2025/QH15 Art. 2. They must be stripped from raw and processed exports before any commit, and must never sit in a publicly readable repository. See §9, OD-15.
+9. Open items affecting this codebook
+ID
+Item
+Owner
+OD-9
+Third novelty statement in TF §B.6 — withdraw or replace. Does not affect variables, but affects how H7a/H7b results are framed.
+Khải
+OD-10
+Whether REL4 remains in the fielded instrument. CLOSED AS MOOT (Amendment A-20). The REL4 this decision referred to (Tam & Ho, 2006, decision-usefulness wording) was removed from the instrument entirely, not merely excluded. The current REL4 is a different item whose sourcing is governed by OD-16 below; this OD approves nothing about it. Khải
+
+OD-12
+OPEN — highest priority. (i) The MC_AIP manipulation check has not cleared the pre-committed |d| ≥ 0.50 gate on any pilot batch, and the pre-committed vignette rewrite (task B2.10) was declined. (ii) Differential attrition by AIP_COND. Both require faculty-advisor ratification and must be disclosed in Method/Limitations before that section is drafted. Not resolved by the sample_role boundary, which is administrative only. Khải / faculty advisor
+
+OD-13
+OPEN. PDPL statutory anchors were realigned to B1.5’s mapping (Arts. 1, 4, 9, 11, 14, 38) by Amendment A-20, but A-11’s article-by-article verification was run against the earlier mapping. Re-verify the current set against luat_PDPL.pdf before the Method section is drafted. Như Quỳnh
+
+OD-14
+OPEN. §6’s hard-drop sequence is the ratified rule, but 01_clean.py currently applies three criteria only (missing data, duplicate pattern, straightlining); the consent / age / omnichannel / attention-check / comprehension-check / speeding drops were disabled and the manipulation check made report-only. Either ratify the narrower policy as a named amendment or restore the codebook rules in code — do not carry code and codebook disagreeing into main collection. Phúc / Khải
+
+OD-15
+OPEN — urgent, compliance. The NCKH_DATA repository is publicly readable, and data/raw/pilot_real.csv carries live IPAddress (478 rows) and LocationLatitude / LocationLongitude (481 rows) — personal data under Law 91/2025/QH15 Art. 2, the statute this study measures awareness of. Make the repository private, strip the columns, and rewrite the commit so the values do not survive in history. Khải
+
+OD-16
+OPEN. REL4’s primary source, Klar (1990), has not been independently verified at item level — the only item in the 34-item battery without a PDF-verified primary, in tension with the project’s citation-integrity rule. Resolve by further sourcing or self-development before final ratification. Như Quỳnh
+
+OD-11
+PDPL1–PDPL4 stems do not name Law 91/2025/QH15.
+Closed (A-17, 8 Sep 2026, supersedes same-day A-16). Stems and preamble both remain generic; no in-instrument feature names the statute. Statute documented in Chapter 2 and Method only (§4.7a). Ratified by Khải; raised by Thiện, confirmed and finalized by faculty advisor.
+OD-4
+Article-level citations to Law 91/2025/QH15 pending OCR verification — CLOSED by Amendment A-11, 26 Aug 2026. All citations verified accurate against the full statute text; no correction required.
+Khải
+—
+ENG dimension-label mapping against Brodie et al. FP4 — RESOLVED by Amendment A-12: Cognitive Processing (ENG1,ENG2), Affection (ENG3,ENG6), Activation (ENG4,ENG5); citation corrected to Hollebeek et al. (2014). See §4.7.
+—
+—
+SUPERSEDED by Amendment A-20. ENG diagnostics are computed on the pooled six-item set, and ENG must appear in the α, loadings and CR/AVE tables. 03_reliability_efa.py still excludes ENG from those tables via POOLED_CONSTRUCTS and must be updated; the per-facet means remain available as supplementary description only.
+Phúc
+—
+Speeding and straightlining thresholds are reasoned priors, not measured facts. Revisit against real pilot duration data and log the change.
+Phúc

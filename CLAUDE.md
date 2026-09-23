@@ -12,6 +12,22 @@ register) and `docs/Master_Codebook_v2_6_updated.docx` (the variable-level bridg
 between the Qualtrics instrument, this pipeline, and TF). Where TF and the
 Codebook disagree, **TF prevails on substance**.
 
+**Newer TF exists (2026-09-22, superseding the §16 description below):
+`docs/Theoretical_Foundations_v2_13_A22_main400_DRAFT (1).docx` — the `.md` draft
+`Theoretical_Foundations_v2_13_A23_DRAFT_r2.md` that §16 was written against no longer
+exists on disk; this `.docx` is the only TF file present now, and its content moved on
+without §16 being updated. Confirmed with Khai (2026-09-22): **Amendment A-22 IS
+ratified** (Project Lead & Faculty Advisor, 21 Sep 2026) — Holm-Bonferroni is removed
+project-wide, and H7a is re-signed to Dampening (βM1 < 0). The same session also
+authorized **Amendment A-23** (H7b re-signed to Dampening, βM2 < 0; H7a/H7b estimation
+of record switched from one pooled two-interaction OLS model to two separate
+single-moderator regressions per Hayes' PROCESS Model 1 template) — A-23 is recorded in
+the TF docx but is, like A-22 before it, still pending the Project Lead & Faculty
+Advisor sign-off; only the sign/estimator change itself is authorized. **See §17 for
+the full reconciliation — §16 below is left as a historical record of a snapshot that
+is no longer current; do not trust its "NOT ratified" / "decision rule is BCa + Holm"
+claims.**
+
 **Read this file before writing or running any analysis script.** Both governing
 docs get re-issued under new filenames periodically (`_vN_updated.docx`) — if you
 see a docs/ file with a higher version number than named above, re-extract and
@@ -1219,3 +1235,513 @@ effect has both grown and tightened. `README.md`'s "Latest 05/06/07 results"
 table still shows the older n=328/380 numbers from §13/§14 — not yet
 reconciled with this n=388 run since this request only covered `01`→`04` +
 `run_plssem.py`, not `05_anova_h3.py`/`06_power_analysis.py`.
+
+## 16. TF v2.13 DRAFT (A-21/A-22/A-23) reconciled with the pipeline; changes since §15 — 2026-09-20
+
+**Status of the source.** `docs/Theoretical_Foundations_v2_13_A23_DRAFT_r2.md` (title
+"Version 2.13 (DRAFT — A-21, A-22 and A-23 pending ratification)"). All three
+amendments are self-declared drafts: they need Khải's own statement of reason (left
+blank as `[ ]` in the file) and ratification by the faculty advisor (Tống Gia Tường).
+**Nothing in A-21..A-23 governs the pipeline yet.** Ratified state remains v2.12/A-20
+(§1.3, §11); the ratified prediction for H7a/H7b is still buffering, β_M > 0
+("attenuates the negative slope of INT→TRU", TF §A.5.1).
+
+**What the draft says.**
+- **A-21:** records the first full structural model (n=394): supported H1, H4, H6a, H6c;
+  not supported H2, H3 (ANOVA F=1.320, p=.251), H5, H6b, H7a, H7b; both β_M negative
+  (opposite to buffering) and non-significant; no alternative estimator substituted
+  for two-stage PLS-SEM in search of significance. Also closes Introduction citation
+  fixes (Aydin 2026 market figures → Wasilewski & Kolaczek 2024; Xie 2026; Kumar et
+  al. 2019) and opens a flag that the §A.1/§A.7 "Aydin (2026)" characterization does
+  not match the verified Sustainability paper (unresolved; affects the H7a novelty
+  argument, not its empirical status).
+- **A-22:** proposes OLS moderated regression as the estimation of record for H7a/H7b
+  (§C.2.2). Disclosed as a POST-DATA decision. PLS-SEM estimates stay reported alongside.
+- **A-23:** respecifies the predicted sign of H7a/H7b to negative (amplification), post
+  hoc, two-tailed, BCa 95% CI, Holm across the two; original prediction + verdict kept;
+  any "supported" is labelled "supported (post hoc)", never confirmatory.
+- **§C.2.2 fixed specification:** TRU ~ INT + PDPL + DISC + INT×PDPL + INT×DISC + REL on
+  equal-weighted mean scores, INT/PDPL/DISC mean-centred before products; case bootstrap
+  10,000, BCa 95% CI, seed recorded; HC3 and classical p alongside; Holm across H7a/H7b;
+  f²; simple slopes with bootstrap CIs; full sample = record, main-only = sensitivity;
+  moderated mediation and re-targeting are exploratory only.
+
+**Verified against outputs (draft's own instruction: "verify before circulation").**
+Matches: the n=394 PLS-SEM values in A-21 (H1 .716, H4 .350, H6a −.239, H6c −.141,
+H2 .039/p .539, H5 .103/p .094, H6b −.020/p .664, H7a −.084/p .180, H7b −.062/p .258,
+E1 .399, E2 .613), the H3 ANOVA, MC_AIP d=.658 / MC_DISC d=1.119; Table C.2-M rows for
+"PLS R cross-check n=346" and both "OLS Model 1" rows (n=397 / n=345). The row
+"SmartPLS 4.1.1.8" is the user's own run and could not be verified here.
+
+**Discrepancies found (flagged, not silently fixed).**
+1. **VIF in A-22 (2.57 / 2.61 for INT→TRU and DISC×INT→TRU)** vs this pipeline's seminr
+   two-stage inner VIF for TRU's predictors: INT 1.019, INT×DISC 1.024, INT×PDPL 1.026
+   (max over all inner VIFs ≈1.30). Different specification (the draft's is the uncentred
+   product in SmartPLS); the draft should say which software the 2.57/2.61 came from.
+2. **OD-14 is stale.** It says `01_clean.py` applies three criteria and the codebook's
+   consent/age/omni/attention/comprehension/speeding drops are disabled. The 9-step policy
+   has been in force since 2026-09-16 (§12). OD-14 should be updated or closed.
+3. **OD-17(ii) n reconciliation.** The different n are export growth, not different case
+   selection: raw 888 → n=388; 912 → 394 (A-21); 915 → 397 (OLS full, SmartPLS import 397;
+   main-only 345); 917 → 398 (current; main-only 346). Table C.2-M mixes main-only 345
+   (OLS rows) and 346 (PLS rows) for that reason. Current sample of record: n=398.
+4. **TF §C.2 requires BCa CIs for the PLS β_M; `07_plssem_bridge.R` reports seminr's
+   percentile CI.** Not implemented; open gap. (The §C.2.2 OLS script does use BCa.)
+5. Interaction-term SEs/p in the draft's OLS Model 1 rows came from an earlier bootstrap
+   seed; a re-run gave DISC full p_boot .072 vs .063 (Monte Carlo variation only).
+
+**New: `src/13_h7_ols_record.R` implements §C.2.2 exactly** → `outputs/tables/h7_ols_record_C22_DRAFT.csv`
+(filled row "OLS pooled model per §C.2.2 (BCa 10,000)" of Table C.2-M). Labelled DRAFT.
+
+| | Full (record) n=398 | Main-only n=346 |
+|---|---|---|
+| H7a β_M1 (centred mean scores) | −0.0721, BCa [−0.198, 0.001], p_boot .0996, Holm .199, classical .031, HC3 .153, f² .0120 | −0.0760, [−0.199, 0.005], p .108, Holm .216, classical .033, HC3 .160, f² .0135 |
+| H7b β_M2 | −0.1106, [−0.299, 0.094], p .249, Holm .249, classical .152, HC3 .282, f² .0053 | −0.0805, [−0.285, 0.142], p .436, classical .345, HC3 .482, f² .0026 |
+| Verdict fields | H7a/H7b: not supported (original buffering) and not supported (post hoc amplification) | same |
+
+Simple slopes of INT→TRU are negative everywhere and significant at PDPL +1SD (−.277) and
+DISC=1 (−.248) but not at PDPL −1SD or DISC=0: the base negative effect, not evidence of
+moderation. **Under the specification the draft itself fixes, neither hypothesis is
+supported under either direction, in either sample** — the single nominally significant
+cell seen earlier (OLS Model 1, main-only, bootstrap p=.044) does not survive the fixed
+specification (REL covariate, both interactions, BCa, Holm).
+
+**Standing rules for future sessions.** Do not treat A-22/A-23 as ratified. The decision
+rule for H7 is the one fixed in §C.2.2 (BCa + Holm + sign), not whichever estimator or
+sample gives p<.05. The many H7 variants run (PLS, PLS-MGA + MICOM, moderated mediation,
+J-N, OLS Model 1 classical/HC3/bootstrap, §C.2.2) are the multiverse; none is dropped.
+MICOM: PDPL groups partially invariant; DISC groups NOT compositionally invariant for INT
+(p=.006) and ENG (p=.039), so the DISC MGA is not interpretable.
+
+**Changes since §15 not yet documented elsewhere:** `01_clean.py` — CC_Gate termination
+diagnostic (`breakdown_cc_gate_terminations`, 383/915 raw, 0 survive filtering), SmartPLS
+numeric export, and a 3-way split `clean_pilot.csv` (n=52) / `clean_main.csv` (346) /
+`clean_pooled.csv` (398, identical to `pilot_clean.csv`, which stays the file existing
+scripts read) with `smartpls_input_{pilot,main,pooled}.csv`; `07_plssem_bridge.R` /
+`run_plssem.py` — Fornell-Larcker (7 reflective constructs), outer VIF, specific indirect
+effects (percentile CI on the same 10,000 resamples) with Zhao-Lynch-Chen classification,
+f² for INT/DISC→TRU filled (seminr sets NA for interaction components by design; PDPL→TRU
+cannot be estimated), `--tag` output suffix; `06_power_analysis.py` — per-term f²/β/p,
+`--perceived-disc`; new scripts `08_data_quality_robustness.py` (duration/Mahalanobis
+sensitivity, stable), `09_h7_supplementary.py/.R` (PLS-MGA permutation + moderated
+mediation), `10_jn_micom.R` (Model 1, J-N, MICOM), `11_ols_model1_bootstrap.R`,
+`12_process_moderated_mediation.R`, `13_h7_ols_record.R`. Power (OLS analogue, checked
+against `pwr::pwr.f2.test`): H7a f²≈.010 → ~790 clean n; H7b f²≈.005 → ~1,580 (f²=.0046 → 1,706).
+
+## 17. §16 was stale; A-22 is actually ratified; H7b re-signed negative (A-23); H7 estimation
+switched to two separate Hayes PROCESS Model 1 regressions; Holm removed everywhere — 2026-09-22
+
+**Discrepancy found and reconciled.** §16 described the current TF as
+`docs/Theoretical_Foundations_v2_13_A23_DRAFT_r2.md` — a draft with A-21/A-22/A-23 all
+unratified, Holm still the H7 decision rule. That `.md` file does not exist on disk. The
+only TF file present in this session is the untracked
+`docs/Theoretical_Foundations_v2_13_A22_main400_DRAFT (1).docx` (its filename still says
+"DRAFT", which is itself misleading). Extracted and read directly (via `python-docx`,
+`pip install python-docx` — not previously installed): its actual content is materially
+ahead of what §16 describes:
+- **Amendment A-22 is ratified** — "Ratified by Project Lead & Faculty Advisor, 21
+  September 2026" is written into Table 0k in the document itself.
+- **Holm-Bonferroni is already formally removed project-wide** ("multiple testing
+  adjustments such as the Holm-Bonferroni method are formally removed... induces severe
+  Type II error rates, masking substantive interaction effects" — citing Hair et al. 2022,
+  Henseler et al. 2015, Becker et al. 2018).
+- **The replacement decision rule is NOT "keep HC3 only".** It is: nominal two-tailed
+  p < .05 **and** a 5,000-resample non-parametric bootstrap 95% CI (percentile/BCa)
+  excluding zero. HC3 and classical p survive only as reported-alongside diagnostics, not
+  as the criterion.
+- **H7a was already re-signed to Dampening (βM1 < 0)** by A-22 — opposite the original
+  buffering prediction (βM1 > 0). Confirmed with Khai before treating this as fact (it
+  contradicts §16's "not ratified" framing).
+
+Confirmed with Khai this session (`AskUserQuestion`): apply the TF's actual rule (nominal
+p + bootstrap CI, not "HC3-only"), and treat A-22 as genuinely ratified. Do not repeat
+§16's now-stale claims about A-22/A-23 in future sessions; this section supersedes them.
+
+**New instruction the same session, applied to the TF file directly:** re-sign **H7b**
+to Dampening (βM2 < 0) as well — mirroring A-22's H7a logic — and switch the H7a/H7b
+estimation of record from one pooled OLS model containing both interaction terms to
+**two separate single-moderator OLS regressions, one per hypothesis, following Hayes'
+PROCESS Model 1 template** (Y = TRU_mean; X = INT_mean, centred; W = PDPL_mean centred
+for H7a, DISC_COND centred for H7b; the other institutional carrier and REL_mean enter
+each model as covariates, with no interaction term of their own).
+
+**Recorded as Amendment A-23** (added to the TF docx's Table 0k, and to Table 3's H7b
+row, and the A.5.1 prose was rewritten for H7b using the same Legal-Sensitization/salience
+logic already used for H7a — disclosure raises conscious, transaction-specific salience
+of the personalization practice at the moment of exposure, which is expected to sharpen
+rather than soften the perceived breach when that practice is also intrusive).
+**Authorized directly by Khai in this session (2026-09-22) — not yet independently
+ratified by the Project Lead & Faculty Advisor the way A-22 was.** Per this project's own
+standing rule for A-21/A-22/A-23-style changes (§16), A-23 needs Khai's own fuller
+written rationale and faculty sign-off before it governs the manuscript; the sign flip and
+estimator change are implemented in the pipeline now on Khai's direct instruction, but the
+TF docx itself flags A-23 as pending the same ratification A-22 already received. A
+bracketed supersession note was also added at the historical (pre-ratification) §C.2.2
+paragraph in the docx, pointing forward to the ratified rule rather than rewriting it —
+consistent with this project's practice of never silently rewriting a dated, disclosed
+methodological choice (§6.1, §11, §16's own "context-honesty" notes).
+
+**TF docx edits made (via `python-docx`, run/edit/save; the file could not be edited as
+plain text since it's a binary `.docx` — `Read` on it fails, and there is no in-repo
+tool for round-tripping the raw `word/document.xml` safely other than `python-docx`,
+which edits whole-paragraph/whole-cell text and does not preserve sub-paragraph run-level
+formatting boundaries — acceptable here since none of the edited spans had internal
+formatting):**
+1. Table 0k: added a new "A-23" row (Amendment / Rationale and Authority columns) as
+   described above.
+2. Table 3 (the "Updated Amendment A-22" copy near the end of the document): H7b's
+   Predicted Sign cell changed from `βM2 > 0 (Buffering)` to `βM2 < 0 (Dampening)`, and its
+   Theoretical Rationale cell rewritten to the disclosure-salience mechanism above.
+3. §A.5.1 prose (the post-A-22 copy): heading changed from "De Facto Assurance & The
+   Buffering Effect — Disclosure Level (H7b, βM2 > 0)" to "...The Dampening Effect...
+   (H7b, βM2 < 0)", and the paragraph body rewritten accordingly.
+4. The historical (pre-ratification, still says "Holm's correction across H7a and H7b")
+   §C.2.2 verdict-rule paragraph was left in place (dated, disclosed snapshot) with a
+   bracketed `[Note added 22 September 2026: superseded...]` appended, pointing at the
+   ratified rule and both sign changes rather than rewriting the original text.
+
+**Code changes to match:**
+- **`src/13_h7_ols_record.R` rewritten.** Was: one pooled OLS model
+  (`TRU_mean ~ REL_mean + INT_c + PDPL_c + DISC_c + INT_x_PDPL + INT_x_DISC`), 10,000
+  resamples, Holm-adjusted bootstrap p as part of the verdict rule, output
+  `outputs/tables/h7_ols_record_A22_main_INTERIM_DRAFT.csv`. Now: **two independent
+  Hayes PROCESS Model 1 regressions** —
+  `H7a: TRU_mean ~ REL_mean + DISC_COND + INT_c + PDPL_c + INT_c:PDPL_c` and
+  `H7b: TRU_mean ~ REL_mean + PDPL_mean + INT_c + DISC_c + INT_c:DISC_c` — each with its
+  own Cook's-distance-flagged-cases sensitivity run, its own simple slopes, its own
+  BCa bootstrap CI (5,000 resamples, matching the TF's `A-22` spec, was 10,000), and
+  **no Holm adjustment anywhere** — verdict is CI-excludes-zero at nominal p < .05.
+  HC3/classical p are kept as reported-alongside columns only, per TF's actual rule
+  (§ this section, "Discrepancy found"), not as an HC3-only criterion. Output renamed
+  to `outputs/tables/h7_ols_record_A22_A23_PROCESS_M1_INTERIM.csv`. The verdict table's
+  `sign_all_N`/`supported_as_predicted` columns now read against **Dampening (βM < 0)**
+  as the predicted direction for both H7a and H7b, not the old buffering (β > 0)
+  prediction.
+- **`src/14_final_results_table.py` updated**: Section G's header, source CSV filename,
+  and the removed `p_holm` column reference; Section E's H7a/H7b predicted-sign labels
+  in the PLS-SEM path table changed from `+ (buffering, ratified)` to
+  `- (dampening, A-22)` / `- (dampening, A-23)` (this also fixes the sign-match check
+  used to classify "Supported" vs. "Significant, OPPOSITE sign", which previously tested
+  against the wrong direction).
+- **`src/11_ols_model1_bootstrap.R`** (an earlier, still-useful exploratory sensitivity
+  script that already ran H7a/H7b as two separate `TRU_mean ~ INT_mean * W` models, one
+  per sample) — its header comment describing the predicted direction as buffering
+  (βM > 0, TF v2.12) was corrected to note the A-22/A-23 sign flip; the script's logic
+  itself needed no change since it never assigned a verdict, only reported b/p/CI.
+- Checked `09_h7_supplementary.{py,R}`, `10_jn_micom.R`, `12_process_moderated_mediation.R`,
+  `06_power_analysis.py`, `07_plssem_bridge.R`, `run_plssem.py` for Holm and for
+  hardcoded buffering-direction language — none found; these scripts report β/p/CI
+  without assigning a directional verdict, so they need no change (per-term f²/power
+  numbers in `06_power_analysis.py` and PLS-SEM path coefficients in `07_plssem_bridge.R`
+  are estimator outputs, not predictions, and are unaffected by which sign was predicted).
+
+**Not done, left to the user:** the TF docx's filename still literally contains "DRAFT",
+which is inconsistent with the ratified-A-22 content now inside it — left as-is, since
+renaming a file the user is actively working in is not this session's call to make.
+`docs/Theoretical_Foundations_v2_13_A23_DRAFT_r2.md`, which §16 was written against, was
+never found — if it exists elsewhere it was not reconciled against the docx here; if it
+was deleted, §16's description of its content is now purely historical.
+
+## 18. `src/` pruned and renumbered to match the model actually being reported — 2026-09-23
+
+Requested by Khai after reviewing which scripts the current model (PLS-SEM for H1, H2,
+H4, H5, H6a, H6b, H6c, E1, E2; two-way ANOVA for H3; two separate Hayes PROCESS Model 1
+OLS regressions for H7a/H7b, per A-22/A-23; descriptives; VIF; HTMT; EFA cross-loadings)
+actually needs. **Removed** (none were tracked in git, so nothing was lost from history):
+- `09_h7_supplementary.py` / `.R` — ran PLS-MGA (permutation) + moderated mediation for
+  H7. TF §1.5 says PLS-MGA is **no longer required for H7** (DISC is a pooled
+  predictor/moderator now, not a between-group factor), and moderated mediation was
+  always "exploratory only" (§C.2) — neither fed the reported model once
+  `09_h7_ols_record.R` (renumbered from `13_...`, see below) became the estimation of
+  record for H7a/H7b.
+- `10_jn_micom.R` — Johnson-Neyman + MICOM. MICOM was a prerequisite only if PLS-MGA was
+  used *somewhere* (§1.5); with `09_h7_supplementary` gone, nothing in the repo calls
+  PLS-MGA anymore, so MICOM has no remaining purpose here.
+- `11_ols_model1_bootstrap.R` — an earlier draft of the same idea now implemented
+  properly in `09_h7_ols_record.R` (formerly `13_...`): two separate simple-moderation
+  OLS regressions, one per hypothesis, bootstrapped. Superseded, not complementary — kept
+  a slightly different sensitivity axis (main vs. pooled sample) but duplicated the core
+  logic of the file that is now the actual estimation of record.
+- `12_process_moderated_mediation.R` — moderated mediation, exploratory only per TF §C.2,
+  not part of the H1–H7b/E1/E2 register being reported.
+
+**Kept, on Khai's explicit instruction, despite being outside the narrow H-testing table**
+(they serve Method/robustness sections, not redundant with anything else in `src/`):
+- `06_power_analysis.py` — a priori power analysis for the Method section's sample-size
+  justification.
+- `08_data_quality_robustness.py` — data-quality sensitivity (duration/Mahalanobis),
+  supplementary robustness, not a duplicate of any other script.
+- `strip_pii.py` — PII-stripping utility (§8's PII fix), a data-governance tool, not a
+  statistical-model script; unaffected by which estimator H7 uses.
+
+**Renumbered** (both files' internal filename self-references and cross-references in
+other files were updated to match; no git history to preserve since neither was tracked):
+- `13_h7_ols_record.R` → **`09_h7_ols_record.R`**
+- `14_final_results_table.py` → **`10_final_results_table.py`** (its docstring's list of
+  required upstream scripts now says `09_h7_ols_record.R`, not `13_...`)
+
+Current `src/` numbering after this cleanup: `01_clean.py`, `02_descriptives.py`,
+`03_reliability_efa.py`, `04_manipulation_check.py`, `05_anova_h3.py`,
+`06_power_analysis.py`, `07_plssem_bridge.R` (+ `run_plssem.py`, unnumbered, the rpy2
+orchestrator for it), `08_data_quality_robustness.py`, `09_h7_ols_record.R`,
+`10_final_results_table.py`, plus the unnumbered support files `_config.py`,
+`_qualtrics_io.py`, `strip_pii.py`. §2's repo-layout diagram still shows the old
+`00`–`07` scaffold-era layout and was not rewritten (it already predates §7 onward) —
+this section is the current source of truth for `src/` contents; treat §2 as historical.
+Left over from the old numbering: `07_plssem_bridge.R`'s `boot_obj` field in its return
+list was kept (harmless, still exported) even though its only consumer,
+`09_h7_supplementary.py`, is gone — flagged in a comment rather than removed, since
+removing it would be a behavior change to a script beyond the scope of this cleanup.
+
+**`outputs/tables/` pruned the same day** to match — 23 files removed, none git-tracked
+(`git ls-files` confirmed none of them were ever committed; most were already covered by
+`.gitignore`'s `outputs/tables/*.csv` rule from §8, so nothing here touches git history):
+- Outputs of the deleted scripts, orphaned once their producer was removed:
+  `h7_supp_mga.csv`, `h7_supp_moderated_mediation.csv`, `h7_supp_summary.csv` (from
+  `09_h7_supplementary.*`); `h7_jn_regions_PDPL.csv`, `h7_micom_cSEM.rds` (from
+  `10_jn_micom.R`); `h7_ols_model1_bootstrap_by_sample.csv`, `h7_process_model1.csv`
+  (from `11_ols_model1_bootstrap.R`); `h7_process_modmed_main.csv` (from
+  `12_process_moderated_mediation.R`).
+- Superseded H7 estimation-of-record snapshots from earlier methodology states:
+  `h7_ols_record_A22_main_INTERIM_DRAFT.csv` (pre-rewrite pooled two-interaction model,
+  Holm-based, old filename) and `h7_ols_record_C22_DRAFT.csv` (§16's even earlier
+  pre-A-22 §C.2.2 spec, also Holm-based) — both fully superseded by
+  `h7_ols_record_A22_A23_PROCESS_M1_INTERIM.csv` (current, from `09_h7_ols_record.R`,
+  no Holm, two separate Hayes PROCESS Model 1 regressions).
+- `final_results_summary.csv` / `final_results_summary_v2.csv` — ad hoc pre-cleanup
+  summary tables whose H7a/H7b rows still used the old pure PLS-SEM two-stage estimate
+  (β_M1=−0.084, β_M2=−0.063, no OLS/PROCESS columns at all) — superseded by
+  `FINAL_results_main_all.csv`/`.xlsx` (from `10_final_results_table.py`, the one script
+  that reads the current OLS-PROCESS-Model-1 output for Section G).
+- 11 byte-for-byte duplicate files: every `plssem_{X}_main_table.csv` was confirmed
+  (`diff`) identical to its `plssem_{X}_smartpls_main.csv` sibling — both were produced
+  by two `run_plssem.py --tag` runs on the same frozen data (n=346 checkpoint), one
+  tagged `table`, one tagged `smartpls`. Kept the `_smartpls_main` name (it's the one
+  tied to the TF's SmartPLS-4 cross-validation requirement, §5); deleted the `_table`
+  twin as a pure duplicate.
+
+**Left alone, on purpose:** the no-suffix `plssem_*.csv` / `H3_anova_disclosure_main_effect.csv`
+files (the `--sample-role all`, pooled pilot+main outputs — a distinct, still-legitimate
+sample-role cut, not a duplicate of `_main`), and every `pilot_*`/`main_*` descriptive,
+reliability, HTMT, cross-loading, cell-balance, and manipulation-check file (all current
+outputs of scripts that are still in `src/`, explicitly part of what Khai asked to keep:
+descriptives, VIF, HTMT, cross-loadings).
+
+## 19. Figures added to `10_final_results_table.py` — 2026-09-23
+
+Requested by Khai: a Figure 1 (Structural Model Diagram) and Figure 2 (Interaction Plot).
+Integrated into `10_final_results_table.py` (not a new script) since it already reads
+every table these figures draw from (`b` = `plssem_bootstrap_paths_main.csv`, `o` =
+`h7_ols_record_A22_A23_PROCESS_M1_INTERIM.csv`, `main` = `clean_main.csv`) — no new
+analysis, just plotting numbers already in Sections E/G. Needs `matplotlib` (already a
+dependency) and `statsmodels.formula.api` (already a dependency, used here for the first
+time in this script).
+
+- **`figure1_structural_model()`** → `outputs/figures/Figure1_structural_model_main.png`.
+  SOR layout (Stimulus/Organism/Response columns, per TF §A.1): solid arrows = H1–H6c,
+  dotted = E1/E2, dash-dot = the DISC→INT specification term, dashed = H7a/H7b moderation
+  (PDPL and DISC arrows converge on the INT→TRU path). Every arrow is labeled with the
+  same β/b and significance star already computed in Section E (PLS-SEM) or Section G
+  (H7a/H7b OLS record) — nothing is recomputed for the figure.
+- **`figure2_interaction_plot()`** → `outputs/figures/Figure2_interaction_plot_main.png`.
+  Two panels (H7a: PDPL ±1SD; H7b: DISC=0/1), each a simple-slopes plot of INT→TRU. This
+  **refits** the same two Hayes PROCESS Model 1 OLS specifications as `09_h7_ols_record.R`
+  directly in Python (`statsmodels.formula.api.ols`, same formulas, same mean-centering)
+  rather than reading `h7_ols_record_A22_A23_PROCESS_M1_INTERIM.csv` — that CSV only
+  stores the slope coefficients, not a full predicted-value grid across INT, so a proper
+  line plot needs the refit. Both lines slope down (as expected, H6a is negative); the
+  Dampening prediction (A-22/A-23) shows up as the high-PDPL / With-Disclosure line
+  falling *faster* than the low-PDPL / No-Disclosure line, crossing partway through the
+  INT range — visually consistent with §17's sign change even though H7b's underlying
+  coefficient is not statistically significant (Figure 2 does not depict significance;
+  Figure 1 and Sections E/G's p-values do).
+
+**Known inconsistency, not fixed here:** at the time these figures were generated,
+`clean_main.csv` had grown to n=363 (raw export now 991, §"mới input mẫu mới" exchanges),
+but `h7_ols_record_A22_A23_PROCESS_M1_INTERIM.csv` (Section G / the H7a-H7b dashed arrows
+in Figure 1) was still the n=356 run from the previous checkpoint — `10_final_results_table.py`
+reads existing tables only and runs no analysis of its own for Sections A–G, so Section E
+(fresh PLS-SEM at n=363) and Section G (stale OLS-record at n=356) are drawn from two
+different n's in the same output until `09_h7_ols_record.R` is re-run on the current
+`clean_main.csv`. Figure 2's own OLS refit, by contrast, reads `clean_main.csv` live and
+so is already on n=363 — only Figure 1's H7a/H7b dashed-arrow labels (pulled from the
+stale `o` table) carry the n=356 numbers. Re-run `09_h7_ols_record.R` before treating
+Figure 1's H7a/H7b annotations as current.
+
+## 20. 14 manuscript Result tables added, plus the new analysis they required — 2026-09-23
+
+Requested by Khai: Tables 1–14 for the thesis's Results chapter. All added to
+`10_final_results_table.py` (functions `table1_...` through `table14_...`, called at the
+end of the script) — same "read existing outputs, run no new analysis" pattern as
+Sections A–H, except three genuinely new statistics had to be added upstream first
+because nothing in the pipeline computed them yet:
+
+**New in `07_plssem_bridge.R` / `run_plssem.py`:**
+- **R² / Adjusted R²** per endogenous construct (`model$rSquared`, trivial extraction) →
+  `plssem_rsquared_{role}.csv`.
+- **Q²predict** (Shmueli, Ray, Estrada & Danks, 2019 PLSpredict routine): 10-fold,
+  10-repetition out-of-sample prediction via `seminr::predict_pls()`, seed 123.
+  Q²predict per indicator = 1 − SSE/SSO, SSE from the returned held-out prediction
+  error, SSO from each indicator's deviation around the **full-sample** mean (the
+  standard reporting approximation — `predict_pls()` doesn't expose per-fold
+  training-set means, which the strict blindfolding definition uses). Reported per
+  construct as the mean across its own indicators, alongside the PLS-vs-LM-benchmark
+  RMSE comparison Shmueli et al. use to grade predictive power. **Bug caught and fixed
+  same day:** the power label was initially graded only from the RMSE comparison
+  (High/Medium/Low by how many indicators PLS beat the naive LM benchmark on), which
+  mislabeled INT as "High" even though its Q²predict is *negative* (−0.015) — Shmueli
+  et al.'s own rule is that Q²predict ≤ 0 means no predictive relevance regardless of
+  the RMSE comparison. Fixed: Q²predict ≤ 0 now short-circuits straight to
+  `"None (Q2predict <= 0)"` before the RMSE-based grading runs. → `plssem_q2predict_{role}.csv`.
+- **Extended specific indirect effects** (was 2 chains, now 6): added `REL->ENG->PI`,
+  `INT->ENG->PI` (through ENG only, not TRU), and the two 3-step serial chains
+  `REL->TRU->ENG->PI` / `INT->TRU->ENG->PI` (`seminr::specific_effect_significance()`
+  supports a `through` vector up to 4 mediators). `run_plssem.py`'s Zhao-Lynch-Chen
+  classification step was generalized: a chain whose ultimate `from->to` has no
+  corresponding direct path in the structural model (e.g. `REL->PI`, never estimated —
+  only `INT->PI`/H6c is) reports its estimate/CI/p but is labeled
+  `"N/A (no direct path in model)"` instead of forcing a classification against a path
+  that doesn't exist.
+
+**New in `09_h7_ols_record.R`:**
+- **HC3-robust SE** alongside the HC3 p that was already there (`hc3_stats()` now
+  returns both; new `SE_HC3` column).
+- **Breusch-Pagan and White heteroscedasticity tests** per model (both the full-N and
+  Cook's-D-trimmed sensitivity runs), via the newly-installed `lmtest` package
+  (`bptest()`; White implemented as the common `bptest(m, varformula = ~fitted(m) +
+  I(fitted(m)^2))` approximation, per Wooldridge's textbook simplification, not the
+  full all-regressors-and-cross-products White test) → new output
+  `outputs/tables/h7_heteroscedasticity_diagnostics.csv`.
+  **Bug found and fixed:** `bptest()` with the `fitted(m)`-based `varformula` crashed
+  ("incompatible dimensions" in `lm.wfit`) specifically on the Cook's-D-trimmed
+  sensitivity data (`dat_wo <- d[-flagged, ]`), because subsetting a data.frame keeps
+  the original (now non-sequential) row names, and `bptest()`'s auxiliary regression
+  mis-sizes itself against that. Fixed with `rownames(dat_wo) <- NULL` right after the
+  subset — confirmed this is a `bptest()`/row-name interaction, not a data problem
+  (the same model on the full, sequentially-row-named `d` never had this issue).
+- **A third PDPL evaluation point for H7a's simple slopes**: was 2 (−1SD, +1SD), now 3
+  (−1SD, Mean [PDPL_c=0], +1SD) — `analyse()`/`run_hypothesis()` generalized from
+  fixed `slope_lo`/`slope_hi` arguments to a named-vector `levels` argument so the
+  bootstrap `stat()` function returns a variable-length vector. H7b intentionally
+  stays at its 2 natural levels (DISC=0/1 has no third "mean" category).
+
+**`data/_config.py` addition:** `DEMOGRAPHIC_VALUE_LABELS`, transcribed verbatim from
+Master Codebook v2.7/A-20 §4.8's variable table (AGE_BAND, GEN, EDU, INC, FREQ, PLAT,
+PRIOR) — same pattern as the existing `REF_LABELS`. **LOC is deliberately excluded**:
+checked the Codebook directly (both the paragraph text and the actual docx table cell)
+and confirmed its row only says "choice numbers" with no numeric-to-region mapping
+anywhere in the document — labeling it would mean fabricating a mapping that doesn't
+exist in any source this session has seen.
+
+**The 14 tables** (each also written as its own
+`outputs/tables/Table{N}_....csv`, and all bundled into one
+`outputs/tables/Manuscript_Results_Tables.xlsx`, one sheet per table):
+
+| # | Table | Source(s) |
+|---|---|---|
+| 1 | Demographic Profile | `main_sample_profile.csv` + `DEMOGRAPHIC_VALUE_LABELS` (LOC/REF excluded, see above) |
+| 2 | Cell Distribution + randomization check | `main_cell_balance.csv` + a chi-square goodness-of-fit test (H0: equal 25%/cell) added here in Python (`scipy.stats.chisquare`) — new, wasn't computed anywhere before |
+| 3 | Manipulation Check | `pilot_manipulation_check_main.csv`, relabeled |
+| 4 | Reliability & Validity (item loadings + construct α/ρA/CR/AVE in one table) | `plssem_outer_loadings_main.csv` + `plssem_reliability_main.csv`, merged via `CONSTRUCT_ITEMS`; DISC excluded (never a reliability construct, §0) |
+| 5 | Fornell-Larcker | `plssem_fornell_larcker_main.csv` |
+| 6 | HTMT | `plssem_htmt_main.csv` |
+| 7 | Inner VIF | `plssem_inner_vif_main.csv`, NaN rows (single-predictor constructs) dropped |
+| 8 | Path Coefficients & Hypothesis Testing | `plssem_bootstrap_paths_main.csv` + `plssem_f_squared_main.csv`, with an explicit Decision column (sign-checked against each H's predicted direction) |
+| 9 | R² and Q²predict | new `plssem_rsquared_main.csv` + `plssem_q2predict_main.csv` (see above) |
+| 10 | Specific Indirect Effects | extended `plssem_indirect_effects_main.csv` (see above, 6 chains not 2) |
+| 11 | Heteroscedasticity Diagnostics | new `h7_heteroscedasticity_diagnostics.csv` (see above) |
+| 12 | Moderation Results (H7a/H7b) | `h7_ols_record_A22_A23_PROCESS_M1_INTERIM.csv`, beta_M rows only, now with HC3 SE |
+| 13 | Sensitivity Check (full vs. Cook's D-trimmed) | same file, pivoted side-by-side |
+| 14 | Simple Slopes at 3 PDPL levels | same file, new 3-level slope rows (see above) |
+
+**Verified end-to-end** by re-running `09_h7_ols_record.R` and `run_plssem.py` on the
+current `clean_main.csv`/`pilot_clean.csv --sample-role main` (n=363 at the time) and
+then `10_final_results_table.py` — all 14 tables and the combined `.xlsx` wrote
+successfully. **INTERIM caveat applies to all 14**: n=363 is still below the N_main=400
+stopping rule (TF §C.2.2). H7a's beta_M CI happened to include 0 at this exact n=363
+checkpoint (it excluded 0 at the n=356 checkpoint two turns earlier in this session) —
+a reminder that "supported"/"not supported" verdicts genuinely move as `pilot_real.csv`
+keeps growing, not a sign anything is broken.
+
+## 21. Figure 2's H7a panel redesigned as a Johnson-Neyman plot — 2026-09-23
+
+Requested by Khai, matching a reference JN plot image (pink = n.s., teal = p<.05,
+dashed vertical line + "W = ..." label at the JN transition, black bar marking the
+observed range of the moderator, θ(W) equation annotated on the plot). Implemented in
+`figure2_interaction_plot()`'s Panel A only — Panel B (H7b) intentionally kept as the
+existing 2-line simple-slopes plot, since DISC is a binary (0/1) moderator with no
+continuous range to run a Johnson-Neyman sweep over; JN only applies to H7a's
+continuous moderator (PDPL).
+
+Method: refits the same H7a OLS model as `09_h7_ols_record.R`
+(`TRU_mean ~ REL_mean + DISC_COND + INT_c * PDPL_c`) via `statsmodels`, then switches to
+**HC3-robust covariance** (`get_robustcov_results(cov_type="HC3")`) for the conditional-
+effect band specifically because Table 11 already found significant heteroscedasticity
+in this exact model (Breusch-Pagan p<.001, White p<.001 on the full-N run) — a classical
+homoscedastic SE band would understate the true uncertainty. The conditional effect
+θ(W) = b_INT_c + b_inter×(W − mean(PDPL)) and its SE (from the HC3 covariance of
+b_INT_c and the interaction term) are evaluated over a grid spanning the observed PDPL
+range ±15%; the JN point is found where |θ/SE| crosses the two-tailed critical t-value,
+located by linear interpolation between the two nearest grid points. At n=363: JN point
+W≈5.18 — the conditional effect of INT on TRU is only significant (and negative,
+consistent with the Dampening prediction) above that PDPL level; below it, the
+confidence band includes zero.
+
+## 22. Manuscript tables renumbered Table 2-15 (was Table 1-14), plus 2 restyled to match
+reference tables Khai supplied ("An & Ngo") — 2026-09-23
+
+Requested by Khai: shift every table number by +1 (freeing "Table 1" for something
+outside this pipeline's scope — not specified, not built here), and restyle two tables
+to match two reference images from a published paper's Table 2 and Table 6. All function
+names, docstrings, and output CSV filenames in `10_final_results_table.py` were renamed
+to match (`table1_...` -> `table2_...` etc., uniformly +1 through the old Table 14 ->
+new Table 15); nothing in the underlying analysis changed, only labeling/formatting.
+
+**New numbering:** Table 2 Demographic Profile (+ supplementary Table 2b, the LOC=5
+city breakdown), Table 3 Cell Distribution, Table 4 Manipulation Check, Table 5
+Reliability & Validity (restyled, see below), Table 6 Fornell-Larcker, Table 7 HTMT,
+Table 8 Inner VIF (restyled, see below), Table 9 Path Coefficients, Table 10 R²/Q²predict,
+Table 11 Indirect Effects, Table 12 Heteroscedasticity, Table 13 Moderation Results,
+Table 14 Sensitivity Check, Table 15 Simple Slopes.
+
+**Table 5 (reliability/validity) restyled** to match the reference "Table 2" image: per
+construct, Cronbach's alpha / rho_A / CR / AVE are now printed only on that construct's
+FIRST item row and left blank on the rows below it (was: repeated on every item row) —
+matches the reference table's own layout of not restating construct-level numbers per
+item. Also **added an Outer VIF column** (from `plssem_outer_vif_main.csv`, not
+previously in this table), since the reference table has a per-item VIF column too.
+rho_A and AVE are kept as extra columns beyond what the reference table itself shows —
+the reference paper's table only has Loadings/alpha/CR/VIF, but TF's own reliability
+thresholds require rho_A and AVE as well, so dropping them to match the reference
+exactly would have lost information this project's own governing rules require.
+
+**Table 8 (inner VIF) restyled** from a long `(to, from, vif)` list into a
+**predictor × outcome matrix** to match the reference "Table 6" image: rows are every
+construct that predicts something in the model (AIP, REL, INT, PDPL, DISC, TRU, ENG,
+INT*PDPL, INT*DISC), columns are the 5 endogenous constructs (REL, INT, TRU, ENG, PI),
+and a blank cell means that predictor doesn't appear in that outcome's own structural
+equation (not a missing value) — same convention the reference table uses.
+
+**Cross-checked against the Master Codebook, per Khai's request:** Table 2's demographic
+categories (`_config.py::DEMOGRAPHIC_VALUE_LABELS`) were already transcribed directly
+from Master Codebook v2.7/A-20 §4.8 in §20 — re-confirmed here, no changes needed.
+Table 5's item list/counts per construct come from `_config.py::CONSTRUCT_ITEMS`, which
+is itself the ratified register from §1 of this file (TF §C.4 / Codebook §4.7) — also
+unchanged. AIP_COND/DISC_COND coding (0=Low/No, 1=High/With) used in Table 4's column
+labels was confirmed against `_config.py`'s own `AIP_COND_COL`/`DISC_COL` constants
+rather than re-derived from scratch.
+
+**Not carried forward from the reference images:** the reference Table 2's specific
+construct names (Perceived Personalization/Relevance/Trust/Usefulness, Purchase
+Intention) are from an unrelated published paper, not this project's own constructs
+(AIP/REL/INT/TRU/ENG/PDPL/PI per §0/§1) — only the table STYLE (layout, which stats
+repeat vs. which don't, matrix format) was adopted, not its variable names or numbers.
+
+**Follow-up same day:** Khai noticed the reference Table 2's "Items" column quotes the
+full item statement, not just a code — Table 5's "Item" column now shows
+`{CODE}: "{English wording}"` (e.g. `AIP1: "ShopWave can analyze my consumption
+level."`). Added `_config.py::ITEM_WORDING_EN`, all 30 items (AIP1-5, REL1-4, INT1-5,
+TRU1-6, ENG1-6, PI1-4, PDPL1-4) transcribed verbatim from Master Codebook v2.7/A-20's
+own "Item (EN)" column for each block — the finalized main-collection wording
+(`PROJ_MAIN_final_v2`), not the superseded pilot-stage text. DISC has no entry (never a
+Likert item, §0).
