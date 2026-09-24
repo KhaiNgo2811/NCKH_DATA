@@ -1836,3 +1836,201 @@ left for Khai's own commit.
 `.xlsx`) — full chain runs clean with the new names. **n_main=381** at this checkpoint,
 still below N_main=400 (TF §C.2.2) — INTERIM. H7a: supported (post hoc, Dampening) in both
 the all-N and Cook's-D-trimmed runs at this n; H7b: not supported.
+
+## 25. Standing rule: hold `run_plssem.py` until n>=395 — 2026-09-24
+
+Khai deleted `outputs/tables/plssem_run_log.csv` (its running history of every past
+`run_plssem.py` invocation, timestamp/input/n — see §24's "1. Có bị lưu lại lịch sử"
+answer) and set a new policy: **do not run `run_plssem.py` again until
+`main_clean_data.csv` reaches n>=395**, then run it and let the log start fresh from
+there. Rationale (inferred, not stated explicitly): the log was getting cluttered with
+many INTERIM checkpoint runs (§13 through §24) at n well under the 400 stopping rule;
+starting the log over right before the confirmatory n>=400 window keeps it focused on
+the runs that actually matter for the manuscript, rather than the whole growth history.
+
+**Current count at the time of this rule (2026-09-24): n_main = 381** (from
+`data/processed/main_clean_data.csv`) — 14 short of the n>=395 trigger. **Future
+sessions: do not call `python src/run_plssem.py` for any reason (including a routine
+"check current n" request) until n_main has been confirmed >=395 via `01_clean.py`'s
+own funnel output** (checking `len(pd.read_csv("data/processed/main_clean_data.csv"))`
+directly, or re-running `01_clean.py`, is fine and does not violate this rule — only
+`run_plssem.py` itself is held back). Other scripts (`05_anova_h3.py`,
+`09_h7_ols_record.R`, `10_final_results_table.py`, etc.) are NOT covered by this hold
+unless Khai says otherwise — this rule is specific to `run_plssem.py` and its log.
+
+**Still in force after §26**: §26 (TF reverted to A-21) made PLS-SEM the H7a/H7b
+estimator of record, but that did NOT require re-running `run_plssem.py` — the
+existing n=381 PLS-SEM outputs on disk were reused as-is; only `10_final_results_table.py`
+was re-run to pick up the relabeling. This rule (hold `run_plssem.py` until n>=395)
+remains the standing default.
+
+## 26. TF reverted to v2.13/A-21 (Buffering restored, PLS-SEM single pooled model is the
+H7a/H7b estimator of record); A-22/A-23 rescinded — 2026-09-24
+
+**Discovery.** Khai asked to "update the project per the new TF." Checked `docs/` first,
+per this file's own standing instruction to re-extract any higher/different-named TF
+before trusting it: `docs/Theoretical_Foundations_v2_13_A22_main400_DRAFT (1).docx` (the
+source of §17's A-22/A-23 changes) **no longer exists**. In its place:
+`docs/Theoretical_Foundations_v2_13_A21_DRAFT.docx` — content-wise this is *earlier* in
+the amendment lineage, not later: it absorbs only A-7 through A-21 (DRAFT, dated
+20 Sep 2026, still pending ratification), and:
+- **H7a/H7b predictions are the ORIGINAL Buffering direction**: β_M1 > 0, β_M2 > 0 (Table
+  3/16's H7a/H7b rows both say "Prediction: β_M1/β_M2 [greater than] 0"). No mention of
+  Dampening anywhere in the document (checked programmatically: 0 hits for "dampening",
+  7 hits for "buffering").
+- **§C.2 estimation is a single pooled two-stage PLS-SEM model** for H7a and H7b together
+  (`"H7a and H7b are two independent second-order interactions on the same outcome. They
+  are estimated in a single pooled model"`) — not two separate OLS/Hayes regressions.
+- **Zero mentions of Holm, BCa (the abbreviation), PROCESS Model, or HC3** anywhere in the
+  document (checked programmatically) — there is no OLS estimator described in this TF at
+  all, of any kind.
+
+**Confirmed with Khai (`AskUserQuestion`) before touching anything**, since this reverses
+a large amount of §17's work: yes, treat this as the real, current governing TF — A-22 and
+A-23 (Holm-Bonferroni removal, H7a/H7b re-signed to Dampening, the OLS Hayes PROCESS
+Model 1 split promoted to "estimation of record") **are rescinded**. The document that
+described them ratified is gone; whatever process produced it does not represent the
+actual (still-unratified) TF lineage the team/faculty are tracking.
+
+**Also confirmed with Khai:** keep running the OLS Hayes PROCESS Model 1 analysis exactly
+as implemented (same regression specs, bootstrap, Cook's D sensitivity, HC3, Breusch-Pagan/
+White) — it is **not deleted**, just demoted from "estimation of record" to a
+**supplementary/exploratory sensitivity check**, since TF v2.13/A-21 designates the single
+pooled PLS-SEM model as the actual estimator of record for H7a/H7b.
+
+**Changes made:**
+- **`09_h7_ols_record.R`**: header comment rewritten to describe its new supplementary
+  status and the real current TF; **no computational change** to the regression formulas,
+  bootstrap procedure, Cook's D, HC3, or heteroscedasticity tests, per Khai's explicit
+  instruction. Only the "predicted direction" labels changed: `sign_all_N` and
+  `supported_as_predicted_A21` (renamed from `..._A22_A23`) now read a **positive**
+  coefficient as the predicted (Buffering) direction, the reverse of before.
+- **`10_final_results_table.py`**:
+  - Section E (PLS-SEM path table) — H7a/H7b predicted-sign label changed from
+    `- (dampening, A-22)`/`- (dampening, A-23)` to `+ (buffering, A-21 DRAFT)` for both;
+    this also flips the sign-match check used for "Supported" vs. "Significant, opposite
+    sign" back to testing for a positive coefficient.
+  - Section G (renamed from "OLS model of record" to "OLS Hayes PROCESS Model 1
+    (SUPPLEMENTARY, not estimation of record)") — predicted-direction label and text
+    updated to Buffering/A-21; no source-data change.
+  - **Table 9 (Path Coefficients) now includes H7a and H7b rows**, sourced from the
+    PLS-SEM bootstrap table (`plssem_bootstrap_paths_main.csv` + `plssem_f_squared_main.csv`,
+    same source as every other path), predicted sign `+`, decision logic identical to every
+    other hypothesis in that table. This is the first time H7a/H7b have appeared in Table 9
+    — previously that table only covered H1-H6c/E1/E2, leaving H7a/H7b to be read solely
+    from the (now-demoted) OLS Table 13.
+  - Table 13/14/15 (Moderation Results / Sensitivity Check / Simple Slopes) docstrings
+    updated to say explicitly they are the supplementary OLS check, not the record.
+  - **Figure 1**: the H7a/H7b dashed-arrow labels now pull b/p from the PLS-SEM bootstrap
+    table (`b`, the same source every other arrow already used) instead of the OLS table
+    (`o`) — consistent with PLS-SEM being the actual estimator of record. Labels changed
+    from "(Dampening)" to "(Buffering, A-21)". Title changed from "...H7a/H7b per Hayes
+    PROCESS Model 1" to "...H1-H7b all PLS-SEM per TF A-21".
+  - Figure 2 (interaction plot, OLS-based simple slopes) **left unchanged** — it's part of
+    the supplementary OLS check Khai asked to keep running as-is; it does not claim to
+    represent the estimation of record, just a visualization.
+- **`07_plssem_bridge.R` / `run_plssem.py`**: no change needed — neither ever hardcoded a
+  predicted sign or an "A-22/A-23" framing; they only estimate and report, so the single
+  pooled H7a/H7b model they've had all along already matches A-21's requirement exactly.
+
+**Result on `main_clean_data.csv` (n=381; `run_plssem.py` was NOT re-run for this --
+§25's "hold until n>=395" rule stands, and no re-run was needed since neither
+`07_plssem_bridge.R` nor `run_plssem.py` changed — only `10_final_results_table.py` was
+re-run, reading the PLS-SEM outputs already on disk from the prior n=381 run):** under
+the PLS-SEM estimator of record, **neither H7a nor H7b is supported** — H7a β_M1 = −0.110 (p=.098, wrong sign vs.
+the Buffering prediction), H7b β_M2 = 0.004 (p=.998, correct sign but negligible and far
+from significant). This is a materially different picture from the OLS Table 13's own
+numbers at the same n (H7a b=−0.092, p=.047, CI excludes 0 — "supported" under the OLS
+check's own non-directional rule, but note the OLS estimate's sign is *also* opposite the
+Buffering prediction, so it would not be "supported as predicted" there either) — a
+reminder that the two estimators can and do disagree, which is exactly why Section E/Table 9
+(PLS-SEM) is the one that governs the manuscript's verdict now, with Table 13 reported
+alongside as supplementary evidence, not a competing verdict.
+
+**Not done / left open:** the TF docx itself was not edited (no changes were needed inside
+it — it already correctly states A-21's content) unlike §17's edits to the old A-22 docx.
+No amendment was added to acknowledge that A-22/A-23 were tried and rescinded — if Khai
+wants that documented inside the TF for the manuscript's own amendment log, that would need
+its own follow-up request (this session only reconciled the pipeline, not the document).
+
+## 27. Correction to §26, same day: the OLS Hayes PROCESS Model 1 check keeps its OWN
+Dampening prediction (beta_M < 0), independent of Table 9's Buffering — 2026-09-24
+
+§26 changed the OLS supplementary check's predicted direction to match Table 9's Buffering
+(beta_M > 0), reasoning that TF v2.13/A-21 is silent on any OLS estimator so there was no
+independent prediction to preserve. **Khai corrected this the same day**: the OLS Hayes
+PROCESS Model 1 check (`09_h7_ols_record.R`, Table 13/14/15) keeps its **own** predicted
+direction, **beta_M1 < 0 and beta_M2 < 0 (Dampening)** — the Legal-Sensitization /
+institutional-salience logic from the earlier (rescinded, §26) A-22/A-23 draft, which Khai
+still holds as the correct theoretical prediction for this specific supplementary check,
+even though that draft's TF status is gone. **This is now intentionally two different
+directional predictions living side by side**:
+- **Table 9 (PLS-SEM, estimator of record, TF v2.13/A-21)**: Buffering, beta_M > 0.
+- **Table 13 (OLS Hayes PROCESS Model 1, supplementary)**: Dampening, beta_M < 0.
+
+Do not "reconcile" these to match each other again without asking — both are deliberate,
+independent, and belong to different tables. `09_h7_ols_record.R`'s header comment now says
+this explicitly ("Do not 'fix' this to match Table 9's Buffering sign again without asking
+first"), specifically to stop a future session from re-flipping it back per §26's reasoning.
+
+**Changes made (reverting only the direction-label parts of §26, not the estimator-of-record
+reassignment, which stands):**
+- `09_h7_ols_record.R`: `sign_all_N`/`supported_as_predicted` (renamed back from
+  `..._A21`) now read a **negative** coefficient as the predicted (Dampening) direction
+  again; header comment explains why this differs from Table 9.
+- `10_final_results_table.py` Section G: `pred=` label for the OLS rows changed from
+  `"Buffering, beta_M > 0 (A-21 DRAFT)"` to `"Dampening, beta_M < 0 (this OLS check's own
+  prediction, independent of Table 9's Buffering)"`.
+- Table 9 / Section E / Figure 1 (PLS-SEM, estimator of record) are **untouched** — still
+  Buffering, beta_M > 0, per A-21, exactly as §26 set them.
+
+**Result on `main_clean_data.csv` (n=381, unchanged from §26 — no new data, no
+`run_plssem.py` re-run per SS25):** under the OLS check's own (Dampening) prediction,
+**H7a is "supported as predicted (Dampening)"** in both the all-N and Cook's-D-trimmed
+runs (b=-0.092, p=.047 all-N; b=-0.072, p=.018 trimmed); H7b remains not supported
+(b≈-0.002 to -0.038, p=.978/.612). This sits alongside, not in place of, Table 9's
+official PLS-SEM verdict (§26: neither H7a nor H7b supported there).
+
+## 28. Table 9 no longer includes H7a/H7b at all; OLS Hayes PROCESS Model 1 is THE test
+for H7a/H7b, predicted Dampening (beta_M < 0) -- §26/§27 superseded further — 2026-09-24
+
+Same day, Khai went one step further than §27: **remove H7a/H7b from Table 9 entirely**
+("xoa phan lien quan den 2 bien dieu tiet o Table 9 di") -- H7a/H7b are not a PLS-SEM
+path-table hypothesis at all; they are tested via the **OLS Hayes PROCESS Model 1 check**
+(Table 13, `09_h7_ols_record.R`), full stop, with predicted direction **beta_M1 < 0 and
+beta_M2 < 0 (Dampening)**. This effectively retires §26's "PLS-SEM is the H7a/H7b
+estimator of record, Buffering" framing -- it stands only for §26's history, not as
+current practice.
+
+**Changes made:**
+- **Table 9 (`table9_path_coefficients()`)**: the `hyp_labels`/`pred_sign` entries for
+  H7a/H7b (added in §26) are removed -- Table 9 is back to exactly H1, H2, H4, H5, H6a,
+  H6b, H6c, E1, E2, nothing else.
+- **Section E** (the PLS-SEM path listing inside `FINAL_results_main_all.csv`): the
+  `INT*PDPL -> TRU` / `INT*DISC -> TRU` rows are kept (PLS-SEM still estimates these
+  paths as part of the same model, for transparency) but are now **reporting-only,
+  no verdict** -- relabeled `"spec INT*PDPL->TRU (H7a tested via OLS Hayes PROCESS
+  Model 1, Section G, not here)"` / same for H7b, `pred=""`, so no "Supported/Not
+  supported" text is generated for them here (avoiding a second, conflicting verdict
+  living next to Table 13's real one).
+- **Figure 1**: the H7a/H7b dashed-arrow b/p values switched back from the PLS-SEM
+  bootstrap table (`b`) to the OLS table (`o`, Section G) -- consistent with OLS Hayes
+  being the actual test. Arrow labels now read "H7a (Dampening, OLS Hayes)" /
+  "H7b (Dampening, OLS Hayes)". Title changed to "PLS-SEM for H1-H6c/E1/E2; H7a/H7b via
+  OLS Hayes PROCESS Model 1".
+- Table 13/14/15 and `09_h7_ols_record.R` are unchanged from §27 (already correct:
+  Dampening prediction, supplementary-but-now-actually-primary role for H7a/H7b).
+
+**Current state of record, as of this section (supersedes §26's framing):**
+- H1-H6c, E1, E2: PLS-SEM two-stage (single pooled model), Table 9 / Section E / Figure 1.
+- **H7a, H7b: OLS Hayes PROCESS Model 1 (`09_h7_ols_record.R`), Table 13, Figure 1 --
+  predicted Dampening, beta_M < 0.** PLS-SEM still estimates `INT*PDPL -> TRU` /
+  `INT*DISC -> TRU` as part of its own single pooled model (Section E, reporting only,
+  no verdict) but that number is NOT the test of H7a/H7b.
+
+**Result on `main_clean_data.csv` (n=381, figure/table regeneration only, no new
+analysis run):** Figure 1 now shows H7a b=-0.092 (*, p=.047) and H7b b=-0.002 (n.s.) --
+the OLS all-N numbers, both in the Dampening direction as predicted; H7a's asterisk
+reflects it clearing p<.05 under the OLS check's own nominal rule (§ "not TF-mandated"
+caveat from §26 still applies -- this is this check's own convention, not a rule fixed
+by any TF version).

@@ -4,9 +4,13 @@ removing 09_h7_supplementary.{py,R}/10_jn_micom.R/11_ols_model1_bootstrap.R/
 12_process_moderated_mediation.R -- see CLAUDE.md for the reorg) - assemble ONE
 results table for the MAIN sample (2026-09-21, requested by Khai): variables
 (descriptives, reliability, validity), manipulation checks, two-way ANOVA (H3),
-PLS-SEM paths, indirect effects, and the OLS model of record for H7a/H7b (TF v2.13
-A-22/A-23, Hayes PROCESS Model 1, INTERIM). Reads existing outputs only; runs no
-analysis.
+PLS-SEM paths (the estimator of record for H7a/H7b too, per TF v2.13/A-21 --
+docs/Theoretical_Foundations_v2_13_A21_DRAFT.docx, DRAFT pending ratification --
+which predicts Buffering, beta_M > 0, for both; A-22/A-23's Dampening resign and
+OLS-as-record framing are rescinded, CLAUDE.md SS26), indirect effects, and the
+supplementary OLS Hayes PROCESS Model 1 sensitivity check for H7a/H7b (kept
+running exactly as before per Khai's instruction, INTERIM). Reads existing
+outputs only; runs no analysis.
 Writes outputs/tables/FINAL_results_main_all.csv (+ .xlsx). No verdict is assigned here
 beyond applying each analysis's own rule to its own output.
 Requires these to have been run first on the same data, all with --sample-role main:
@@ -106,8 +110,8 @@ paths = [("AIP  ->  REL", "H1 AIP->REL", "+"), ("AIP  ->  INT", "H2 AIP->INT", "
          ("INT  ->  PI", "H6c INT->PI", "-"), ("TRU  ->  ENG", "E1 TRU->ENG (established)", "+"),
          ("ENG  ->  PI", "E2 ENG->PI (established)", "+"), ("DISC  ->  INT", "spec DISC->INT (not H3)", ""),
          ("DISC  ->  TRU", "spec DISC->TRU", ""), ("PDPL  ->  TRU", "spec PDPL->TRU", ""),
-         ("INT*PDPL  ->  TRU", "H7a INT x PDPL -> TRU (beta_M1)", "- (dampening, A-22)"),
-         ("INT*DISC  ->  TRU", "H7b INT x DISC -> TRU (beta_M2)", "- (dampening, A-23)")]
+         ("INT*PDPL  ->  TRU", "spec INT*PDPL->TRU (H7a tested via OLS Hayes PROCESS Model 1, Section G, not here)", ""),
+         ("INT*DISC  ->  TRU", "spec INT*DISC->TRU (H7b tested via OLS Hayes PROCESS Model 1, Section G, not here)", "")]
 for k, it, pr in paths:
     r = b.loc[k]
     a, t = [x.strip() for x in k.split("->")]
@@ -133,14 +137,16 @@ for _, r in ie.iterrows():
         ci=f"[{r.ci_low:.3f}, {r.ci_high:.3f}]", p=fp(r.p_boot),
         note=f"direct beta {r.direct_beta:.3f} (p={r.direct_p:.3f})", verdict=r.classification)
 
-# G. OLS model of record (interim)
-SEC_G = "G. OLS model of record (TF v2.13 A-22/A-23; INTERIM, Hayes PROCESS Model 1, BCa 5,000, no Holm)"
+# G. OLS Hayes PROCESS Model 1 (supplementary sensitivity check, NOT the estimation
+# of record -- see Section E / CLAUDE.md SS26. TF v2.13/A-21 designates the single
+# pooled PLS-SEM model as the estimator of record for H7a/H7b.)
+SEC_G = "G. OLS Hayes PROCESS Model 1 (SUPPLEMENTARY, not estimation of record; INTERIM, BCa 5,000, no Holm)"
 o = pd.read_csv(T + "h7_ols_record_A22_A23_PROCESS_M1_INTERIM.csv")
 for _, r in o.iterrows():
     if "beta_M" in r.term:
-        add(SEC_G, f"{r.term} | {r.analysis}", pred="Dampening, beta_M < 0 (A-22/A-23)", n=int(r.n),
+        add(SEC_G, f"{r.term} | {r.analysis}", pred="Dampening, beta_M < 0 (this OLS check's own prediction, independent of Table 9's Buffering)", n=int(r.n),
             est=f"b={r.estimate:.3f}", ci=f"[{r.bca_low:.3f}, {r.bca_high:.3f}] BCa",
-            p=f"boot {r.p_boot:.3f} (no Holm adjustment, A-22)", eff=f"f2={r.f2:.4f}",
+            p=f"boot {r.p_boot:.3f} (no Holm adjustment)", eff=f"f2={r.f2:.4f}",
             note=f"classical p={r.p_classical:.3f}; HC3 p={r.p_HC3:.3f}; R2={r.R2:.3f}",
             verdict="CI excludes 0" if r.ci_excludes_0 else "CI includes 0 -> not supported")
     else:
@@ -178,7 +184,10 @@ def _path_label(hyp, k):
 def figure1_structural_model():
     """Figure 1: Structural Model Diagram (SOR layout per TF SS A.1/model-figure
     legend) -- solid arrows H1-H6c, dotted arrows E1/E2, dashed arrows H7a/H7b
-    moderation. Labels pull beta + significance stars straight from Section E/G."""
+    moderation. Labels pull beta + significance stars from Section E (H1-H6c/E1/E2,
+    PLS-SEM) and Section G (H7a/H7b, OLS Hayes PROCESS Model 1 -- H7a/H7b are
+    tested via this OLS check, not the PLS-SEM path table, CLAUDE.md SS28;
+    predicted Dampening, beta_M<0)."""
     fig, ax = plt.subplots(figsize=(13, 8))
     ax.set_xlim(-1, 12.5)
     ax.set_ylim(-3, 6)
@@ -223,11 +232,11 @@ def figure1_structural_model():
     arrow("DISC", "INT", style="-.", color="gray", lw=1.0,
           label=_path_label("spec.", "DISC  ->  INT"), label_pos=0.3)
 
-    # H7a/H7b moderation, dashed, pointing at the INT->TRU path
+    # H7a/H7b moderation, dashed, pointing at the INT->TRU path. Source is the
+    # OLS Hayes PROCESS Model 1 table (o, Section G) -- H7a/H7b are tested via
+    # this OLS check, not the PLS-SEM path table (Khai's instruction,
+    # 2026-09-24, CLAUDE.md SS28); predicted direction is Dampening, beta_M<0.
     mid_x, mid_y = (nodes["INT"][0] + nodes["TRU"][0]) / 2, (nodes["INT"][1] + nodes["TRU"][1]) / 2
-    o_ind = o.set_index(["analysis", "term"])
-    row_a = o[(o.analysis.str.startswith("all N")) & (o.term.str.contains("H7a"))].iloc[0]
-    row_b = o[(o.analysis.str.startswith("all N")) & (o.term.str.contains("H7b"))].iloc[0]
     p_a = FancyArrowPatch(nodes["PDPL"], (mid_x, mid_y), arrowstyle="-|>", mutation_scale=14,
                            linestyle="--", color="#b03a2e", lw=1.6,
                            connectionstyle="arc3,rad=0.15", shrinkA=20, shrinkB=4)
@@ -236,12 +245,14 @@ def figure1_structural_model():
                            connectionstyle="arc3,rad=-0.15", shrinkA=20, shrinkB=4)
     ax.add_patch(p_a)
     ax.add_patch(p_b)
+    row_a = o[(o.analysis.str.startswith("all N")) & (o.term.str.contains("H7a"))].iloc[0]
+    row_b = o[(o.analysis.str.startswith("all N")) & (o.term.str.contains("H7b"))].iloc[0]
     ax.text(nodes["PDPL"][0] + 1.7, nodes["PDPL"][1] + 0.9,
-            f"H7a (Dampening)\nb={row_a.estimate:.3f} {_star(row_a.p_boot)}",
+            f"H7a (Dampening, OLS Hayes)\nb={row_a.estimate:.3f} {_star(row_a.p_boot)}",
             fontsize=8, color="#b03a2e",
             bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.85))
     ax.text(nodes["DISC"][0] + 2.2, nodes["DISC"][1] - 0.9,
-            f"H7b (Dampening)\nb={row_b.estimate:.3f} {_star(row_b.p_boot)}",
+            f"H7b (Dampening, OLS Hayes)\nb={row_b.estimate:.3f} {_star(row_b.p_boot)}",
             fontsize=8, color="#1f618d",
             bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.85))
 
@@ -253,7 +264,7 @@ def figure1_structural_model():
             "Dash-dot = specification term   Dashed = H7a/H7b moderation\n"
             f"n={N} (sample_role=main, INTERIM -- below N_main=400 stopping rule, TF SS C.2.2)",
             fontsize=8, color="dimgray")
-    ax.set_title("Figure 1. Structural Model Diagram (PLS-SEM, two-stage; H7a/H7b per Hayes PROCESS Model 1)",
+    ax.set_title("Figure 1. Structural Model Diagram (PLS-SEM for H1-H6c/E1/E2; H7a/H7b via OLS Hayes PROCESS Model 1)",
                  fontsize=11)
     fig.tight_layout()
     fig.savefig(F + "Figure1_structural_model_main.png", dpi=200)
@@ -495,7 +506,11 @@ def table9_path_coefficients():
     """Table 9 (was Table 8): Path Coefficients and Hypothesis Testing --
     beta, SE (bootstrap SD), t, p, 95% bootstrap CI, f2, decision. Same
     beta/p/CI/f2 numbers as Section E above, reformatted into one clean
-    manuscript table with an explicit Decision column."""
+    manuscript table with an explicit Decision column. **H7a/H7b are
+    deliberately NOT included here** (removed 2026-09-24, Khai's explicit
+    instruction): H7a/H7b are tested via the OLS Hayes PROCESS Model 1 check
+    (Table 13), predicted Dampening (beta_M < 0) -- not via this PLS-SEM path
+    table. See CLAUDE.md SS28."""
     hyp_labels = {
         "AIP  ->  REL": "H1", "AIP  ->  INT": "H2", "REL  ->  TRU": "H4", "REL  ->  ENG": "H5",
         "INT  ->  TRU": "H6a", "INT  ->  ENG": "H6b", "INT  ->  PI": "H6c",
@@ -564,7 +579,11 @@ def table12_heteroscedasticity():
 def table13_moderation_results():
     """Table 13 (was Table 12): Moderation Results -- INT x PDPL -> TRU (H7a)
     and INT x DISC -> TRU (H7b): b, HC3 SE, bootstrap CI, p (both bootstrap
-    and HC3), from the Hayes PROCESS Model 1 record (09_h7_ols_record.R)."""
+    and HC3), from the Hayes PROCESS Model 1 SUPPLEMENTARY sensitivity check
+    (09_h7_ols_record.R). NOT the estimation of record -- TF v2.13/A-21
+    designates the single pooled PLS-SEM model (Table 9) as the estimator of
+    record for H7a/H7b; kept running unchanged per Khai's instruction,
+    2026-09-24, see CLAUDE.md SS26."""
     o2 = pd.read_csv(T + "h7_ols_record_A22_A23_PROCESS_M1_INTERIM.csv")
     mod = o2[o2.term.str.contains("beta_M")].copy()
     mod = mod.rename(columns={"term": "Hypothesis term", "analysis": "Sample", "estimate": "b",
@@ -578,7 +597,9 @@ def table13_moderation_results():
 
 def table14_sensitivity_check():
     """Table 14 (was Table 13): Sensitivity Check -- Full Sample vs. Cook's
-    D-Trimmed Sample, for both H7a and H7b's beta_M term, side by side."""
+    D-Trimmed Sample, for both H7a and H7b's beta_M term, side by side.
+    Part of the supplementary OLS check (Table 13), not the PLS-SEM
+    estimation of record (Table 9) -- CLAUDE.md SS26."""
     o2 = pd.read_csv(T + "h7_ols_record_A22_A23_PROCESS_M1_INTERIM.csv")
     mod = o2[o2.term.str.contains("beta_M")].copy()
     mod["analysis"] = mod["analysis"].replace({
@@ -597,7 +618,8 @@ def table15_simple_slopes():
     """Table 15 (was Table 14): Conditional Effects / Simple Slopes of
     INT->TRU at 3 levels of PDPL (-1SD, Mean, +1SD) -- H7a only; DISC has no
     third "mean" level distinct from its two natural categories, so it stays
-    a 2-level comparison in Table 13."""
+    a 2-level comparison in Table 13. Part of the supplementary OLS check,
+    not the PLS-SEM estimation of record (Table 9) -- CLAUDE.md SS26."""
     o2 = pd.read_csv(T + "h7_ols_record_A22_A23_PROCESS_M1_INTERIM.csv")
     slopes = o2[o2.term.str.contains("slope INT->TRU PDPL")].copy()
     slopes["analysis"] = slopes["analysis"].replace({

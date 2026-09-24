@@ -1,19 +1,36 @@
 # 09_h7_ols_record.R (renumbered 2026-09-23 from 13_h7_ols_record.R after removing
 # 09_h7_supplementary.{py,R}/10_jn_micom.R/11_ols_model1_bootstrap.R/
 # 12_process_moderated_mediation.R -- see CLAUDE.md for the reorg) -- H7a/H7b OLS
-# model of record per Theoretical_Foundations v2.13
-# (file: Theoretical_Foundations_v2_13_A22_main400_DRAFT (1).docx), Amendment A-22
-# (ratified 21 Sep 2026: Holm-Bonferroni filter removed, H7a re-signed to Dampening,
-# beta_M1 < 0) and Amendment A-23 (authorized by Khai, 22 Sep 2026, pending the same
-# Project Lead & Faculty Advisor ratification A-22 received: H7b re-signed to Dampening,
-# beta_M2 < 0; estimation switched from one pooled two-interaction model to two separate
-# single-moderator regressions following Hayes' PROCESS Model 1 template).
+# Hayes PROCESS Model 1 regressions, kept as a SUPPLEMENTARY/exploratory sensitivity
+# check (Khai's explicit instruction, 2026-09-24, "van chay OLS Hayes nhu cu").
 #
-# UPDATED 2026-09-23 (requested by Khai, for the manuscript's Table 11/12/14): added (a)
-# HC3-robust standard errors alongside the HC3 p already reported, (b) Breusch-Pagan and
-# White heteroscedasticity tests per model (full-N run only), (c) a third PDPL evaluation
-# point (Mean, i.e. PDPL_c=0) for H7a's simple slopes -- DISC stays at its 2 natural
-# levels (0/1) since it has no "mean" level to speak of.
+# REVISED 2026-09-24: the TF docx this script's estimator-of-record framing was built
+# on (Theoretical_Foundations_v2_13_A22_main400_DRAFT (1).docx -- "Amendment A-22
+# ratified... Amendment A-23...") no longer exists in docs/ and its Amendments A-22/A-23
+# (Holm-Bonferroni removal, H7a/H7b re-signed to Dampening beta_M < 0, this OLS estimator
+# promoted to "estimation of record") are RESCINDED. The current governing TF is
+# docs/Theoretical_Foundations_v2_13_A21_DRAFT.docx (still DRAFT, pending ratification),
+# whose SS C.2 designates ONE POOLED two-stage PLS-SEM model (07_plssem_bridge.R) as the
+# estimator of record for H7a/H7b, with the ORIGINAL directional predictions restored:
+# beta_M1 > 0 and beta_M2 > 0 (Buffering), not Dampening. See CLAUDE.md SS26.
+#
+# What did NOT change, per Khai's explicit instruction to keep running this exactly as
+# before: the regression specifications, bootstrap procedure, Cook's D sensitivity,
+# HC3 SE/p, and Breusch-Pagan/White tests below are UNCHANGED computationally -- only
+# this script's ROLE (supplementary, not of record) was corrected to match the real,
+# current TF.
+#
+# CORRECTED AGAIN 2026-09-24 (same day, Khai's explicit instruction): this
+# SUPPLEMENTARY OLS check's own predicted direction is beta_M1 < 0 and beta_M2 < 0
+# (Dampening) -- NOT the same as the PLS-SEM estimator-of-record's official Buffering
+# prediction (beta_M > 0, TF v2.13/A-21, Table 9 / Figure 1 / Section E of
+# 10_final_results_table.py). The two estimators are treated as carrying two
+# independent directional predictions on purpose: A-21 is silent on any OLS estimator,
+# so this check's own direction is Khai's own judgement call (the Legal-Sensitization /
+# institutional-salience logic from the earlier, since-rescinded A-22/A-23 draft),
+# kept here as this script's prediction even though that draft's TF status is gone.
+# Do not "fix" this to match Table 9's Buffering sign again without asking first --
+# both directions are intentional and belong to different tables (CLAUDE.md SS27).
 #
 # Two independent PROCESS Model 1 (Hayes) regressions, one per hypothesis. Each is a
 # simple moderation Y = TRU on X = INT, moderator W, and X*W, with REL and the other
@@ -29,14 +46,15 @@
 #   threshold 4/N, applied uniformly; flagged cases listed. Conclusions rest on ALL N; the
 #   run without the flagged cases is sensitivity, and "supported" requires the verdict to
 #   hold in BOTH.
-# Inference: case-resampling bootstrap, 5,000 resamples (TF v2.13/A-22), BCa 95% CI,
-#   two-tailed, seed 123. No Holm or other multiple-comparison adjustment (removed by
-#   A-22) -- HC3 (SE + p) and classical p are reported alongside for reference only.
-# Verdict rule (A-22/A-23): H7a (H7b) is "supported (post hoc, non-directional)" if its
+# Inference: case-resampling bootstrap, 5,000 resamples, BCa 95% CI, two-tailed, seed 123.
+#   No Holm or other multiple-comparison adjustment -- HC3 (SE + p) and classical p are
+#   reported alongside for reference only.
+# Verdict rule (this supplementary check's own convention, not TF-mandated since A-21 has
+#   no OLS estimator at all): H7a (H7b) is "supported (post hoc, non-directional)" if its
 #   BCa CI excludes 0 at nominal p < .05, else "not supported". The SIGN is always reported;
-#   the original directional predictions are now beta_M1 < 0 and beta_M2 < 0 (both
-#   Dampening) -- a negative coefficient IS the predicted direction under A-22/A-23, kept
-#   distinct from the pre-amendment buffering predictions for the historical record.
+#   this check's own predicted direction is beta_M1 < 0 and beta_M2 < 0 (Dampening) -- a
+#   NEGATIVE coefficient is the predicted direction here, independent of Table 9's
+#   Buffering prediction for the PLS-SEM estimator of record (see note above).
 #   Simple slopes (PDPL -1SD/Mean/+1SD; DISC = 0/1) and f2 reported with bootstrap intervals.
 # Usage: Rscript src/09_h7_ols_record.R data/processed/main_clean_data.csv
 
@@ -124,15 +142,15 @@ res_H7a <- run_hypothesis(f_H7a, "INT_x_PDPL", "H7a",
 lo_disc <- 0 - mean(d$DISC_COND); hi_disc <- 1 - mean(d$DISC_COND)
 res_H7b <- run_hypothesis(f_H7b, "INT_x_DISC", "H7b", c("DISC=0" = lo_disc, "DISC=1" = hi_disc))
 
-cat("\nVerdict per A-22/A-23 (INTERIM LOOK, read from this run; 'supported' requires BOTH analyses; predicted direction is now Dampening, beta_M < 0, for both H7a and H7b):\n")
+cat("\nVerdict (supplementary OLS check, INTERIM LOOK; 'supported' requires BOTH analyses; this check's OWN predicted direction is Dampening, beta_M < 0, for both H7a and H7b -- independent of Table 9's PLS-SEM estimator-of-record prediction, which is Buffering, beta_M > 0, per TF A-21, CLAUDE.md SS27):\n")
 verdict_tab <- data.frame(
   hypothesis = c("H7a", "H7b"),
   all_N = c(res_H7a$A$ver, res_H7b$A$ver),
   without_flagged = c(res_H7a$B$ver, res_H7b$B$ver),
   verdict = c(res_H7a$final, res_H7b$final),
-  sign_all_N = c(ifelse(res_H7a$A$sign < 0, "negative (Dampening direction)", "positive"),
-                 ifelse(res_H7b$A$sign < 0, "negative (Dampening direction)", "positive")),
-  supported_as_predicted_A22_A23 = c(
+  sign_all_N = c(ifelse(res_H7a$A$sign < 0, "negative (Dampening direction)", "positive (opposite predicted direction)"),
+                 ifelse(res_H7b$A$sign < 0, "negative (Dampening direction)", "positive (opposite predicted direction)")),
+  supported_as_predicted = c(
     ifelse(res_H7a$A$sign < 0 & res_H7a$final != "not supported", "supported as predicted (Dampening)", "not supported"),
     ifelse(res_H7b$A$sign < 0 & res_H7b$final != "not supported", "supported as predicted (Dampening)", "not supported")))
 print(verdict_tab, row.names = FALSE)
