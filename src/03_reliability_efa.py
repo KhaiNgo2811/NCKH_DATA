@@ -32,7 +32,7 @@ Important governance rules:
     - This script is for PILOT data only.
 
 Usage:
-    python src/03_reliability_efa.py --input data/processed/pilot_clean.csv
+    python src/03_reliability_efa.py --input data/processed/main_clean_data.csv
 
 Outputs:
     outputs/tables/pilot_reliability.csv           (includes ENG, per A-20)

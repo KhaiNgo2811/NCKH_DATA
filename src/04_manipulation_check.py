@@ -6,7 +6,7 @@ Amendment A-7 replacement bullet 2). If not met, vignettes go back to task B2.10
 Real fielded column names are MC_AIP and MC_DISC (NOT MC1/MC2 - see CLAUDE.md SS1).
 
 Usage:
-    python src/04_manipulation_check.py --input data/processed/pilot_clean.csv
+    python src/04_manipulation_check.py --input data/processed/main_clean_data.csv
 """
 import argparse
 import sys

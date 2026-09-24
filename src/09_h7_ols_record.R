@@ -38,7 +38,7 @@
 #   Dampening) -- a negative coefficient IS the predicted direction under A-22/A-23, kept
 #   distinct from the pre-amendment buffering predictions for the historical record.
 #   Simple slopes (PDPL -1SD/Mean/+1SD; DISC = 0/1) and f2 reported with bootstrap intervals.
-# Usage: Rscript src/09_h7_ols_record.R data/processed/clean_main.csv
+# Usage: Rscript src/09_h7_ols_record.R data/processed/main_clean_data.csv
 
 suppressMessages(library(boot))
 suppressMessages(library(lmtest))

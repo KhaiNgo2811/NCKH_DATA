@@ -18,6 +18,7 @@ from _config import (  # noqa: E402
     ATT1_COL, ATT1_CORRECT, ATT2_COL, ATT2_CORRECT,
     CC1_COL, CC2_COL, CC1_PLATFORM_ANCHOR, CC1_PERSONALIZED_ANCHOR, CC2_YES_ANCHOR, CC2_NO_ANCHOR,
     SPEEDING_MIN_SECONDS, DURATION_COL,
+    LOC_COL, LOC_TEXT_COL, NON_VIETNAM_LOC5_TEXT,
 )
 
 # ---------------------------------------------------------------------------
@@ -181,6 +182,7 @@ HARD_DROP_STEP_ORDER = [
     "speeder_under_120s",
     "excess_missing_items",
     "duplicate_response_pattern",
+    "non_vietnam_location",
     "straightlining_near_zero_sd",
 ]
 
@@ -233,6 +235,22 @@ def build_hard_drop_masks(df, present_items):
     if present_items:
         dup_flag = flag_duplicate_response_pattern(df, present_items)
         masks["duplicate_response_pattern"] = ~dup_flag
+
+    # Non-Vietnam location (2026-09-23, requested by Khai): only respondents
+    # who picked LOC=5 ("Khac/Other") AND typed a confirmed-foreign place name
+    # in LOC_5_TEXT are dropped -- see _config.py::NON_VIETNAM_LOC5_TEXT for the
+    # hand-maintained list and its provenance. Rows with LOC in {1,2,3} (Ho Chi
+    # Minh/Ha Noi/Da Nang), a Vietnamese LOC=5 answer, missing/blank LOC_5_TEXT,
+    # or LOC itself missing (pre-LOC-field rows, per CLAUDE.md SS "LOC added
+    # mid-collection") all pass this step untouched.
+    if LOC_COL in df.columns:
+        loc = pd.to_numeric(df[LOC_COL], errors="coerce")
+        if LOC_TEXT_COL in df.columns:
+            loc_text_norm = df[LOC_TEXT_COL].astype(str).str.strip().str.casefold()
+        else:
+            loc_text_norm = pd.Series("", index=df.index)
+        is_foreign = (loc == 5) & loc_text_norm.isin(NON_VIETNAM_LOC5_TEXT)
+        masks["non_vietnam_location"] = ~is_foreign
 
     if present_items:
         sd = df[present_items].std(axis=1, skipna=True)
@@ -698,29 +716,32 @@ def main():
 
     clean = strip_pii(clean)
 
-    out_csv = f"data/processed/{args.phase}_clean.csv"
     out_log = f"outputs/tables/{args.phase}_exclusion_log.csv"
-    clean.to_csv(out_csv, index=False)
     log.to_csv(out_log, index=False)
-    # 3-way split (2026-09-20, requested by Khai): the same cleaned sample written as
-    # pilot-only, main-only and pooled (pilot+main), plus the SmartPLS numeric export
-    # for each. sample_role is the ADMINISTRATIVE label (CLAUDE.md SS9/A-19), not a
-    # measurement-readiness boundary. {phase}_clean.csv above is kept unchanged (it is
-    # the pooled file existing scripts read); clean_pooled.csv is an identical copy
-    # under an explicit name.
+    # 2-way split (2026-09-24, requested by Khai, replacing the previous 3-way
+    # pilot/main/pooled split): the same cleaned sample written as ONLY
+    # pilot_clean_data.csv and main_clean_data.csv, plus the SmartPLS numeric
+    # export for each. sample_role is the ADMINISTRATIVE label (CLAUDE.md
+    # SS9/A-19), not a measurement-readiness boundary. The pooled file
+    # (previously clean_pooled.csv / pilot_clean.csv) is retired -- Khai wants
+    # exactly two clean datasets going forward, not three. Any script that used
+    # to read the pooled file with --sample-role main/pilot for filtering should
+    # now point --input directly at main_clean_data.csv / pilot_clean_data.csv.
     splits = {"pilot": clean[clean["sample_role"] == "pilot"],
-              "main": clean[clean["sample_role"] == "main"],
-              "pooled": clean}
+              "main": clean[clean["sample_role"] == "main"]}
+    written = []
     for tag, part in splits.items():
-        part.to_csv(f"data/processed/clean_{tag}.csv", index=False)
+        out_path = f"data/processed/{tag}_clean_data.csv"
+        part.to_csv(out_path, index=False)
         sp = export_smartpls_input(part, f"data/processed/smartpls_input_{tag}.csv")
-        print(f"[01_clean] split '{tag}': n={len(part)} -> data/processed/clean_{tag}.csv, "
+        print(f"[01_clean] split '{tag}': n={len(part)} -> {out_path}, "
               f"smartpls_input_{tag}.csv ({sp.shape[1]} cols, no missing values)")
+        written.append(out_path)
 
     print(f"\n[01_clean] input={args.input} phase={args.phase}")
     print(log.to_string(index=False))
-    print(f"[01_clean] wrote {out_csv} (n={len(clean)}), {out_log}, {checkpoint_path}, "
-          f"and {sensitivity_path}")
+    print(f"[01_clean] wrote {', '.join(written)} (n_pilot={len(splits['pilot'])}, "
+          f"n_main={len(splits['main'])}), {out_log}, {checkpoint_path}, and {sensitivity_path}")
 
 
 if __name__ == "__main__":

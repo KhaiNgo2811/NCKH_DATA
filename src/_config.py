@@ -144,6 +144,22 @@ DURATION_COL = "Duration (in seconds)"
 # excess_missing_items, straightlining, or any exclusion rule.
 LOC_COL = "LOC"
 LOC_TEXT_COL = "LOC_5_TEXT"
+
+# Non-Vietnam LOC=5 free-text answers (2026-09-23, requested by Khai): this
+# project's target population is Vietnamese online shoppers -- a respondent
+# whose self-reported area of residence (LOC_5_TEXT, only asked when
+# LOC=5 "Khac/Other") names a place outside Vietnam is out of scope and hard-
+# dropped (01_clean.py's "non_vietnam_location" step). This is a hand-
+# maintained list, verified against each respondent's actual LOC_5_TEXT string
+# (see outputs/tables/Table2b_LOC_other_breakdown.csv for the full breakdown
+# of every LOC=5 answer) -- NOT a geocoding lookup. Any new overseas answer in
+# a future export must be added here manually before it will be caught; a
+# genuine Vietnamese province/city name (however spelled) must NOT be added.
+# Matched case-insensitively after stripping whitespace.
+NON_VIETNAM_LOC5_TEXT = {
+    "wollongong",  # Australia
+    "l.a",         # Los Angeles, USA
+}
 REF_COL = "REF"
 DEMOGRAPHIC_COLS = ["AGE_BAND", "GEN", "LOC", "EDU", "INC", "FREQ", "PLAT", "PRIOR", "REF"]
 

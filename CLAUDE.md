@@ -1745,3 +1745,94 @@ TRU1-6, ENG1-6, PI1-4, PDPL1-4) transcribed verbatim from Master Codebook v2.7/A
 own "Item (EN)" column for each block — the finalized main-collection wording
 (`PROJ_MAIN_final_v2`), not the superseded pilot-stage text. DISC has no entry (never a
 Likert item, §0).
+
+## 23. 10th hard-drop step added: non-Vietnam respondents excluded — 2026-09-23
+
+**Context for the triggering question.** Khai asked why `clean_main.csv` had "1 dữ liệu
+không trọn vẹn" — investigated directly: `clean_main.csv` (n=367 at the time) has one
+row (`ResponseId R_4smw8GeFt5DsaQN`) with all 9 `DEMOGRAPHIC_COLS` (AGE_BAND, GEN, LOC,
+EDU, INC, FREQ, PLAT, PRIOR, REF) missing simultaneously, despite passing the
+zero-tolerance 34-item missing-item filter (step 7) — a respondent who fully completed
+the substantive battery but skipped the entire demographics block. This is not a bug:
+`excess_missing_items` (§12 step 7) only checks the 34 reflective items, by design —
+demographics were never part of that check, and a handful of other rows also have one
+or two individual demographic fields missing (`AGE_BAND`/`GEN`/`LOC`/etc., each ~1 row)
+for the same reason. Nothing was changed for this — it's expected behavior, not a defect.
+
+**Then, a separate, actionable request in the same message:** restrict the sample to
+Vietnam residents — drop any respondent who filled in `LOC=5` ("Khac/Other") with a
+free-text answer naming a location outside Vietnam. Checked `Table2b_LOC_other_breakdown.csv`
+(§22) for the full list of LOC=5 answers first: of ~26 distinct free-text answers, only
+2 are actually foreign — "Wollongong" (Australia) and "L.A" (Los Angeles, USA); every
+other answer is a genuine Vietnamese province/city name (Tây Ninh, Đắk Lắk, Nghệ An,
+An Giang, etc.), and "Prefer not to say" / missing free text are non-answers, not foreign
+claims, so neither was touched.
+
+**Implemented as a 10th hard-drop step, `non_vietnam_location`** (`01_clean.py`,
+inserted into `HARD_DROP_STEP_ORDER` right after `duplicate_response_pattern`, before
+`straightlining_near_zero_sd`): drops a row only if `LOC == 5` **and** its
+(stripped, casefolded) `LOC_5_TEXT` exactly matches an entry in the new
+`_config.py::NON_VIETNAM_LOC5_TEXT` set (currently `{"wollongong", "l.a"}`). Every other
+case — `LOC` in {1,2,3} (Ho Chi Minh/Ha Noi/Da Nang), a Vietnamese `LOC=5` answer, a
+missing/blank `LOC_5_TEXT`, or `LOC` itself missing (pre-LOC-field rows, §9) — passes
+through untouched. **This list is hand-maintained, not a geocoding lookup** — a future
+raw-export respondent typing a new foreign place name will not be caught automatically;
+add their (casefolded) answer to `NON_VIETNAM_LOC5_TEXT` after checking
+`Table2b_LOC_other_breakdown.csv` again, the same way this pair was found. Symmetrically,
+never add a genuine Vietnamese place name to this set no matter how it's spelled.
+
+**Result on `pilot_real.csv` (1003 raw, 2026-09-23):** the new step drops exactly 2 rows
+(confirmed: Wollongong and L.A, the only two matches) — pooled n 419→417, main n 367→365.
+9-step hard-drop policy (§12) is now a **10-step policy**; `outputs/tables/pilot_exclusion_log.csv`
+shows `non_vietnam_location` as its own funnel row between `duplicate_response_pattern`
+and `straightlining_near_zero_sd`.
+
+## 24. Raw file renamed to `raw_data.csv`; processed output collapsed from a 3-way
+pilot/main/pooled split to exactly 2 files — 2026-09-24
+
+**Trigger:** Khai renamed the live raw export from `data/raw/pilot_real.csv` to
+`data/raw/raw_data.csv` (confirmed on disk — `pilot_real.csv` no longer exists,
+`raw_data.csv` does) and asked that, after cleaning, there be **only two** processed
+datasets: `pilot_clean_data` and `main_clean_data` — no pooled (pilot+main) file anymore.
+
+**`01_clean.py` changed:** the previous write step produced `data/processed/{phase}_clean.csv`
+(the pooled file, e.g. `pilot_clean.csv` under the historical `--phase pilot` usage) plus a
+3-way split (`clean_pilot.csv`, `clean_main.csv`, `clean_pooled.csv`) and 3 SmartPLS exports
+(`smartpls_input_{pilot,main,pooled}.csv`). Now it writes **only**:
+- `data/processed/pilot_clean_data.csv`
+- `data/processed/main_clean_data.csv`
+- `smartpls_input_pilot.csv` / `smartpls_input_main.csv` (kept, pooled variant dropped)
+
+The pooled write and the `clean_pooled.csv`/`{phase}_clean.csv` duplicate names are gone
+entirely — there is no third combined file. `--input` is unaffected (still a plain CLI
+argument, already pointed at whatever raw file is given: `python src/01_clean.py --input
+data/raw/raw_data.csv --phase pilot`).
+
+**Every downstream script's usage example / default-path comment** was updated from the
+retired `data/processed/pilot_clean.csv` (the old pooled file, historically read with
+`--sample-role {pilot,main}` for filtering) to point directly at
+`data/processed/main_clean_data.csv` (or `pilot_clean_data.csv` where the pilot sample
+specifically was meant): `02_descriptives.py`, `03_reliability_efa.py`,
+`04_manipulation_check.py`, `06_power_analysis.py` (both usage lines and the `--input`
+help text), `08_data_quality_robustness.py`, `09_h7_ols_record.R`, `run_plssem.py`, and
+`10_final_results_table.py`'s actual `pd.read_csv(...)` call (not just a comment — this one
+would have broken on the next run otherwise). The `--sample-role` flag in `03`/`04`/`06`/`05`/
+`run_plssem.py` still works exactly as before (harmless no-op when the input file is already
+single-role), it's just no longer *necessary* now that there's no pooled file to filter down
+from. Historical/dated mentions of `pilot_real.csv` elsewhere (comments describing what was
+verified on a specific date, e.g. `_config.py`'s TRU-count provenance notes) were left
+untouched — they're dated facts about that session, not stale instructions.
+
+**Cleanup:** deleted the now-orphaned old-named files from `data/processed/`:
+`clean_main.csv`, `clean_pilot.csv`, `clean_pooled.csv`, `pilot_clean.csv`,
+`smartpls_input_pooled.csv`. **Note:** `pilot_clean.csv` was, unlike the others, actually
+git-tracked (pre-dates the `.gitignore` rule from §8, same historical gap) — its deletion
+shows as `D data/processed/pilot_clean.csv` in `git status`; not staged or committed here,
+left for Khai's own commit.
+
+**Verified end-to-end on `raw_data.csv` (1043 raw, 2026-09-24):** `01_clean.py` →
+`pilot_clean_data.csv` (n=52), `main_clean_data.csv` (n=381) → `09_h7_ols_record.R` →
+`run_plssem.py --sample-role main` → `10_final_results_table.py` (all 15 tables + combined
+`.xlsx`) — full chain runs clean with the new names. **n_main=381** at this checkpoint,
+still below N_main=400 (TF §C.2.2) — INTERIM. H7a: supported (post hoc, Dampening) in both
+the all-N and Cook's-D-trimmed runs at this n; H7b: not supported.

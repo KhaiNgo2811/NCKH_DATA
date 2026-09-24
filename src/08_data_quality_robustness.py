@@ -23,7 +23,7 @@ shrink variances and shift coefficients, which is a reason to read (c) as a
 sensitivity check rather than a cleaner sample.
 
 Usage:
-    python src/08_data_quality_robustness.py --input data/processed/pilot_clean.csv
+    python src/08_data_quality_robustness.py --input data/processed/main_clean_data.csv
 Writes (never touches the main plssem_*.csv files):
     outputs/tables/robustness_dq_flags.csv
     outputs/tables/robustness_dq_paths_{a_full,b_no_extreme_duration,c_no_mahalanobis}.csv

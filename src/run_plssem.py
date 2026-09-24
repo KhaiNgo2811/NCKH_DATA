@@ -28,7 +28,7 @@ estimated) to outputs/tables/plssem_run_log.csv, so repeated runs on a growing
 pilot_real.csv can be told apart instead of only ever showing the latest numbers.
 
 Usage:
-    python src/run_plssem.py --input data/processed/main_clean.csv
+    python src/run_plssem.py --input data/processed/main_clean_data.csv
 """
 import argparse
 import sys

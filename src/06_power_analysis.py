@@ -56,8 +56,8 @@ perceived f2 for H7b directly.
 Usage:
     python src/06_power_analysis.py
     python src/06_power_analysis.py --f2 0.02 0.009 --k 6 --alpha 0.05 --power 0.80
-    python src/06_power_analysis.py --input data/processed/pilot_clean.csv --sample-role main
-    python src/06_power_analysis.py --input data/processed/pilot_clean.csv --sample-role main --perceived-disc
+    python src/06_power_analysis.py --input data/processed/main_clean_data.csv
+    python src/06_power_analysis.py --input data/processed/main_clean_data.csv --perceived-disc
 """
 import argparse
 import sys
@@ -376,7 +376,7 @@ def main():
     ap.add_argument("--alpha", type=float, default=0.05)
     ap.add_argument("--power", type=float, default=0.80)
     ap.add_argument("--input", default=None,
-                     help="Optional: a cleaned CSV (e.g. data/processed/pilot_clean.csv). "
+                     help="Optional: a cleaned CSV (e.g. data/processed/main_clean_data.csv). "
                           "If given, also fits the observed/empirical f2 via "
                           "compute_observed_f2() and adds it to the table. Omit to get "
                           "only the two assumed-f2 scenarios (original behavior).")

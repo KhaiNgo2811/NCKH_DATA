@@ -28,7 +28,7 @@ from _config import DEMOGRAPHIC_VALUE_LABELS, CONSTRUCT_ITEMS, ITEM_WORDING_EN  
 
 T = "outputs/tables/"
 F = "outputs/figures/"
-main = pd.read_csv("data/processed/clean_main.csv")
+main = pd.read_csv("data/processed/main_clean_data.csv")
 N = len(main)
 rows = []
 

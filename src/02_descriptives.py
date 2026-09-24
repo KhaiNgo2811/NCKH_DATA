@@ -2,7 +2,7 @@
 02_descriptives.py - demographics summary + 2x2 cell balance check + construct
 descriptives + soft-flag sensitivity.
 Usage:
-    python src/02_descriptives.py --input data/processed/pilot_clean.csv --phase pilot
+    python src/02_descriptives.py --input data/processed/main_clean_data.csv --phase main
 """
 import argparse
 import sys
