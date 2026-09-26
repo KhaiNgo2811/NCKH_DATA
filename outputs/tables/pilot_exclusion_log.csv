@@ -1,15 +1,16 @@
 step,n_before,n_dropped_this_step,n_after
-consent_fail,1043,6,1037
-screener_age_fail,1037,19,1018
-screener_omni_fail,1018,40,978
-attention_check_fail,978,528,450
-comprehension_check_fail,450,0,450
-speeder_under_120s,450,2,448
-excess_missing_items,448,0,448
-duplicate_response_pattern,448,12,436
-non_vietnam_location,436,2,434
-straightlining_near_zero_sd,434,1,433
-TOTAL,1043,610,433
-"manipulation_check_group_evidence_MC_AIP (report only, n_excluded=0, d=0.746, p=0.0)",433,0,433
-"manipulation_check_group_evidence_MC_DISC (report only, n_excluded=0, d=1.163, p=0.0)",433,0,433
-"manipulation_check_composite_evidence (report only, n_excluded=0, AIP_mean d=0.837, p=0.0)",433,0,433
+consent_fail,1105,7,1098
+screener_age_fail,1098,21,1077
+screener_omni_fail,1077,43,1034
+non_vietnam_location,1034,2,1032
+attention_check_fail,1032,558,474
+comprehension_check_fail,474,0,474
+speeder_under_120s,474,2,472
+straightlining_near_zero_sd,472,5,467
+duplicate_response_pattern,467,8,459
+excess_missing_items,459,0,459
+demographics_incomplete,459,1,458
+TOTAL,1105,647,458
+"manipulation_check_group_evidence_MC_AIP (report only, n_excluded=0, d=0.763, p=0.0)",458,0,458
+"manipulation_check_group_evidence_MC_DISC (report only, n_excluded=0, d=1.151, p=0.0)",458,0,458
+"manipulation_check_composite_evidence (report only, n_excluded=0, AIP_mean d=0.834, p=0.0)",458,0,458

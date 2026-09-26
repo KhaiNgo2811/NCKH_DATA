@@ -1,15 +1,12 @@
 """
-10_final_results_table.py (renumbered 2026-09-23 from 14_final_results_table.py after
-removing 09_h7_supplementary.{py,R}/10_jn_micom.R/11_ols_model1_bootstrap.R/
-12_process_moderated_mediation.R -- see CLAUDE.md for the reorg) - assemble ONE
-results table for the MAIN sample (2026-09-21, requested by Khai): variables
-(descriptives, reliability, validity), manipulation checks, two-way ANOVA (H3),
-PLS-SEM paths (the estimator of record for H7a/H7b too, per TF v2.13/A-21 --
-docs/Theoretical_Foundations_v2_13_A21_DRAFT.docx, DRAFT pending ratification --
-which predicts Buffering, beta_M > 0, for both; A-22/A-23's Dampening resign and
-OLS-as-record framing are rescinded, CLAUDE.md SS26), indirect effects, and the
-supplementary OLS Hayes PROCESS Model 1 sensitivity check for H7a/H7b (kept
-running exactly as before per Khai's instruction, INTERIM). Reads existing
+10_final_results_table.py - assemble ONE results table for the MAIN sample
+(2026-09-21, requested by Khai): variables (descriptives, reliability,
+validity), manipulation checks, two-way ANOVA (H3), PLS-SEM paths for
+H1-H6c/E1/E2 only, indirect effects, and the OLS Hayes PROCESS Model 1 check
+for H7a/H7b (docs/Theoretical_Foundations_v2_14.docx SS C.2.2, Amendments
+A-14/A-15/A-16 -- THIS is the ONLY estimation of H7a/H7b; PLS-SEM never
+touches H7a/H7b anywhere in this script, not even for reporting; predicted
+Dampening, beta_M < 0; see CLAUDE.md SS29/SS32), INTERIM. Reads existing
 outputs only; runs no analysis.
 Writes outputs/tables/FINAL_results_main_all.csv (+ .xlsx). No verdict is assigned here
 beyond applying each analysis's own rule to its own output.
@@ -109,9 +106,11 @@ paths = [("AIP  ->  REL", "H1 AIP->REL", "+"), ("AIP  ->  INT", "H2 AIP->INT", "
          ("INT  ->  TRU", "H6a INT->TRU", "-"), ("INT  ->  ENG", "H6b INT->ENG", "-"),
          ("INT  ->  PI", "H6c INT->PI", "-"), ("TRU  ->  ENG", "E1 TRU->ENG (established)", "+"),
          ("ENG  ->  PI", "E2 ENG->PI (established)", "+"), ("DISC  ->  INT", "spec DISC->INT (not H3)", ""),
-         ("DISC  ->  TRU", "spec DISC->TRU", ""), ("PDPL  ->  TRU", "spec PDPL->TRU", ""),
-         ("INT*PDPL  ->  TRU", "spec INT*PDPL->TRU (H7a tested via OLS Hayes PROCESS Model 1, Section G, not here)", ""),
-         ("INT*DISC  ->  TRU", "spec INT*DISC->TRU (H7b tested via OLS Hayes PROCESS Model 1, Section G, not here)", "")]
+         ("DISC  ->  TRU", "spec DISC->TRU", ""), ("PDPL  ->  TRU", "spec PDPL->TRU", "")]
+# H7a/H7b are NOT reported here at all (removed 2026-09-26, Khai's explicit
+# instruction) -- PLS-SEM's own INT*PDPL/INT*DISC estimates are not part of the
+# H7a/H7b record in any form, including reporting-only. H7a/H7b are OLS Hayes
+# PROCESS Model 1 only (Section G / Table 10), full stop -- CLAUDE.md SS32.
 for k, it, pr in paths:
     r = b.loc[k]
     a, t = [x.strip() for x in k.split("->")]
@@ -137,14 +136,15 @@ for _, r in ie.iterrows():
         ci=f"[{r.ci_low:.3f}, {r.ci_high:.3f}]", p=fp(r.p_boot),
         note=f"direct beta {r.direct_beta:.3f} (p={r.direct_p:.3f})", verdict=r.classification)
 
-# G. OLS Hayes PROCESS Model 1 (supplementary sensitivity check, NOT the estimation
-# of record -- see Section E / CLAUDE.md SS26. TF v2.13/A-21 designates the single
-# pooled PLS-SEM model as the estimator of record for H7a/H7b.)
-SEC_G = "G. OLS Hayes PROCESS Model 1 (SUPPLEMENTARY, not estimation of record; INTERIM, BCa 5,000, no Holm)"
-o = pd.read_csv(T + "h7_ols_record_A22_A23_PROCESS_M1_INTERIM.csv")
-for _, r in o.iterrows():
+# G. OLS Hayes PROCESS Model 1 -- THE estimation of record for H7a/H7b (TF v2.14
+# SS C.2.2, Amendments A-15/A-16; PLS-SEM's own INT*PDPL/INT*DISC estimates are
+# reported for reference only in Section E, no verdict there). Predicted direction
+# is Dampening (beta_M < 0), Amendment A-14. See CLAUDE.md SS29.
+SEC_G = "G. OLS Hayes PROCESS Model 1 (ESTIMATION OF RECORD for H7a/H7b, TF v2.14 A-15/A-16; INTERIM, BCa 5,000, no Holm)"
+o = pd.read_csv(T + "h7_ols_record_A15_A16_PROCESS_M1_INTERIM.csv")
+for _, r in o[o.analysis != "pooled model with REL (A-15 form, sensitivity)"].iterrows():
     if "beta_M" in r.term:
-        add(SEC_G, f"{r.term} | {r.analysis}", pred="Dampening, beta_M < 0 (this OLS check's own prediction, independent of Table 9's Buffering)", n=int(r.n),
+        add(SEC_G, f"{r.term} | {r.analysis}", pred="Dampening, beta_M < 0 (Amendment A-14)", n=int(r.n),
             est=f"b={r.estimate:.3f}", ci=f"[{r.bca_low:.3f}, {r.bca_high:.3f}] BCa",
             p=f"boot {r.p_boot:.3f} (no Holm adjustment)", eff=f"f2={r.f2:.4f}",
             note=f"classical p={r.p_classical:.3f}; HC3 p={r.p_HC3:.3f}; R2={r.R2:.3f}",
@@ -168,7 +168,7 @@ print(f"\n{len(out)} rows -> {T}FINAL_results_main_all.csv / .xlsx")
 
 # --- H. Figures -------------------------------------------------------------
 # Reuses the same tables already read above (`b` = plssem_bootstrap_paths_main,
-# `o` = h7_ols_record_A22_A23_PROCESS_M1_INTERIM) -- no re-analysis, just plotting
+# `o` = h7_ols_record_A15_A16_PROCESS_M1_INTERIM) -- no re-analysis, just plotting
 # the numbers already in Sections E/G. INTERIM caveat (n < 400) applies here too.
 
 def _star(p):
@@ -465,22 +465,22 @@ def table5_reliability_validity():
 
 
 def table6_fornell_larcker():
-    """Table 6 (was Table 5): Discriminant Validity - Fornell-Larcker
+    """Table A1 (appendix): Discriminant Validity - Fornell-Larcker
     Criterion."""
     out = pd.read_csv(T + "plssem_fornell_larcker_main.csv", index_col=0).round(3)
-    out.to_csv(T + "Table6_fornell_larcker.csv")
+    out.to_csv(T + "TableA1_fornell_larcker.csv")
     return out
 
 
 def table7_htmt():
-    """Table 7 (was Table 6): Discriminant Validity - HTMT Ratio."""
+    """Table 6 (main body): Discriminant Validity - HTMT Ratio."""
     out = pd.read_csv(T + "plssem_htmt_main.csv", index_col=0).round(3)
-    out.to_csv(T + "Table7_htmt.csv")
+    out.to_csv(T + "Table6_htmt.csv")
     return out
 
 
 def table8_inner_vif():
-    """Table 8 (was Table 7): Inner VIF Values Among Latent Variables --
+    """Table A2 (appendix): Inner VIF Values Among Latent Variables --
     reformatted (2026-09-23) as a predictor x outcome MATRIX to match the
     reference "Table 6" layout Khai supplied (An & Ngo), instead of the earlier
     long (to, from, vif) format. Rows = every construct that predicts at least
@@ -498,19 +498,18 @@ def table8_inner_vif():
     endogenous_order = [c for c in ["REL", "INT", "TRU", "ENG", "PI"] if c in piv.columns]
     piv = piv[endogenous_order]
     piv.index.name = "Predictor \\ Outcome"
-    piv.to_csv(T + "Table8_inner_vif.csv")
+    piv.to_csv(T + "TableA2_inner_vif.csv")
     return piv
 
 
 def table9_path_coefficients():
-    """Table 9 (was Table 8): Path Coefficients and Hypothesis Testing --
+    """Table 7 (main body): Path Coefficients and Hypothesis Testing --
     beta, SE (bootstrap SD), t, p, 95% bootstrap CI, f2, decision. Same
     beta/p/CI/f2 numbers as Section E above, reformatted into one clean
-    manuscript table with an explicit Decision column. **H7a/H7b are
-    deliberately NOT included here** (removed 2026-09-24, Khai's explicit
-    instruction): H7a/H7b are tested via the OLS Hayes PROCESS Model 1 check
-    (Table 13), predicted Dampening (beta_M < 0) -- not via this PLS-SEM path
-    table. See CLAUDE.md SS28."""
+    manuscript table with an explicit Decision column. H7a/H7b are not
+    estimated or reported anywhere via PLS-SEM in this pipeline -- they are
+    tested exclusively via the OLS Hayes PROCESS Model 1 check (Table 10),
+    predicted Dampening (beta_M < 0)."""
     hyp_labels = {
         "AIP  ->  REL": "H1", "AIP  ->  INT": "H2", "REL  ->  TRU": "H4", "REL  ->  ENG": "H5",
         "INT  ->  TRU": "H6a", "INT  ->  ENG": "H6b", "INT  ->  PI": "H6c",
@@ -535,12 +534,12 @@ def table9_path_coefficients():
                      "p": p, "95% CI low": round(r["2.5% CI"], 3), "95% CI high": round(r["97.5% CI"], 3),
                      "f2": round(fv, 3) if pd.notna(fv) else np.nan, "Decision": decision})
     out = pd.DataFrame(rows)
-    out.to_csv(T + "Table9_path_coefficients.csv", index=False)
+    out.to_csv(T + "Table7_path_coefficients.csv", index=False)
     return out
 
 
 def table10_r2_q2predict():
-    """Table 10 (was Table 9): R^2 and Q2predict for Endogenous Constructs
+    """Table 8 (main body): R^2 and Q2predict for Endogenous Constructs
     (Shmueli et al. 2019 PLSpredict, 10-fold x 10-rep, seed 123 -- see
     07_plssem_bridge.R)."""
     r2 = pd.read_csv(T + "plssem_rsquared_main.csv")
@@ -549,79 +548,83 @@ def table10_r2_q2predict():
     out = out.round({"R2": 3, "AdjR2": 3, "Q2predict": 3})
     out = out.rename(columns={"construct": "Construct", "AdjR2": "Adjusted R2",
                               "predictive_power": "Predictive power (PLS vs. LM benchmark)"})
-    out.to_csv(T + "Table10_r2_q2predict.csv", index=False)
+    out.to_csv(T + "Table8_r2_q2predict.csv", index=False)
     return out
 
 
 def table11_indirect_effects():
-    """Table 11 (was Table 10): Specific Indirect Effects (mediation test,
-    percentile bootstrap CI on the same 10,000 resamples as Table 9) --
+    """Table 9 (main body): Specific Indirect Effects (mediation test,
+    percentile bootstrap CI on the same 10,000 resamples as Table 7) --
     includes INT->TRU->ENG, REL->TRU->ENG, and the extended set (through ENG
     only, and the 3-step serial chains through TRU then ENG)."""
     ie = pd.read_csv(T + "plssem_indirect_effects_main.csv")
     out = ie.rename(columns={"effect": "Indirect path", "estimate": "beta", "ci_low": "95% CI low",
                               "ci_high": "95% CI high", "p_boot": "p", "classification": "Mediation type"})
-    out.to_csv(T + "Table11_indirect_effects.csv", index=False)
+    out.to_csv(T + "Table9_indirect_effects.csv", index=False)
     return out
 
 
 def table12_heteroscedasticity():
-    """Table 12 (was Table 11): Heteroscedasticity Diagnostics (Breusch-Pagan;
+    """Table A3 (appendix): Heteroscedasticity Diagnostics (Breusch-Pagan;
     White = bptest() with fitted + fitted^2 auxiliary regressors) for the
     H7a/H7b OLS models, both the all-N and Cook's-D-trimmed sensitivity runs."""
     het = pd.read_csv(T + "h7_heteroscedasticity_diagnostics.csv")
     out = het.rename(columns={"bp_stat": "Breusch-Pagan LM", "bp_df": "BP df", "bp_p": "BP p",
                               "white_stat": "White LM", "white_df": "White df", "white_p": "White p"})
-    out.to_csv(T + "Table12_heteroscedasticity.csv", index=False)
+    out.to_csv(T + "TableA3_heteroscedasticity.csv", index=False)
     return out
 
 
 def table13_moderation_results():
-    """Table 13 (was Table 12): Moderation Results -- INT x PDPL -> TRU (H7a)
+    """Table 10 (main body): Moderation Results -- INT x PDPL -> TRU (H7a)
     and INT x DISC -> TRU (H7b): b, HC3 SE, bootstrap CI, p (both bootstrap
-    and HC3), from the Hayes PROCESS Model 1 SUPPLEMENTARY sensitivity check
-    (09_h7_ols_record.R). NOT the estimation of record -- TF v2.13/A-21
-    designates the single pooled PLS-SEM model (Table 9) as the estimator of
-    record for H7a/H7b; kept running unchanged per Khai's instruction,
-    2026-09-24, see CLAUDE.md SS26."""
-    o2 = pd.read_csv(T + "h7_ols_record_A22_A23_PROCESS_M1_INTERIM.csv")
-    mod = o2[o2.term.str.contains("beta_M")].copy()
+    and HC3), from the Hayes PROCESS Model 1 model of record
+    (09_h7_ols_record.R, TF v2.14 SS C.2.2, Amendments A-15/A-16). THIS is
+    the estimation of record for H7a/H7b -- PLS-SEM never estimates or
+    reports H7a/H7b anywhere in this pipeline. Restricted to the two
+    model-of-record rows per hypothesis (all-N, Cook's-D-trimmed); the
+    pooled-with-REL sensitivity variant is in Table A4 instead."""
+    o2 = pd.read_csv(T + "h7_ols_record_A15_A16_PROCESS_M1_INTERIM.csv")
+    mod = o2[o2.term.str.contains("beta_M") & o2.analysis.isin(
+        ["all N (conclusions rest on this)", "without Cook's-D-flagged cases (sensitivity)"])].copy()
     mod = mod.rename(columns={"term": "Hypothesis term", "analysis": "Sample", "estimate": "b",
                               "bca_low": "95% CI low (BCa)", "bca_high": "95% CI high (BCa)",
                               "p_boot": "p (bootstrap)", "SE_HC3": "SE (HC3)", "p_HC3": "p (HC3)"})
     out = mod[["Hypothesis term", "Sample", "n", "b", "SE (HC3)", "95% CI low (BCa)",
               "95% CI high (BCa)", "p (bootstrap)", "p (HC3)", "f2"]]
-    out.to_csv(T + "Table13_moderation_results.csv", index=False)
+    out.to_csv(T + "Table10_moderation_results.csv", index=False)
     return out
 
 
 def table14_sensitivity_check():
-    """Table 14 (was Table 13): Sensitivity Check -- Full Sample vs. Cook's
-    D-Trimmed Sample, for both H7a and H7b's beta_M term, side by side.
-    Part of the supplementary OLS check (Table 13), not the PLS-SEM
-    estimation of record (Table 9) -- CLAUDE.md SS26."""
-    o2 = pd.read_csv(T + "h7_ols_record_A22_A23_PROCESS_M1_INTERIM.csv")
+    """Table A4 (appendix): Sensitivity Check for H7a/H7b's beta_M term --
+    Full Sample vs. Cook's D-Trimmed Sample (both from the model of record,
+    no REL/cross-covariate) vs. the pooled-with-REL model (Amendment A-15
+    form, both interactions in one equation, explicitly retained in TF v2.14
+    SS C.2.2 as a sensitivity check on the model-of-record specification)."""
+    o2 = pd.read_csv(T + "h7_ols_record_A15_A16_PROCESS_M1_INTERIM.csv")
     mod = o2[o2.term.str.contains("beta_M")].copy()
     mod["analysis"] = mod["analysis"].replace({
         "all N (conclusions rest on this)": "Full sample",
-        "without Cook's-D-flagged cases (sensitivity)": "Cook's D-trimmed"})
+        "without Cook's-D-flagged cases (sensitivity)": "Cook's D-trimmed",
+        "pooled model with REL (A-15 form, sensitivity)": "Pooled with REL (A-15 form)"})
     piv = mod.pivot(index="term",
                      columns="analysis",
                      values=["n", "estimate", "bca_low", "bca_high", "p_boot", "ci_excludes_0"])
     piv.columns = [f"{stat} ({sample})" for stat, sample in piv.columns]
     piv = piv.reset_index().rename(columns={"term": "Hypothesis term"})
-    piv.to_csv(T + "Table14_sensitivity_full_vs_trimmed.csv", index=False)
+    piv.to_csv(T + "TableA4_sensitivity_full_vs_trimmed.csv", index=False)
     return piv
 
 
 def table15_simple_slopes():
-    """Table 15 (was Table 14): Conditional Effects / Simple Slopes of
-    INT->TRU at 3 levels of PDPL (-1SD, Mean, +1SD) -- H7a only; DISC has no
-    third "mean" level distinct from its two natural categories, so it stays
-    a 2-level comparison in Table 13. Part of the supplementary OLS check,
-    not the PLS-SEM estimation of record (Table 9) -- CLAUDE.md SS26."""
-    o2 = pd.read_csv(T + "h7_ols_record_A22_A23_PROCESS_M1_INTERIM.csv")
-    slopes = o2[o2.term.str.contains("slope INT->TRU PDPL")].copy()
+    """Table A5 (appendix): Conditional Effects / Simple Slopes of
+    INT->TRU at 3 levels of PDPL (-1SD, Mean, +1SD) -- H7a only, from the
+    model of record; DISC has no third "mean" level distinct from its two
+    natural categories, so it stays a 2-level comparison in Table 10."""
+    o2 = pd.read_csv(T + "h7_ols_record_A15_A16_PROCESS_M1_INTERIM.csv")
+    slopes = o2[o2.term.str.contains("slope INT->TRU PDPL") & o2.analysis.isin(
+        ["all N (conclusions rest on this)", "without Cook's-D-flagged cases (sensitivity)"])].copy()
     slopes["analysis"] = slopes["analysis"].replace({
         "all N (conclusions rest on this)": "Full sample",
         "without Cook's-D-flagged cases (sensitivity)": "Cook's D-trimmed"})
@@ -630,22 +633,32 @@ def table15_simple_slopes():
                                  "bca_high": "95% CI high (BCa)", "p_boot": "p"})
     out = out[["Conditional effect", "Sample", "n", "Simple slope (b)",
               "95% CI low (BCa)", "95% CI high (BCa)", "p"]]
-    out.to_csv(T + "Table15_simple_slopes_PDPL.csv", index=False)
+    out.to_csv(T + "TableA5_simple_slopes_PDPL.csv", index=False)
     return out
 
 
-_manuscript_tables = [
+# Main body (Table 2-10) and appendix (Table A1-A5), per Khai's 2026-09-26
+# renumbering. H7a/H7b (Table 10) are OLS Hayes PROCESS Model 1 only -- PLS-SEM
+# never estimates or reports H7a/H7b anywhere in this script, including
+# reporting-only rows.
+_MAIN_BODY_TABLES = [
     ("Table2", table2_demographic_profile), ("Table2b", table2b_loc_other_breakdown),
     ("Table3", table3_cell_distribution),
     ("Table4", table4_manipulation_check), ("Table5", table5_reliability_validity),
-    ("Table6", table6_fornell_larcker), ("Table7", table7_htmt),
-    ("Table8", table8_inner_vif), ("Table9", table9_path_coefficients),
-    ("Table10", table10_r2_q2predict), ("Table11", table11_indirect_effects),
-    ("Table12", table12_heteroscedasticity), ("Table13", table13_moderation_results),
-    ("Table14", table14_sensitivity_check), ("Table15", table15_simple_slopes),
+    ("Table6", table7_htmt),
+    ("Table7", table9_path_coefficients),
+    ("Table8", table10_r2_q2predict),
+    ("Table9", table11_indirect_effects),
+    ("Table10", table13_moderation_results),
 ]
+_APPENDIX_TABLES = [
+    ("TableA1", table6_fornell_larcker), ("TableA2", table8_inner_vif),
+    ("TableA3", table12_heteroscedasticity), ("TableA4", table14_sensitivity_check),
+    ("TableA5", table15_simple_slopes),
+]
+_manuscript_tables = _MAIN_BODY_TABLES + _APPENDIX_TABLES
 
-_MATRIX_TABLES = ("Table6", "Table7", "Table8")  # constructs/predictors are the index
+_MATRIX_TABLES = ("Table6", "TableA1", "TableA2")  # constructs/predictors are the index
 
 _built = {}
 for _name, _fn in _manuscript_tables:

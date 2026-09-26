@@ -160,6 +160,21 @@ NON_VIETNAM_LOC5_TEXT = {
     "wollongong",  # Australia
     "l.a",         # Los Angeles, USA
 }
+
+# Demographics-incomplete termination points (2026-09-26, requested by Khai): a
+# respondent whose Qualtrics survey flow terminated at one of these Flow Element
+# IDs quit partway through the demographics block, leaving ALL 9
+# DEMOGRAPHIC_COLS missing (verified against the actual raw export -- e.g.
+# ResponseId R_4smw8GeFt5DsaQN, "Last Seen Flow Element ID" = FL_51, Finished=0,
+# Progress=79%, all demographics NaN, but the 34-item substantive battery is
+# complete so it survives the zero-tolerance missing-item step untouched).
+# Hand-maintained, like NON_VIETNAM_LOC5_TEXT -- a future raw export may
+# terminate respondents at a different Flow Element ID for the same reason
+# (e.g. if the survey flow is edited); verify against a fresh row before adding.
+LAST_SEEN_FLOW_ELEMENT_COL = "Last Seen Flow Element ID"
+DEMOGRAPHICS_INCOMPLETE_FLOW_ELEMENTS = {
+    "FL_51",  # terminates right at/before the demographics block starts
+}
 REF_COL = "REF"
 DEMOGRAPHIC_COLS = ["AGE_BAND", "GEN", "LOC", "EDU", "INC", "FREQ", "PLAT", "PRIOR", "REF"]
 

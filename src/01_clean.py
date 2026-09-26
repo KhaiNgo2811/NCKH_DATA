@@ -19,6 +19,7 @@ from _config import (  # noqa: E402
     CC1_COL, CC2_COL, CC1_PLATFORM_ANCHOR, CC1_PERSONALIZED_ANCHOR, CC2_YES_ANCHOR, CC2_NO_ANCHOR,
     SPEEDING_MIN_SECONDS, DURATION_COL,
     LOC_COL, LOC_TEXT_COL, NON_VIETNAM_LOC5_TEXT,
+    LAST_SEEN_FLOW_ELEMENT_COL, DEMOGRAPHICS_INCOMPLETE_FLOW_ELEMENTS,
 )
 
 # ---------------------------------------------------------------------------
@@ -174,17 +175,31 @@ def flag_duplicate_response_pattern(df, items):
 # manipulation_check_sensitivity() can recombine (e.g. "all steps except the
 # speeder floor") -- see build_hard_drop_masks().
 HARD_DROP_STEP_ORDER = [
+    # -- 1. ELIGIBILITY & SCREENING (Tieu chuan doi tuong tham gia) --
     "consent_fail",
     "screener_age_fail",
     "screener_omni_fail",
+    "non_vietnam_location",         # target-population eligibility, grouped with screening
+
+    # -- 2. ATTENTION & COMPREHENSION (Kiem tra doc hieu & Tuong tac) --
     "attention_check_fail",
-    "comprehension_check_fail",
+    "comprehension_check_fail",     # especially important for the 2x2 scenario design
+
+    # -- 3. CARELESS RESPONDING (Hanh vi phan hoi au / Khong nghiem tuc) --
     "speeder_under_120s",
+    "straightlining_near_zero_sd",  # grouped with speeding under one careless-responding umbrella
+
+    # -- 4. TECHNICAL & COMPLETENESS (Trung lap & Muc do hoan thien) --
+    "duplicate_response_pattern",   # IP/fingerprint/timestamp duplicate check
     "excess_missing_items",
-    "duplicate_response_pattern",
-    "non_vietnam_location",
-    "straightlining_near_zero_sd",
+    "demographics_incomplete",
 ]
+# Reordered 2026-09-26 (Khai's explicit grouping, see CLAUDE.md SS31) from the prior
+# flat consent->...->straightlining sequence. Re-ordering changes ONLY which step gets
+# credit for dropping a respondent who fails more than one criterion (the funnel
+# breakdown in the printed log) -- the final kept sample after ALL 11 steps is
+# identical either way, since a respondent is dropped if ANY step's mask is False
+# regardless of order.
 
 
 def build_hard_drop_masks(df, present_items):
@@ -251,6 +266,16 @@ def build_hard_drop_masks(df, present_items):
             loc_text_norm = pd.Series("", index=df.index)
         is_foreign = (loc == 5) & loc_text_norm.isin(NON_VIETNAM_LOC5_TEXT)
         masks["non_vietnam_location"] = ~is_foreign
+
+    # Demographics-incomplete (2026-09-26, requested by Khai): a respondent whose
+    # survey flow terminated at a known demographics-incomplete Flow Element ID
+    # (see _config.py::DEMOGRAPHICS_INCOMPLETE_FLOW_ELEMENTS) quit right at/before
+    # the demographics block -- they can still pass the zero-tolerance 34-item
+    # missing-item step (that step never checks demographics), so this catches
+    # what that step cannot.
+    if LAST_SEEN_FLOW_ELEMENT_COL in df.columns:
+        masks["demographics_incomplete"] = ~df[LAST_SEEN_FLOW_ELEMENT_COL].isin(
+            DEMOGRAPHICS_INCOMPLETE_FLOW_ELEMENTS)
 
     if present_items:
         sd = df[present_items].std(axis=1, skipna=True)

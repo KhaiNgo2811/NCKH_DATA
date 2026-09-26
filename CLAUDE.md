@@ -2034,3 +2034,234 @@ the OLS all-N numbers, both in the Dampening direction as predicted; H7a's aster
 reflects it clearing p<.05 under the OLS check's own nominal rule (§ "not TF-mandated"
 caveat from §26 still applies -- this is this check's own convention, not a rule fixed
 by any TF version).
+
+## 29. TF re-verified against docs/Theoretical_Foundations_v2_14.docx (a full version
+bump, not a DRAFT) -- OLS Hayes PROCESS Model 1 IS confirmed the estimation of record
+for H7a/H7b, predicted Dampening; model spec and verdict rule corrected — 2026-09-24
+
+**Yet another docs/ change, re-verified per this file's own standing instruction.**
+`docs/Theoretical_Foundations_v2_13_A21_DRAFT.docx` (§26/§27/§28's basis) is gone;
+`docs/Theoretical_Foundations_v2_14.docx` is now the only TF file present -- a full
+version bump (2.13 -> 2.14), not marked DRAFT. Extracted and read directly. It resolves
+the Buffering/Dampening and PLS-SEM/OLS questions explicitly, with specific amendment
+numbers this time (not the vague "A-21/22/23" churn of earlier sessions):
+
+- **Amendment A-14**: "H7a supported, H7b not supported; H7a/H7b sign typo corrected...
+  The predicted sign of both moderations is negative — β_M1 < 0 and β_M2 < 0 (dampening)
+  — and the '> 0 / buffering' wording printed in earlier versions was a **typing error**,
+  now corrected throughout." I.e. every prior version's "Buffering" framing (including
+  what §26 read out of the since-superseded A-21 draft) is now declared, by the TF
+  itself, to have been an error — Dampening was always the intended prediction.
+- **Amendment A-15 (ratified, not "pending")**: "Estimation of record for H7a/H7b: OLS
+  moderated regression on the main-only sample (N_main=400); Holm-Bonferroni correction
+  removed; verdict from a 5,000-resample bootstrap 95% CI at nominal p<.05." — OLS,
+  not PLS-SEM, is confirmed the estimator of record. §C.2's PLS-SEM two-stage model
+  still estimates `INT*PDPL -> TRU`/`INT*DISC -> TRU` as part of its own equations, and
+  is reported "next to" the OLS estimates for an agreement check, but does not carry
+  the verdict.
+- **Amendment A-16 (pending ratification, but already written as "Model of record" in
+  SS C.2.2)**: two separate single-moderator OLS regressions, Hayes' PROCESS Model 1
+  template, **without REL and without the other institutional carrier as a covariate**:
+  `H7a: TRU = b0 + b1*INT_c + b2*PDPL_c + beta_M1*(INT_c x PDPL_c) + e`
+  `H7b: TRU = b0 + b1*INT_c + b2*DISC_c + beta_M2*(INT_c x DISC_c) + e`
+  This is DIFFERENT from what `09_h7_ols_record.R` had implemented since §17/§20/§26-28
+  (which included REL and the cross-covariate in each equation, an assumption carried
+  over from the earlier, since-defunct A-22/A-23 lineage that was never actually in any
+  real TF text). The TF explicitly names the REL-including combined-equation form (from
+  A-15's own original text) as a **sensitivity analysis**, not the model of record:
+  `TRU = b0 + b1*REL + b2*INT_c + b3*PDPL_c + b4*DISC_c + beta_M1*(...) + beta_M2*(...) + e`
+  (both interactions together in ONE pooled equation, mirroring H4's REL covariate).
+- **Verdict rule (A-15) is DIRECTIONAL**, which `09_h7_ols_record.R` had never
+  implemented correctly: "H7a (H7b) is supported if its 95% CI excludes zero **and the
+  coefficient is negative, as predicted**... A significant positive coefficient would be
+  reported as such and would **not** count as support." The script's verdict logic had
+  been non-directional (CI-excludes-zero either way) since it was first written.
+
+**`09_h7_ols_record.R` rewritten to match, all three corrections:**
+1. Model-of-record formulas changed to drop REL and the cross-covariate:
+   `f_H7a <- TRU_mean ~ INT_c + PDPL_c + INT_x_PDPL`,
+   `f_H7b <- TRU_mean ~ INT_c + DISC_c + INT_x_DISC`.
+2. Added the pooled-with-REL sensitivity model (`f_pooled`, both interactions together)
+   as a third analysis per hypothesis, all-N only, clearly labeled
+   `"pooled model with REL (A-15 form, sensitivity)"`.
+3. `analyse()`'s bootstrap `stat()` function was generalized to look up the tested
+   coefficient **by name** (`b[term]`) instead of assuming it's the last coefficient --
+   necessary because the pooled sensitivity model has two interaction terms, so the one
+   being tested is not always last.
+4. Verdict logic (`ver <- ...`) changed from `(ci[1,1] > 0 | ci[1,2] < 0) && p<.05`
+   (non-directional) to `ci[1,2] < 0 && p<.05` (CI entirely negative AND p<.05) --
+   directional, matching A-15's actual rule. Labels changed from
+   `"supported (post hoc, non-directional)"` to `"supported (as predicted, dampening)"`.
+5. Output renamed `h7_ols_record_A22_A23_PROCESS_M1_INTERIM.csv` ->
+   `h7_ols_record_A15_A16_PROCESS_M1_INTERIM.csv` (old file deleted); header comment
+   rewritten to cite the real amendment numbers and formulas.
+
+**`10_final_results_table.py` updated to match:** Section G relabeled "ESTIMATION OF
+RECORD for H7a/H7b" (was "SUPPLEMENTARY"); all `h7_ols_record_...csv` filename
+references updated; Table 13 (Moderation Results) and Table 15 (Simple Slopes) now
+filter to just the two model-of-record rows (excluding the new pooled-with-REL
+sensitivity rows); Table 14 (Sensitivity Check) extended to a 3-way pivot — Full
+sample / Cook's-D-trimmed / Pooled with REL (A-15 form) — instead of 2-way, so the new
+sensitivity variant has a home. Figure 1 and Table 9 needed no further change (§28
+already had them right: Table 9 excludes H7a/H7b, Figure 1 sources H7a/H7b from the OLS
+table, both already consistent with A-15/A-16).
+
+**Result on `main_clean_data.csv` (n=381) under the corrected model-of-record
+specification and directional verdict rule:**
+
+| | H7a beta_M1 (all-N) | H7a (Cook's D-trimmed) | H7b beta_M2 (all-N) | H7b (trimmed) |
+|---|---|---|---|---|
+| b | -0.0899 | -0.1061 | -0.0418 | -0.0586 |
+| BCa 95% CI | [-0.201, -0.007] | [-0.172, -0.037] | [-0.277, 0.192] | [-0.228, 0.106] |
+| p (bootstrap) | .048 | .006 | .730 | .495 |
+| Verdict | supported | supported | not supported | not supported |
+
+**H7a: supported (as predicted, dampening) in BOTH the all-N and Cook's-D-trimmed
+runs** -- CI entirely negative, p<.05 in both. **H7b: not supported** in either.
+Sensitivity (pooled-with-REL, all-N): H7a b=-0.092, CI=[-0.204,-0.004] (excludes 0) but
+p=.056 (misses the nominal .05 cutoff by a hair); H7b b=+0.009, n.s. -- broadly
+consistent with the model-of-record verdict for both hypotheses, with H7a sitting right
+at the edge under the alternate (REL-including) specification.
+
+**Standing rule for future sessions**: OLS Hayes PROCESS Model 1
+(`09_h7_ols_record.R`) is THE estimation of record for H7a/H7b -- not PLS-SEM, and not
+"supplementary" as §26-§28 briefly had it. Predicted direction is Dampening
+(beta_M1 < 0, beta_M2 < 0) per Amendment A-14 -- treat any TF text saying "Buffering"
+as describing a pre-A-14 typo, not the current prediction. If `docs/` changes again,
+re-extract before trusting any of this -- this project's TF file has now changed
+content substantively 4 times in 3 days (§17, §26, §28, §29).
+
+## 30. 11th hard-drop step added: `demographics_incomplete` (terminated at Flow Element
+FL_51) — 2026-09-26
+
+Khai spotted the same respondent §23 had flagged as "1 dữ liệu không trọn vẹn"
+(ResponseId `R_4smw8GeFt5DsaQN`, all 9 `DEMOGRAPHIC_COLS` missing) again, this time
+identified by its Qualtrics **Last Seen Flow Element ID = `FL_51`** (Finished=0,
+Progress=79%), and asked to exclude it going forward via a real hard-drop step instead
+of leaving it as a documented-but-tolerated edge case.
+
+**Implemented as an 11th hard-drop step, `demographics_incomplete`** (`01_clean.py`,
+inserted right after `non_vietnam_location`, before `straightlining_near_zero_sd`):
+drops any row whose `"Last Seen Flow Element ID"` is in the new
+`_config.py::DEMOGRAPHICS_INCOMPLETE_FLOW_ELEMENTS` set (currently `{"FL_51"}`). Checked
+the raw export first: only 2 rows in the entire 1083-row raw file have ever landed on
+`FL_51` (both `Finished=0`, `Progress=79%`), and only one of them (`R_4smw8GeFt5DsaQN`)
+was still present in `main_clean_data.csv` before this fix — the other
+(`R_4N8HL21e7cKDGwK`) had already been caught by an earlier step. **Hand-maintained, like
+`NON_VIETNAM_LOC5_TEXT`** — if the Qualtrics survey flow is ever edited, a future
+demographics-incomplete respondent may terminate at a different Flow Element ID that
+won't be caught automatically; verify against a fresh raw row (its
+`"Last Seen Flow Element ID"`, `Finished`, `Progress`, and which fields are all-NaN)
+before adding a new ID to the set.
+
+**Result on `raw_data.csv` (1083 raw, 2026-09-26):** the new step drops exactly 1 row as
+expected (`R_4smw8GeFt5DsaQN`) — pooled 447→446, **main 395→394**. 10-step hard-drop
+policy (§23) is now an **11-step policy**. `main_clean_data.csv` is now **1 short of the
+n>=395 trigger** for re-running `run_plssem.py` (§25) and 6 short of N_main=400.
+
+## 31. `HARD_DROP_STEP_ORDER` regrouped into 4 named categories, same day — 2026-09-26
+
+Khai supplied an exact reordering of the 11 hard-drop steps into 4 labeled groups and
+asked for the source to match it:
+1. **Eligibility & Screening**: `consent_fail`, `screener_age_fail`, `screener_omni_fail`,
+   `non_vietnam_location` (moved up here — a target-population eligibility criterion,
+   grouped with the other screening checks rather than left with the technical/
+   completeness steps where it originally sat).
+2. **Attention & Comprehension**: `attention_check_fail`, `comprehension_check_fail`.
+3. **Careless Responding**: `speeder_under_120s`, `straightlining_near_zero_sd` (moved
+   up here, next to speeding, under one careless-responding umbrella — previously it
+   was the very last step).
+4. **Technical & Completeness**: `duplicate_response_pattern`, `excess_missing_items`,
+   `demographics_incomplete`.
+
+**Implemented exactly as given** in `01_clean.py::HARD_DROP_STEP_ORDER`, with the 4 group
+headers kept as comments in the source for readability. `apply_exclusions()` already
+iterates generically over `HARD_DROP_STEP_ORDER`, so no other code change was needed.
+**Re-ordering changes only which step gets "credit" for dropping a respondent who fails
+more than one criterion** (the printed funnel breakdown) — the final kept sample after
+all 11 steps is identical regardless of order, since a respondent is dropped if ANY
+step's mask is False. Confirmed on `raw_data.csv` (1083 raw): same final n (446 pooled,
+394 main) as the previous step order, just redistributed across steps — e.g.
+`straightlining_near_zero_sd` now shows 5 dropped (was 1) since it runs before
+`duplicate_response_pattern` in the new order and so catches respondents the old order
+would have let `duplicate_response_pattern` claim instead.
+
+## 32. Manuscript tables renumbered into main body (Table 2-10) + appendix (Table A1-A5);
+every remaining PLS-SEM trace of H7a/H7b removed; historical docstring clutter pruned
+— 2026-09-26
+
+Khai supplied an exact main-body/appendix split and asked `10_final_results_table.py`'s
+output to match it, plus asked (separately, same message) to delete every remaining sign
+that H7a/H7b were ever estimated via PLS-SEM — including reporting-only rows — now that
+OLS Hayes PROCESS Model 1 is the sole estimator (§29).
+
+**New numbering (supersedes §22/§28's Table 2-15 numbering):**
+
+| Main body | Was | | Appendix | Was |
+|---|---|---|---|---|
+| Table 2 (+2b) | Table 2 (+2b) | | Table A1 | Table 6 (Fornell-Larcker) |
+| Table 3 | Table 3 | | Table A2 | Table 8 (Inner VIF) |
+| Table 4 | Table 4 | | Table A3 | Table 12 (Heteroscedasticity) |
+| Table 5 | Table 5 | | Table A4 | Table 14 (Sensitivity check) |
+| Table 6 (HTMT) | Table 7 | | Table A5 | Table 15 (Simple slopes) |
+| Table 7 (Path coefficients) | Table 9 | | | |
+| Table 8 (R2/Q2predict) | Table 10 | | | |
+| Table 9 (Indirect effects) | Table 11 | | | |
+| Table 10 (Moderation, H7a/H7b) | Table 13 | | | |
+
+Function names in `10_final_results_table.py` are unchanged (`table6_fornell_larcker()`,
+`table7_htmt()`, etc. still mean the same analysis they always did) — only each
+function's `.to_csv()` output filename and docstring were updated to its new manuscript
+number. The assembly section at the bottom of the script now defines `_MAIN_BODY_TABLES`
+(Table2-Table10) and `_APPENDIX_TABLES` (TableA1-TableA5) as two explicit lists (Table2b
+stays attached to Table2 in the main-body list, not given its own appendix slot), with
+`_manuscript_tables = _MAIN_BODY_TABLES + _APPENDIX_TABLES` kept as the combined
+build/write loop's input so `Manuscript_Results_Tables.xlsx` still gets all 15 sheets in
+one file (main-body sheets first, appendix sheets after). `_MATRIX_TABLES` (the tables
+whose row index should be written to Excel) updated from `("Table6","Table7","Table8")`
+to `("Table6","TableA1","TableA2")` to track HTMT/Fornell-Larcker/Inner-VIF to their new
+names. Old-numbered orphan CSVs in `outputs/tables/` (`Table6_fornell_larcker.csv`,
+`Table7_htmt.csv`, `Table8_inner_vif.csv`, `Table9_path_coefficients.csv`,
+`Table10_r2_q2predict.csv`, `Table11_indirect_effects.csv`,
+`Table12_heteroscedasticity.csv`, `Table13_moderation_results.csv`,
+`Table14_sensitivity_full_vs_trimmed.csv`, `Table15_simple_slopes_PDPL.csv`) were
+deleted — none were git-tracked (same `outputs/tables/*.csv` `.gitignore` rule as §8).
+
+**PLS-SEM/H7a/H7b traces removed:**
+- `10_final_results_table.py` Section E's `paths` list (feeding
+  `FINAL_results_main_all.csv`) previously still listed `INT*PDPL -> TRU` /
+  `INT*DISC -> TRU` as reporting-only rows (no verdict, per §28). These two rows are now
+  **deleted outright** — Section E no longer mentions H7a/H7b in any form, reporting or
+  otherwise. Section E's remaining rows (H1/H2/H4/H5/H6a/H6b/H6c/E1/E2 plus the
+  DISC->INT/DISC->TRU/PDPL->TRU specification terms) are unchanged.
+- Table 7 (path coefficients, was Table 9)'s docstring and `table9_path_coefficients()`'s
+  `hyp_labels` dict already excluded H7a/H7b since §28 — confirmed still correct, no
+  change needed there beyond the renumbering above.
+- Verified no other script (`07_plssem_bridge.R`, `run_plssem.py`, Figure 1/2 code) still
+  sources H7a/H7b from a PLS-SEM table — Figure 1's H7a/H7b arrows already read from the
+  OLS table (`o`) since §28, confirmed unchanged.
+
+**Historical docstring/comment clutter removed** (Khai's second ask, same message):
+- `10_final_results_table.py`'s module docstring no longer says "(renumbered 2026-09-23
+  from 14_final_results_table.py after removing
+  09_h7_supplementary.{py,R}/10_jn_micom.R/11_ols_model1_bootstrap.R/
+  12_process_moderated_mediation.R)" — rewritten to a clean description of the script's
+  current scope (PLS-SEM for H1-H6c/E1/E2 only; OLS Hayes PROCESS Model 1 is the sole
+  H7a/H7b estimator, TF v2.14 §C.2.2, Amendments A-14/A-15/A-16).
+- `09_h7_ols_record.R`'s header comment's opening line simplified to state its role
+  directly ("THE ONLY ESTIMATION OF H7a/H7b in this pipeline — PLS-SEM never estimates or
+  reports H7a/H7b, not even for reference") ahead of the existing TF-verification history
+  (Amendments A-14/A-15/A-16 detail below it, unchanged) rather than leading with the
+  renumbering/rewrite history.
+- These are documentation/comment-only changes — no computation, formula, bootstrap
+  procedure, or output value in either script changed.
+
+**Verified end-to-end**: re-ran `10_final_results_table.py` on the current
+`main_clean_data.csv`/PLS-SEM/OLS outputs (n=404 pooled funnel input, n=381 in the
+H7a/H7b OLS record — §25's "hold `run_plssem.py` until n>=395" rule means the on-disk
+PLS-SEM outputs are still from an earlier n; Section E's PLS-SEM numbers reflect
+whatever `run_plssem.py` was last run against, not necessarily today's n=404 — this is
+expected and unrelated to today's table-restructuring/cleanup work). All 15 tables (10
+main body incl. 2b, 5 appendix) and `Manuscript_Results_Tables.xlsx` wrote successfully;
+`FINAL_results_main_all.csv`'s Section E now has 12 PLS-SEM rows (was 14 — the two
+H7a/H7b reporting-only rows are gone) and Section G's OLS Hayes rows are unchanged.
