@@ -141,7 +141,7 @@ for _, r in ie.iterrows():
 # reported for reference only in Section E, no verdict there). Predicted direction
 # is Dampening (beta_M < 0), Amendment A-14. See CLAUDE.md SS29.
 SEC_G = "G. OLS Hayes PROCESS Model 1 (ESTIMATION OF RECORD for H7a/H7b, TF v2.14 A-15/A-16; INTERIM, BCa 5,000, no Holm)"
-o = pd.read_csv(T + "h7_ols_record_A15_A16_PROCESS_M1_INTERIM.csv")
+o = pd.read_csv(T + "h7_ols_record_A15_A16_PROCESS_M1_FINAL.csv")
 for _, r in o[o.analysis != "pooled model with REL (A-15 form, sensitivity)"].iterrows():
     if "beta_M" in r.term:
         add(SEC_G, f"{r.term} | {r.analysis}", pred="Dampening, beta_M < 0 (Amendment A-14)", n=int(r.n),
@@ -168,8 +168,8 @@ print(f"\n{len(out)} rows -> {T}FINAL_results_main_all.csv / .xlsx")
 
 # --- H. Figures -------------------------------------------------------------
 # Reuses the same tables already read above (`b` = plssem_bootstrap_paths_main,
-# `o` = h7_ols_record_A15_A16_PROCESS_M1_INTERIM) -- no re-analysis, just plotting
-# the numbers already in Sections E/G. INTERIM caveat (n < 400) applies here too.
+# `o` = h7_ols_record_A15_A16_PROCESS_M1_FINAL) -- no re-analysis, just plotting
+# the numbers already in Sections E/G.
 
 def _star(p):
     return "***" if p < .001 else "**" if p < .01 else "*" if p < .05 else "n.s."
@@ -584,7 +584,7 @@ def table13_moderation_results():
     reports H7a/H7b anywhere in this pipeline. Restricted to the two
     model-of-record rows per hypothesis (all-N, Cook's-D-trimmed); the
     pooled-with-REL sensitivity variant is in Table A4 instead."""
-    o2 = pd.read_csv(T + "h7_ols_record_A15_A16_PROCESS_M1_INTERIM.csv")
+    o2 = pd.read_csv(T + "h7_ols_record_A15_A16_PROCESS_M1_FINAL.csv")
     mod = o2[o2.term.str.contains("beta_M") & o2.analysis.isin(
         ["all N (conclusions rest on this)", "without Cook's-D-flagged cases (sensitivity)"])].copy()
     mod = mod.rename(columns={"term": "Hypothesis term", "analysis": "Sample", "estimate": "b",
@@ -602,7 +602,7 @@ def table14_sensitivity_check():
     no REL/cross-covariate) vs. the pooled-with-REL model (Amendment A-15
     form, both interactions in one equation, explicitly retained in TF v2.14
     SS C.2.2 as a sensitivity check on the model-of-record specification)."""
-    o2 = pd.read_csv(T + "h7_ols_record_A15_A16_PROCESS_M1_INTERIM.csv")
+    o2 = pd.read_csv(T + "h7_ols_record_A15_A16_PROCESS_M1_FINAL.csv")
     mod = o2[o2.term.str.contains("beta_M")].copy()
     mod["analysis"] = mod["analysis"].replace({
         "all N (conclusions rest on this)": "Full sample",
@@ -622,7 +622,7 @@ def table15_simple_slopes():
     INT->TRU at 3 levels of PDPL (-1SD, Mean, +1SD) -- H7a only, from the
     model of record; DISC has no third "mean" level distinct from its two
     natural categories, so it stays a 2-level comparison in Table 10."""
-    o2 = pd.read_csv(T + "h7_ols_record_A15_A16_PROCESS_M1_INTERIM.csv")
+    o2 = pd.read_csv(T + "h7_ols_record_A15_A16_PROCESS_M1_FINAL.csv")
     slopes = o2[o2.term.str.contains("slope INT->TRU PDPL") & o2.analysis.isin(
         ["all N (conclusions rest on this)", "without Cook's-D-flagged cases (sensitivity)"])].copy()
     slopes["analysis"] = slopes["analysis"].replace({

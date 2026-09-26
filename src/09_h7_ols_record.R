@@ -32,6 +32,9 @@
 #   cases ("H7 is not analysed before the stop"). Running this on N_main < 400 is an
 #   INTERIM LOOK, labelled as such, not the verdict of record. Full sample / pilot are
 #   sensitivity only and not run here.
+# **FINAL / confirmatory run, 2026-09-26**: Khai confirmed n_main=406 (>= N_main=400) is
+#   the locked, final sample -- no further data collection. This is the verdict of
+#   record, not an interim look; the runtime label below reflects this once N>=400.
 # Influential cases: Cook's distance computed once on the model of record (per
 #   hypothesis), threshold 4/N, applied uniformly; flagged cases listed. Conclusions
 #   rest on ALL N; the run without flagged cases is sensitivity, and "supported"
@@ -63,7 +66,11 @@ f_H7b <- TRU_mean ~ INT_c + DISC_c + INT_x_DISC
 # both interactions together, mirroring H4's REL covariate.
 f_pooled <- TRU_mean ~ REL_mean + INT_c + PDPL_c + DISC_c + INT_x_PDPL + INT_x_DISC
 
-cat(sprintf("\n*** INTERIM LOOK: main-only N=%d < 400 (stopping rule N_main=400; 'H7 is not analysed before the stop'). Not the verdict of record. ***\n", N))
+if (N >= 400) {
+  cat(sprintf("\n*** FINAL / CONFIRMATORY RUN: main-only N=%d (>= stopping rule N_main=400). This IS the verdict of record. ***\n", N))
+} else {
+  cat(sprintf("\n*** INTERIM LOOK: main-only N=%d < 400 (stopping rule N_main=400; 'H7 is not analysed before the stop'). Not the verdict of record. ***\n", N))
+}
 
 # HC3-robust SE + p for one coefficient (MacKinnon & White, 1985 HC3 estimator).
 hc3_stats <- function(m, t) {
@@ -150,7 +157,8 @@ sens_H7b <- analyse(d, "pooled model with REL (A-15 form, sensitivity)", f_poole
                      c("DISC=0" = lo_disc, "DISC=1" = hi_disc))
 for (r in list(sens_H7a, sens_H7b)) { cat(sprintf("\n===== %s =====\n", r$tab$term[1])); print(r$tab[, -(1:2)], row.names = FALSE) }
 
-cat("\nVerdict (Amendment A-15, model of record; INTERIM LOOK; 'supported' requires BOTH the all-N and Cook's-D-trimmed runs; predicted direction is Dampening, beta_M1 < 0 and beta_M2 < 0, per Amendment A-14):\n")
+run_label <- if (N >= 400) "FINAL / confirmatory" else "INTERIM LOOK"
+cat(sprintf("\nVerdict (Amendment A-15, model of record; %s; 'supported' requires BOTH the all-N and Cook's-D-trimmed runs; predicted direction is Dampening, beta_M1 < 0 and beta_M2 < 0, per Amendment A-14):\n", run_label))
 verdict_tab <- data.frame(
   hypothesis = c("H7a", "H7b"),
   all_N = c(res_H7a$A$ver, res_H7b$A$ver),
@@ -164,6 +172,7 @@ cat("\nHeteroscedasticity diagnostics (Breusch-Pagan; White = bptest() with fitt
 hetero_tab <- rbind(res_H7a$A$hetero, res_H7a$B$hetero, res_H7b$A$hetero, res_H7b$B$hetero)
 print(hetero_tab, row.names = FALSE)
 
+out_suffix <- if (N >= 400) "FINAL" else "INTERIM"
 write.csv(rbind(res_H7a$A$tab, res_H7a$B$tab, res_H7b$A$tab, res_H7b$B$tab, sens_H7a$tab, sens_H7b$tab),
-          "outputs/tables/h7_ols_record_A15_A16_PROCESS_M1_INTERIM.csv", row.names = FALSE)
+          sprintf("outputs/tables/h7_ols_record_A15_A16_PROCESS_M1_%s.csv", out_suffix), row.names = FALSE)
 write.csv(hetero_tab, "outputs/tables/h7_heteroscedasticity_diagnostics.csv", row.names = FALSE)
